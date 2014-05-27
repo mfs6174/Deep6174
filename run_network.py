@@ -7,6 +7,8 @@ import scipy.io as sio
 import scipy.signal as signal
 import theano.tensor as T
 import theano
+
+import operator
 from itertools import count
 from convolutional_mlp import LeNetConvPoolLayer
 from multi_convolution_mlp import ConfigurableNN
@@ -14,8 +16,6 @@ from multi_convolution_mlp import ConfigurableNN
 class NetworkRunner(object):
 
     def __init__(self, input_size):
-        self.layers = []
-        self.layer_config = []
         self.input_size = input_size
         self.nn = ConfigurableNN(1, (input_size, input_size))
 
@@ -57,43 +57,73 @@ class NetworkRunner(object):
 
     def run(self, img):
         assert img.shape == (self.input_size, self.input_size)
+
+        results = []
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
                 f = theano.function([self.nn.orig_input],
-                                     layer.y_pred)
+                                     layer.p_y_given_x)
+                results.append(f([[img]])[0])
             else:
                 f = theano.function([self.nn.orig_input],
                                    layer.output)
-            print f([[img]])
+                results.append(f([[img]]))
+        return results
 
+def build_nn_with_params(params, input_size):
+    """ params: the object load from {epoch}.mat file
+        input_size: an integer. e.g. 28
+    """
 
+    runner = NetworkRunner(input_size)
+    for nlayer in count(start=1, step=1):
+        layername = 'layer' + str(nlayer)
+        if layername not in params:
+            break
+        layerdata = params[layername]
+        layertype = layerdata['type'][0][0][0]
+        print "Layer ", nlayer, ' is ', layertype
 
-fname = 'logs/10.mat'
-mat = sio.loadmat(fname)
-
-runner = NetworkRunner(28)
-for nlayer in count(start=1, step=1):
-    layername = 'layer' + str(nlayer)
-    if layername not in mat:
-        break
-    layerdata = mat[layername]
-    layertype = layerdata['type'][0][0][0]
-    print "Layer ", nlayer, ' is ', layertype
-
-    if layertype == 'convpool':
-        runner.add_convpool_layer(layerdata['W'][0][0],
-                                  layerdata['b'][0][0],
-                                  layerdata['pool_size'][0][0][0][0])
-    elif layertype == 'hidden':
-        runner.add_hidden_layer(layerdata['W'][0][0],
+        if layertype == 'convpool':
+            runner.add_convpool_layer(layerdata['W'][0][0],
+                                      layerdata['b'][0][0],
+                                      layerdata['pool_size'][0][0][0][0])
+        elif layertype == 'hidden':
+            runner.add_hidden_layer(layerdata['W'][0][0],
+                                    layerdata['b'][0][0])
+        elif layertype == 'lr':
+            runner.add_LR_layer(layerdata['W'][0][0],
                                 layerdata['b'][0][0])
-    elif layertype == 'lr':
-        runner.add_LR_layer(layerdata['W'][0][0],
-                            layerdata['b'][0][0])
+    return runner
 
+def run_with_epoch_and_img(epoch, img):
+    """epoch: an integer,
+       img: a (size x size) matrix
+       caller should gurantee that
+       img size is the same size as those used to build the network
+    """
+    fname = 'logs/{0}.mat'.format(epoch)
+    data = sio.loadmat(fname)
+    nn = build_nn_with_params(data, img.shape[0])
+    ret = nn.run(img)
+    return ret
 
-data = sio.loadmat('./pic5r.mat')
-data = data['pic5r']
-print data
-#data = np.random.rand(28, 28)
-runner.run(data)
+def run_with_joined_epoch_and_img(epoch, img):
+    fname = 'logs/all_params.mat'.format(epoch)
+    data = sio.loadmat(fname)
+    data = data['epoch' + str(epoch)]
+    nn = build_nn_with_params(data, img.shape[0])
+    ret = nn.run(img)
+    return ret
+
+def get_an_image():
+    import cPickle, gzip
+    f = gzip.open('mnist-data/mnist.pkl.gz', 'rb')
+    train_set, valid_set, test_set = cPickle.load(f)
+    f.close()
+    return train_set[0][0].reshape(28, 28)
+
+img = get_an_image()
+results = run_with_epoch_and_img(10, img)
+label = max(enumerate(results[-1]), key=operator.itemgetter(1))
+print "Label(prob): ", label

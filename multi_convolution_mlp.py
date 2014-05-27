@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Tue May 27 22:38:04 2014 +0800
+# Date: Tue May 27 23:18:27 2014 +0800
 import os
 import sys
 import time
@@ -74,18 +74,6 @@ class ConfigurableNN(object):
         self.layer_config.append({'image_shape': image_shape,
                                   'filter_shape': filter_shape,
                                   'pool_size': pool_size })
-
-    def test(self):
-        l = self.layers[-1]
-        input_img = numpy.zeros((28, 28))
-        #input_symbol = T.matrix('input_symbol')
-        l.W.set_value(random.rand(*self.layer_config[0]['filter_shape']).astype('float32'))
-        l.b.set_value(numpy.zeros((self.layer_config[0]['filter_shape'][0],),
-                                 dtype='float32'))
-        f = theano.function([self.orig_input], l.output)
-        result = f([[input_img]])
-        print result.shape
-
 
     def add_hidden_layer(self, n_out, activation):
         if not len(self.layer_config):
@@ -250,29 +238,6 @@ class ConfigurableNN(object):
         print >> sys.stderr, ('The code for file ' +
                               os.path.split(__file__)[1] +
                               ' ran for %.2fm' % ((end_time - start_time) / 60.))
-
-def train_network():
-    nn = ConfigurableNN(500, (28, 28))
-    # a NN with two conv-pool layer
-    # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((20, 5), 2)
-    nn.add_convpoollayer((50, 5), 2)
-
-    nn.add_hidden_layer(n_out=500, activation=T.tanh)
-    nn.add_LR_layer()
-    nn.work(dataset=dataset)
-
-def rebuild_network():
-    """ rebuild network with saved params"""
-    # batch size is 1
-    nn = ConfigurableNN(1, (28, 28))
-    nn.add_convpoollayer((20, 5), 2)
-    nn.add_convpoollayer((50, 5), 2)
-
-    nn.add_hidden_layer(n_out=500, activation=T.tanh)
-    nn.add_LR_layer()
-    nn.work(dataset=dataset)
-
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         dataset = sys.argv[1]
@@ -280,9 +245,6 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-
-    #rebuild_network()
-    #sys.exit(0)
 
     # config the nn
     nn = ConfigurableNN(500, (28, 28))
