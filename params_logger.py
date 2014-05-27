@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Tue May 27 14:55:42 2014 +0800
+# Date: Tue May 27 22:22:35 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -31,20 +31,27 @@ class ParamsLogger(object):
         except:
             pass
 
-    def save_params(self, epoch, layers):
+    def save_params(self, epoch, layers, layer_config):
         fname = os.path.join(self.logdir, "{0}.mat".format(epoch))
         res = {}
 
         layer_params = [x.params for x in layers]
         cnt = 0
-        for layer, pair in zip(layers, layer_params):
+        for layer, pair, config in zip(layers, layer_params, layer_config):
             cnt += 1
             W = pair[0].get_value()
             print W.shape
             W = W.tolist()
             b = pair[1].get_value().tolist()
-            res['layer' + str(cnt)] = ({'type': name_dict[type(layer)],
-                        'W': W, 'b': b})
+            dic = {'type': name_dict[type(layer)],
+                   'W': W,
+                   'b': b}
+
+            # extra config info to save
+            if type(layer) == LeNetConvPoolLayer:
+                dic['pool_size'] = config['pool_size']
+            res['layer' + str(cnt)] = dic
+
         sio.savemat(fname, res)
         #with open(fname, 'w') as fout:
             #json.dump(res, fout)
