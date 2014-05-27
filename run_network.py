@@ -1,6 +1,5 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-
 import numpy as np
 import scipy
 import scipy.io as sio
@@ -74,7 +73,6 @@ def build_nn_with_params(params, input_size):
     """ params: the object load from {epoch}.mat file
         input_size: an integer. e.g. 28
     """
-
     runner = NetworkRunner(input_size)
     for nlayer in count(start=1, step=1):
         layername = 'layer' + str(nlayer)
@@ -96,34 +94,26 @@ def build_nn_with_params(params, input_size):
                                 layerdata['b'][0][0])
     return runner
 
-def run_with_epoch_and_img(epoch, img):
-    """epoch: an integer,
-       img: a (size x size) matrix
+def get_nn(filename, image_size):
+    """ img: a (size x size) matrix
        caller should gurantee that
        img size is the same size as those used to build the network
     """
-    fname = 'logs/{0}.mat'.format(epoch)
-    data = sio.loadmat(fname)
-    nn = build_nn_with_params(data, img.shape[0])
-    ret = nn.run(img)
-    return ret
+    data = sio.loadmat(filename)
+    nn = build_nn_with_params(data, image_size)
+    return nn
 
-def run_with_joined_epoch_and_img(epoch, img):
-    fname = 'logs/all_params.mat'.format(epoch)
-    data = sio.loadmat(fname)
-    data = data['epoch' + str(epoch)]
-    nn = build_nn_with_params(data, img.shape[0])
-    ret = nn.run(img)
-    return ret
-
-def get_an_image():
+def get_an_image(dataset='mnist.pkl.gz'):
     import cPickle, gzip
-    f = gzip.open('mnist-data/mnist.pkl.gz', 'rb')
+    f = gzip.open(dataset, 'rb')
     train_set, valid_set, test_set = cPickle.load(f)
     f.close()
-    return train_set[0][0].reshape(28, 28)
+    return test_set[0][0].reshape(28, 28)
 
-img = get_an_image()
-results = run_with_epoch_and_img(10, img)
-label = max(enumerate(results[-1]), key=operator.itemgetter(1))
-print "Label(prob): ", label
+if __name__ == '__main__':
+    nn = get_nn('logs/60.mat', 28)
+    img = get_an_image()
+
+    results = nn.run(img)
+    label = max(enumerate(results[-1]), key=operator.itemgetter(1))
+    print "Predicted Label(prob): ", label
