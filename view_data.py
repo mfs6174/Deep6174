@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: view_data.py
-# Date: Mon May 05 20:25:04 2014 +0000
+# Date: Thu May 29 20:32:19 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
@@ -22,3 +22,4 @@ print len(train_set[0]), len(valid_set[0]), len(test_set[0])
 f.close()
 
 print train_set[0][0].shape
+toimage(test_set[0][0].reshape(28, 28)).show()

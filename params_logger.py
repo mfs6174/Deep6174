@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Tue May 27 22:22:35 2014 +0800
+# Date: Thu May 29 23:29:54 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np

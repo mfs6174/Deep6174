@@ -4,6 +4,7 @@ import numpy as np
 import scipy
 import scipy.io as sio
 import scipy.signal as signal
+from scipy.misc import imsave
 import theano.tensor as T
 import theano
 
@@ -11,6 +12,8 @@ import operator
 from itertools import count
 from convolutional_mlp import LeNetConvPoolLayer
 from multi_convolution_mlp import ConfigurableNN
+
+from IPython.core.debugger import Tracer
 
 class NetworkRunner(object):
 
@@ -115,5 +118,15 @@ if __name__ == '__main__':
     img = get_an_image()
 
     results = nn.run(img)
+
+    convolved_l1 = results[0][0]
+    for idx, pic in enumerate(convolved_l1):
+        imsave('convolved_l1.' + str(idx) + '.png', pic)
+
+    convolved_l2 = results[1][0]
+    for idx, pic in enumerate(convolved_l2):
+        imsave('convolved_l2.' + str(idx) + '.png', pic)
+
+        #Tracer()()
     label = max(enumerate(results[-1]), key=operator.itemgetter(1))
     print "Predicted Label(prob): ", label
