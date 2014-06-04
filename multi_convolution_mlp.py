@@ -1,11 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Tue May 27 23:18:27 2014 +0800
+# Date: Tue Jun 03 22:02:16 2014 +0800
 import os
 import sys
 import time
 from itertools import chain
+import cPickle
+import gzip
 
 import numpy
 from numpy import random
@@ -245,9 +247,11 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
+    size = int(numpy.sqrt(cPickle.load(gzip.open(dataset, 'rb'))[0][0][0].shape[0]))
+    print "Input img size is {0}x{0}".format(size)
 
     # config the nn
-    nn = ConfigurableNN(500, (28, 28))
+    nn = ConfigurableNN(500, (size, size))
 
     # a NN with two conv-pool layer
     # params are: (n_filters, filter_size), pooling_size

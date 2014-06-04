@@ -20,3 +20,5 @@ for f in glob.glob(logdir + '/*.mat'):
     params['epoch' + str(epoch)] = mat
 
 sio.savemat(os.path.join(logdir, 'all_params.mat'), params)
+
+# Usage: ./join_mat.py ./logs

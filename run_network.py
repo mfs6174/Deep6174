@@ -7,6 +7,7 @@ import scipy.signal as signal
 from scipy.misc import imsave
 import theano.tensor as T
 import theano
+import sys, cPickle, gzip
 
 import operator
 from itertools import count
@@ -20,8 +21,10 @@ class NetworkRunner(object):
     def __init__(self, input_size):
         self.input_size = input_size
         self.nn = ConfigurableNN(1, (input_size, input_size))
+        self.n_conv_layer = 0
 
     def add_convpool_layer(self, W, b, pool_size):
+        self.n_conv_layer += 1
         if len(self.nn.layers) == 0:
             # this is first layer
             ninput = 1
@@ -106,27 +109,41 @@ def get_nn(filename, image_size):
     nn = build_nn_with_params(data, image_size)
     return nn
 
-def get_an_image(dataset='mnist.pkl.gz'):
+def get_an_image(dataset, label=7):
+    """ get an image with label=number"""
     import cPickle, gzip
     f = gzip.open(dataset, 'rb')
     train_set, valid_set, test_set = cPickle.load(f)
     f.close()
-    return test_set[0][0].reshape(28, 28)
+    for idx, img in enumerate(test_set[0]):
+        if int(test_set[1][idx]) != label:
+            continue
+        size = int(np.sqrt(img.shape[0]))
+        return img.reshape(size, size)
 
 if __name__ == '__main__':
-    nn = get_nn('logs/60.mat', 28)
-    img = get_an_image()
+    epoch = int(sys.argv[2])
+    dataset = sys.argv[1]
+    size = int(np.sqrt(cPickle.load(gzip.open(dataset,
+                                              'rb'))[0][0][0].shape[0]))
+    print "Using dataset {0} with size {1}x{1}".format(dataset, size)
+    nn = get_nn('logs/{0}.mat'.format(epoch), size)
+    img = get_an_image(dataset, 1)
 
+    # run the network
     results = nn.run(img)
 
-    convolved_l1 = results[0][0]
-    for idx, pic in enumerate(convolved_l1):
-        imsave('convolved_l1.' + str(idx) + '.png', pic)
+    # save all the representations
+    #sio.savemat('logs/representations.mat', mdict={'results': results})
 
-    convolved_l2 = results[1][0]
-    for idx, pic in enumerate(convolved_l2):
-        imsave('convolved_l2.' + str(idx) + '.png', pic)
+    # save convolved images
+    for nl in xrange(nn.n_conv_layer):
+        layer = results[nl][0]
+        for idx, pic in enumerate(layer):
+            imsave('convolved_layer{0}.{1}.jpg'.format(nl, idx), pic)
 
-        #Tracer()()
+    # the predicted results
     label = max(enumerate(results[-1]), key=operator.itemgetter(1))
     print "Predicted Label(prob): ", label
+
+# Usage ./run_network.py dataset.pkl.gz 60
