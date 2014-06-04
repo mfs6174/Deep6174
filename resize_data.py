@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: resize_data.py\2
-# Date: Wed Jun 04 20:28:23 2014 +0800
+# Date: Wed Jun 04 12:38:33 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
@@ -9,14 +9,14 @@ from numpy import random
 import scipy
 from scipy.ndimage import zoom
 import sys
-from dataio import save_data, save_data
+from dataio import read_data, save_data
 
 # prepare params
 input = sys.argv[1]
 SIZE = float(sys.argv[2])
 output_basename = input[:-6] + "resample{0}".format(SIZE)
 
-train_set, valid_set, test_set = save_data(input)
+train_set, valid_set, test_set = read_data(input)
 
 def resample(dataset):
     Xs = dataset[0]
