@@ -1,23 +1,22 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_noise_data.py
-# Date: Sun May 18 17:40:34 2014 +0800
+# Date: Wed Jun 04 20:28:14 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
 from numpy import random
+from dataio import save_data, save_data
 import sys
 
 # prepare params
 input = sys.argv[1]
 NOISE_MAX = float(sys.argv[2])
-output = input[:-6] + "noise{0}.pkl.gz".format(NOISE_MAX)
+output_basename = input[:-6] + "noise{0}".format(NOISE_MAX)
 
 # Load the dataset
-f = gzip.open(input, 'rb')
-train_set, valid_set, test_set = cPickle.load(f)
+train_set, valid_set, test_set = save_data(input)
 print len(train_set[0]), len(valid_set[0]), len(test_set[0])
-f.close()
 
 
 def add_noise(dataset):
@@ -30,11 +29,10 @@ def add_noise(dataset):
 add_noise(train_set)
 add_noise(valid_set)
 add_noise(test_set)
+
 print "Writing..."
 data = (train_set, valid_set, test_set)
-fout = gzip.open(output, 'wb')
-cPickle.dump(data, fout, -1)
-fout.close()
+save_data(data, output_basename)
 
 # Usage: ./gen_noise_data.py input.pkl.gz 1.2
 # will generate input.noise1.pkl.gz,

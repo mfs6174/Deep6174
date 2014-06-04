@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: add_to_frame.py\2
-# Date: Sun May 18 17:48:40 2014 +0800
+# Date: Wed Jun 04 20:28:19 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle as pickle
@@ -9,6 +9,7 @@ import cPickle as pickle
 import gzip, numpy
 import random
 import argparse
+from dataio import save_data, save_data
 
 def get_args():
     desc = 'add img into a larger frame'
@@ -54,14 +55,12 @@ def add_frame(dataset):
 args = get_args()
 input = args.input
 frame_size = int(args.size)
-output = input[:-6] + "frame{0}.pkl.gz".format(frame_size)
+output_basename = input[:-6] + "frame{0}".format(frame_size)
 
 # read data
-f = gzip.open(input, 'rb')
-train_set, valid_set, test_set = pickle.load(f)
+train_set, valid_set, test_set = save_data(input)
 print len(train_set[0]), len(valid_set[0]), len(test_set[0])
 orig_size = int(numpy.sqrt(len(train_set[0][0])))
-f.close()
 
 assert frame_size > orig_size, "frame size must be larger than original image"
 
@@ -72,9 +71,7 @@ test_set = add_frame(test_set)
 
 print "Writing..."
 data = (train_set, valid_set, test_set)
-fout = gzip.open(output, 'wb')
-pickle.dump(data, fout, -1)
-fout.close()
+save_data(data, output_basename)
 
 #usage: add_to_frame.py [-h] -i INPUT -s SIZE [-p PLACE]
 #optional arguments:

@@ -144,13 +144,9 @@ class LogisticRegression(object):
             raise NotImplementedError()
 
 
+from dataio import read_data
 def load_data(dataset):
-    print '... loading data'
-
-    f = gzip.open(dataset, 'rb')
-    train_set, valid_set, test_set = cPickle.load(f)
-    print train_set[0][0].shape
-    f.close()
+    train_set, valid_set, test_set = read_data(dataset)
 
     def shared_dataset(data_xy, borrow=True):
         """ Function that loads the dataset into shared variables

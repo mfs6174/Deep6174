@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Tue Jun 03 22:02:16 2014 +0800
+# Date: Wed Jun 04 20:29:03 2014 +0800
 import os
 import sys
 import time
@@ -17,6 +17,7 @@ import theano.tensor as T
 
 from params_logger import ParamsLogger
 from logistic_sgd import LogisticRegression, load_data
+from dataio import read_data, save_data
 from mlp import HiddenLayer
 from convolutional_mlp import LeNetConvPoolLayer
 
@@ -247,7 +248,8 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-    size = int(numpy.sqrt(cPickle.load(gzip.open(dataset, 'rb'))[0][0][0].shape[0]))
+    train_set = read_data(dataset)[0]
+    size = int(numpy.sqrt(train_set[0][0].shape[0]))
     print "Input img size is {0}x{0}".format(size)
 
     # config the nn

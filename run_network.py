@@ -9,6 +9,7 @@ import theano.tensor as T
 import theano
 import sys, cPickle, gzip
 
+from dataio import read_data, save_data
 import operator
 from itertools import count
 from convolutional_mlp import LeNetConvPoolLayer
@@ -111,10 +112,7 @@ def get_nn(filename, image_size):
 
 def get_an_image(dataset, label=7):
     """ get an image with label=number"""
-    import cPickle, gzip
-    f = gzip.open(dataset, 'rb')
-    train_set, valid_set, test_set = cPickle.load(f)
-    f.close()
+    train_set, valid_set, test_set = read_data(dataset)
     for idx, img in enumerate(test_set[0]):
         if int(test_set[1][idx]) != label:
             continue
@@ -124,8 +122,8 @@ def get_an_image(dataset, label=7):
 if __name__ == '__main__':
     epoch = int(sys.argv[2])
     dataset = sys.argv[1]
-    size = int(np.sqrt(cPickle.load(gzip.open(dataset,
-                                              'rb'))[0][0][0].shape[0]))
+    train = read_data(dataset)[0]
+    size = int(np.sqrt(train[0][0].shape[0]))
     print "Using dataset {0} with size {1}x{1}".format(dataset, size)
     nn = get_nn('logs/{0}.mat'.format(epoch), size)
     img = get_an_image(dataset, 1)
