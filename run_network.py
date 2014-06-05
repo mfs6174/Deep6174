@@ -61,20 +61,33 @@ class NetworkRunner(object):
         last_layer.W.set_value(W.astype('float32'))
         last_layer.b.set_value(b.flatten().astype('float32'))
 
+    def finish(self):
+        self.funcs = []
+        for (idx, layer) in enumerate(self.nn.layers):
+            if idx == len(self.nn.layers) - 1:
+                f = theano.function([self.nn.orig_input],
+                                     layer.p_y_given_x)
+            else:
+                f = theano.function([self.nn.orig_input],
+                                   layer.output)
+            self.funcs.append(f)
+
     def run(self, img):
         assert img.shape == (self.input_size, self.input_size)
 
         results = []
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
-                f = theano.function([self.nn.orig_input],
-                                     layer.p_y_given_x)
-                results.append(f([[img]])[0])
+                results.append(self.funcs[idx]([[img]])[0])
             else:
-                f = theano.function([self.nn.orig_input],
-                                   layer.output)
-                results.append(f([[img]]))
+                results.append(self.funcs[idx]([[img]]))
         return results
+
+    def predict(self, img):
+        res = self.funcs[-1]([[img]])[0]
+        label = max(enumerate(res), key=operator.itemgetter(1))
+        return label
+
 
 def build_nn_with_params(params, input_size):
     """ params: the object load from {epoch}.mat file
@@ -124,9 +137,15 @@ if __name__ == '__main__':
     dataset = sys.argv[1]
     train = read_data(dataset)[0]
     size = int(np.sqrt(train[0][0].shape[0]))
+
+    try:
+        label = int(sys.argv[3])
+    except:
+        label = 3
     print "Using dataset {0} with size {1}x{1}".format(dataset, size)
     nn = get_nn('logs/{0}.mat'.format(epoch), size)
-    img = get_an_image(dataset, 1)
+    nn.finish()
+    img = get_an_image(dataset, label)
 
     # run the network
     results = nn.run(img)
@@ -144,4 +163,4 @@ if __name__ == '__main__':
     label = max(enumerate(results[-1]), key=operator.itemgetter(1))
     print "Predicted Label(prob): ", label
 
-# Usage ./run_network.py dataset.pkl.gz 60
+# Usage ./run_network.py dataset.pkl.gz 60 [label]
