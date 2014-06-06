@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Wed Jun 04 15:00:32 2014 +0000
+# Date: Fri Jun 06 05:24:07 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
@@ -10,14 +10,18 @@ import cPickle as pickle
 import tables
 import numpy as np
 import os
+import scipy.io as sio
 
 def read_data_fallback(dataset):
-    def get(name):
-        f = gzip.open(os.path.join(dataset, '{0}.pkl.gz'.format(name)), 'rb')
-        data = pickle.load(f)
-        f.close()
-        return data
-    return (get('train'), get('valid'), get('test'))
+    f = gzip.open(dataset, 'rb')
+    mat = sio.loadmat(f)
+    f.close()
+    data = mat['data']
+    train, valid, test = data[0], data[1], data[2]
+    def transform(d):
+        d[1] = d[1][0]
+        return d
+    return transform(train), transform(valid), transform(test)
 
 def read_data(dataset):
     """ return (train, valid, test)"""
@@ -28,18 +32,15 @@ def read_data(dataset):
         f.close()
         return (train, valid, test)
 
-    if os.path.isdir(dataset):
+    if dataset.endswith('.mat.gz'):
         return read_data_fallback(dataset)
     assert False, "Invalid Dataset Filename"
 
 def save_data_fallback(data, basename):
-    dirname = basename + '.dump'
-    os.mkdir(dirname)
-    for idx, name in enumerate(['train', 'valid', 'test']):
-        fout = gzip.open(os.path.join(dirname, '{0}.pkl.gz'.format(name)), 'wb')
-        pickle.dump(data[idx], fout, -1)
-        fout.close()
-
+    fname = basename + '.mat.gz'
+    f = gzip.open(fname, 'wb')
+    sio.savemat(f, {'data' : data})
+    f.close()
 
 def save_data(data, basename):
     print 'Writing data to {0}'.format(basename)
@@ -51,3 +52,10 @@ def save_data(data, basename):
     except:
         print "Pickle failed !"
         save_data_fallback(data, basename)
+
+if __name__ == '__main__':
+    t, v, ts = read_data('./mnist.pkl.gz')
+    save_data_fallback((t, v, ts), 'testdir')
+
+    tt, vv, ttss = read_data_fallback('testdir.mat.gz')
+    print tt[1] == t[1]

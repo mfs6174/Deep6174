@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Thu May 29 23:29:54 2014 +0800
+# Date: Fri Jun 06 04:31:41 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -40,7 +40,6 @@ class ParamsLogger(object):
         for layer, pair, config in zip(layers, layer_params, layer_config):
             cnt += 1
             W = pair[0].get_value()
-            print W.shape
             W = W.tolist()
             b = pair[1].get_value().tolist()
             dic = {'type': name_dict[type(layer)],

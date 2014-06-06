@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Wed Jun 04 14:54:31 2014 +0000
+# Date: Fri Jun 06 04:30:51 2014 +0000
 import os
 import sys
 import time
@@ -159,7 +159,8 @@ class ConfigurableNN(object):
                     self.y: valid_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
 
         # all the params to optimize on
-        params = list(chain.from_iterable([x.params for x in self.layers]))
+        #params = list(chain.from_iterable([x.params for x in self.layers]))
+        params = self.layers[-1].params     # only train last layer
         # take derivatives on those params
         grads = T.grad(cost, params)
 
@@ -273,6 +274,6 @@ if __name__ == '__main__':
 
     #nn.add_hidden_layer(n_out=500, activation=T.tanh)
     nn.add_LR_layer()
-    nn.work(dataset=dataset)
+    nn.work(dataset=dataset, n_epochs=300)
 
 # Usage: ./multi_convolution_mlp.py dataset.pkl.gz
