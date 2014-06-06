@@ -1,27 +1,37 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Fri Jun 06 05:24:07 2014 +0000
+# Date: Fri Jun 06 15:16:01 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
 import cPickle as pickle
 #import pickle
 import tables
+from IPython.core.debugger import Tracer
+from itertools import izip, count
+import glob
 import numpy as np
 import os
 import scipy.io as sio
 
 def read_data_fallback(dataset):
-    f = gzip.open(dataset, 'rb')
-    mat = sio.loadmat(f)
-    f.close()
-    data = mat['data']
-    train, valid, test = data[0], data[1], data[2]
-    def transform(d):
-        d[1] = d[1][0]
-        return d
-    return transform(train), transform(valid), transform(test)
+    def read(name):
+        pat = '{0}/{1}-*.pkl.gz'.format(dataset, name)
+        all_imgs = []
+        all_labels = []
+        for f in sorted(glob.glob(pat)):
+            fin = gzip.open(f, 'rb')
+            imgs, labels = pickle.load(fin)
+            if not len(all_imgs):
+                all_imgs = np.vstack([imgs])
+                all_labels = labels
+            else:
+                all_imgs = np.vstack([all_imgs, imgs])
+                all_labels = np.concatenate((all_labels, labels))
+            fin.close()
+        return (all_imgs, all_labels)
+    return (read('train'), read('valid'), read('test'))
 
 def read_data(dataset):
     """ return (train, valid, test)"""
@@ -32,15 +42,31 @@ def read_data(dataset):
         f.close()
         return (train, valid, test)
 
-    if dataset.endswith('.mat.gz'):
+    if os.path.isdir(dataset):
         return read_data_fallback(dataset)
     assert False, "Invalid Dataset Filename"
 
 def save_data_fallback(data, basename):
-    fname = basename + '.mat.gz'
-    f = gzip.open(fname, 'wb')
-    sio.savemat(f, {'data' : data})
-    f.close()
+    dirname = basename
+    try:
+        os.mkdir(basename)
+    except:
+        pass
+
+    nslice = 5
+    def save(dataset, name):
+        imgs = np.array_split(dataset[0], nslice)
+        labels = np.array_split(dataset[1], nslice)
+        for idx, img_slice, label_slice in izip(count(), imgs, labels):
+            to_save = (img_slice, label_slice)
+            fname = "{0}-{1}.pkl.gz".format(name, idx)
+            fout = gzip.open(os.path.join(dirname, fname), 'wb')
+            pickle.dump(to_save, fout, -1)
+            fout.close()
+
+    for idx, name in enumerate(['train', 'valid', 'test']):
+        dataset = data[idx]
+        save(dataset, name)
 
 def save_data(data, basename):
     print 'Writing data to {0}'.format(basename)
@@ -55,7 +81,8 @@ def save_data(data, basename):
 
 if __name__ == '__main__':
     t, v, ts = read_data('./mnist.pkl.gz')
+    print "Saving..."
     save_data_fallback((t, v, ts), 'testdir')
 
-    tt, vv, ttss = read_data_fallback('testdir.mat.gz')
+    tt, vv, ttss = read_data_fallback('testdir')
     print tt[1] == t[1]

@@ -53,6 +53,7 @@ class NetworkRunner(object):
         last_layer.b.set_value(b.flatten().astype('float32'))
 
     def add_LR_layer(self, W, b):
+        self.LR_W = W
         assert W.shape[1] == 10
         assert b.shape[1] == 10
 
@@ -132,6 +133,13 @@ def get_an_image(dataset, label=7):
         size = int(np.sqrt(img.shape[0]))
         return img.reshape(size, size)
 
+def save_LR_W(nn):
+    W = nn.LR_W
+    for l in range(10):
+        imgs = W[:,l].reshape(20, 7, 7)
+        for idx, img in enumerate(imgs):
+            imsave('label{0}-weight{1}.jpg'.format(l, idx), img)
+
 if __name__ == '__main__':
     epoch = int(sys.argv[2])
     dataset = sys.argv[1]
@@ -144,6 +152,11 @@ if __name__ == '__main__':
         label = 3
     print "Using dataset {0} with size {1}x{1}".format(dataset, size)
     nn = get_nn('logs/{0}.mat'.format(epoch), size)
+
+    save_LR_W(nn)
+    sys.exit()
+
+
     nn.finish()
     img = get_an_image(dataset, label)
 
