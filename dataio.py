@@ -1,21 +1,20 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Sun Jun 08 03:06:54 2014 +0000
+# Date: Sun Jun 08 03:48:19 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
 import cPickle as pickle
-#import pickle
-import tables
-from IPython.core.debugger import Tracer
+import operator
+#from IPython.core.debugger import Tracer
 from itertools import izip, count
 import glob
 import numpy as np
 import os
 import scipy.io as sio
 
-def read_data_fallback(dataset):
+def _read_data_fallback(dataset):
     def read(name):
         pat = '{0}/{1}-*.pkl.gz'.format(dataset, name)
         all_imgs = []
@@ -43,18 +42,20 @@ def read_data(dataset):
         return (train, valid, test)
 
     if os.path.isdir(dataset):
-        return read_data_fallback(dataset)
+        return _read_data_fallback(dataset)
     assert False, "Invalid Dataset Filename"
 
-def save_data_fallback(data, basename):
+def _save_data_fallback(data, basename):
     dirname = basename + ".pkl.gz"
     try:
-        os.mkdir(basename)
+        os.mkdir(dirname)
     except:
         pass
 
-    nslice = 5
     def save(dataset, name):
+        size = reduce(operator.mul, dataset[0].shape)
+        nslice = np.ceil(size / (2.5 * (10 ** 8)))
+        print nslice
         imgs = np.array_split(dataset[0], nslice)
         labels = np.array_split(dataset[1], nslice)
         for idx, img_slice, label_slice in izip(count(), imgs, labels):
@@ -69,21 +70,32 @@ def save_data_fallback(data, basename):
         save(dataset, name)
 
 def save_data(data, basename):
+    """ param data is (train, valid, test)
+        basename doesn't contain .pkl.gz suffix
+    """
     print 'Writing data to {0}'.format(basename)
+    output = basename + '.pkl.gz'
+    assert not os.path.exists(output), "Path exists! " + str(output)
+
     try:
         # first try pickle
-        fout = gzip.open(basename + '.pkl.gz', 'wb')
+        fout = gzip.open(output, 'wb')
         pickle.dump(data, fout, -1)
         fout.close()
     except:
         print "Pickle failed ! Split the data!"
-        os.remove(basename + '.pkl.gz')
-        save_data_fallback(data, basename)
+        os.remove(output)
+        _save_data_fallback(data, basename)
+
+def get_dataset_imgsize(dataset):
+    train = read_data(dataset)[0]
+    size = int(np.sqrt(train[0][0].shape[0]))
+    return size
 
 if __name__ == '__main__':
     t, v, ts = read_data('./mnist.pkl.gz')
     print "Saving..."
-    save_data_fallback((t, v, ts), 'testdir')
+    _save_data_fallback((t, v, ts), 'testdir')
 
-    tt, vv, ttss = read_data_fallback('testdir')
+    tt, vv, ttss = _read_data_fallback('testdir')
     print tt[1] == t[1]

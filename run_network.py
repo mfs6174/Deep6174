@@ -9,7 +9,7 @@ import theano.tensor as T
 import theano
 import sys, cPickle, gzip
 
-from dataio import read_data, save_data
+from dataio import read_data, save_data, get_dataset_imgsize
 import operator
 from itertools import count
 from convolutional_mlp import LeNetConvPoolLayer
@@ -62,7 +62,8 @@ class NetworkRunner(object):
         last_layer.W.set_value(W.astype('float32'))
         last_layer.b.set_value(b.flatten().astype('float32'))
 
-    def finish(self):
+    def _finish(self):
+        """ compile all the functions """
         self.funcs = []
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
@@ -89,6 +90,9 @@ class NetworkRunner(object):
         label = max(enumerate(res), key=operator.itemgetter(1))
         return label
 
+    def get_LR_W(self):
+        return self.LR_W
+
 
 def build_nn_with_params(params, input_size):
     """ params: the object load from {epoch}.mat file
@@ -113,6 +117,7 @@ def build_nn_with_params(params, input_size):
         elif layertype == 'lr':
             runner.add_LR_layer(layerdata['W'][0][0],
                                 layerdata['b'][0][0])
+    runner.finish()
     return runner
 
 def get_nn(filename, image_size):
@@ -133,18 +138,16 @@ def get_an_image(dataset, label=7):
         size = int(np.sqrt(img.shape[0]))
         return img.reshape(size, size)
 
-def save_LR_W(nn):
-    W = nn.LR_W
+def save_LR_W(W):
     for l in range(10):
         imgs = W[:,l].reshape(20, 7, 7)
         for idx, img in enumerate(imgs):
-            imsave('label{0}-weight{1}.jpg'.format(l, idx), img)
+            imsave('LRW-label{0}-weight{1}.jpg'.format(l, idx), img)
 
 if __name__ == '__main__':
     epoch = int(sys.argv[2])
     dataset = sys.argv[1]
-    train = read_data(dataset)[0]
-    size = int(np.sqrt(train[0][0].shape[0]))
+    size = get_dataset_imgsize(dataset)
 
     try:
         label = int(sys.argv[3])
@@ -153,13 +156,10 @@ if __name__ == '__main__':
     print "Using dataset {0} with size {1}x{1}".format(dataset, size)
     nn = get_nn('logs/{0}.mat'.format(epoch), size)
 
-    save_LR_W(nn)
-    sys.exit()
+    W = nn.get_LR_W()
+    save_LR_W(W)
 
-
-    nn.finish()
     img = get_an_image(dataset, label)
-
     # run the network
     results = nn.run(img)
 
