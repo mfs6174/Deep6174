@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Fri Jun 06 15:16:01 2014 +0800
+# Date: Sun Jun 08 03:06:54 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
@@ -36,7 +36,7 @@ def read_data_fallback(dataset):
 def read_data(dataset):
     """ return (train, valid, test)"""
     print ' ... loading data from {0}'.format(dataset)
-    if dataset.endswith('.pkl.gz'):
+    if os.path.isfile(dataset):
         f = gzip.open(dataset, 'rb')
         train, valid, test = pickle.load(f)
         f.close()
@@ -47,7 +47,7 @@ def read_data(dataset):
     assert False, "Invalid Dataset Filename"
 
 def save_data_fallback(data, basename):
-    dirname = basename
+    dirname = basename + ".pkl.gz"
     try:
         os.mkdir(basename)
     except:
@@ -76,7 +76,8 @@ def save_data(data, basename):
         pickle.dump(data, fout, -1)
         fout.close()
     except:
-        print "Pickle failed !"
+        print "Pickle failed ! Split the data!"
+        os.remove(basename + '.pkl.gz')
         save_data_fallback(data, basename)
 
 if __name__ == '__main__':
