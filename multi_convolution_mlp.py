@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Sun Jun 08 03:03:00 2014 +0000
+# Date: Sun Jun 08 05:44:50 2014 +0000
 import os
 import sys
 import time
@@ -270,7 +270,8 @@ if __name__ == '__main__':
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((20, 5), 2)
-    nn.add_convpoollayer((20, 5), 2)
+    nn.add_convpoollayer((20, 5), 1)
+    nn.add_convpoollayer((20, 5), 1)
 
     #nn.add_hidden_layer(n_out=500, activation=T.tanh)
     nn.add_LR_layer()

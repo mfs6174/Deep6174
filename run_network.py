@@ -62,7 +62,7 @@ class NetworkRunner(object):
         last_layer.W.set_value(W.astype('float32'))
         last_layer.b.set_value(b.flatten().astype('float32'))
 
-    def _finish(self):
+    def finish(self):
         """ compile all the functions """
         self.funcs = []
         for (idx, layer) in enumerate(self.nn.layers):
@@ -129,7 +129,7 @@ def get_nn(filename, image_size):
     nn = build_nn_with_params(data, image_size)
     return nn
 
-def get_an_image(dataset, label=7):
+def get_an_image(dataset):
     """ get an image with label=number"""
     train_set, valid_set, test_set = read_data(dataset)
     for idx, img in enumerate(test_set[0]):
@@ -153,11 +153,13 @@ if __name__ == '__main__':
         label = int(sys.argv[3])
     except:
         label = 3
+
     print "Using dataset {0} with size {1}x{1}".format(dataset, size)
     nn = get_nn('logs/{0}.mat'.format(epoch), size)
 
-    W = nn.get_LR_W()
-    save_LR_W(W)
+    # save W matrix in LR layer
+    #W = nn.get_LR_W()
+    #save_LR_W(W)
 
     img = get_an_image(dataset, label)
     # run the network
