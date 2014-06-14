@@ -129,7 +129,7 @@ def get_nn(filename, image_size):
     nn = build_nn_with_params(data, image_size)
     return nn
 
-def get_an_image(dataset):
+def get_an_image(dataset, label):
     """ get an image with label=number"""
     train_set, valid_set, test_set = read_data(dataset)
     for idx, img in enumerate(test_set[0]):
