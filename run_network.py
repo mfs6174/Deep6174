@@ -138,9 +138,12 @@ def get_an_image(dataset, label):
         size = int(np.sqrt(img.shape[0]))
         return img.reshape(size, size)
 
-def save_LR_W(W):
+def save_LR_W_img(W, n_filter):
+    """ save W as images """
     for l in range(10):
-        imgs = W[:,l].reshape(20, 7, 7)
+        w = W[:,l]
+        size = int(np.sqrt(w.shape[0] / n_filter))
+        imgs = w.reshape(n_filter, size, size)
         for idx, img in enumerate(imgs):
             imsave('LRW-label{0}-weight{1}.jpg'.format(l, idx), img)
 
@@ -158,8 +161,10 @@ if __name__ == '__main__':
     nn = get_nn('logs/{0}.mat'.format(epoch), size)
 
     # save W matrix in LR layer
-    #W = nn.get_LR_W()
-    #save_LR_W(W)
+    W = nn.get_LR_W()
+    save_LR_W_img(W, 20)        # 20 is the number of filters in the last convpool layer
+    sio.savemat('W.mat', mdict={'W': W})
+    sys.exit()
 
     img = get_an_image(dataset, label)
     # run the network

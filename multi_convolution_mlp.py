@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Sat Jun 14 17:19:00 2014 +0000
+# Date: Mon Jul 21 02:21:21 2014 -0700
 import os
 import sys
 import time
@@ -169,7 +169,9 @@ class ConfigurableNN(object):
         for param_i, grad_i in zip(params, grads):
             updates.append((param_i, param_i - learning_rate * grad_i))
 
-        train_model = theano.function([index], cost, updates=updates,
+        train_model = theano.function([index],
+              cost,
+              updates=updates,
               givens={
                 self.x: train_set_x[index * self.batch_size: (index + 1) * self.batch_size],
                 self.y: train_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
