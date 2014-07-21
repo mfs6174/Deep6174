@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Mon Jul 21 00:35:46 2014 -0700
+# Date: Mon Jul 21 02:24:03 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
@@ -97,6 +97,15 @@ def get_dataset_imgsize(dataset):
     else:
         print "Not Square!"
         raise NotImplementedError
+
+def sample_dataset(imgs, labels, cnt):
+    """ sample `cnt' images from the dataset (imgs, labels)"""
+    assert cnt < len(imgs)
+    assert len(imgs) == len(labels)
+    idxs = random.sample(range(len(imgs)), cnt)
+    imgs = imgs[idxs]
+    labels = labels[idxs]
+    return (imgs, labels)
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:

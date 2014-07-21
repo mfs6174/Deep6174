@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Mon Jul 21 02:21:44 2014 -0700
+# Date: Mon Jul 21 02:26:33 2014 -0700
 import os
 import sys
 import time
@@ -16,7 +16,7 @@ import theano
 import theano.tensor as T
 
 from params_logger import ParamsLogger
-from logistic_sgd import LogisticRegression
+from logistic_sgd import LogisticRegression, load_data
 from dataio import read_data, save_data, get_dataset_imgsize
 from mlp import HiddenLayer
 from convolutional_mlp import LeNetConvPoolLayer
@@ -152,7 +152,7 @@ class ConfigurableNN(object):
         print self.layer_config
         assert type(self.layers[-1]) in [LogisticRegression, FixedLengthSoftmax]
 
-        datasets = read_data(dataset)
+        datasets = load_data(dataset)
 
         train_set_x, train_set_y = datasets[0]
         valid_set_x, valid_set_y = datasets[1]
@@ -289,14 +289,8 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-<<<<<<< HEAD
-
-    size = get_dataset_imgsize(dataset)
-    print "Input img size is {0}x{0}".format(size)
-=======
     train_set = read_data(dataset)[0]
     print "Input img size is {0}".format(train_set[0][0].shape)
->>>>>>> fixed length
 
     # config the nn
     nn = ConfigurableNN(500, train_set[0][0].shape, multi_output=True)
@@ -305,18 +299,9 @@ if __name__ == '__main__':
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((20, 5), 2)
-<<<<<<< HEAD
-    nn.add_convpoollayer((50, 5), 1)
-    nn.add_convpoollayer((20, 5), 1)
-
-    nn.add_hidden_layer(n_out=500, activation=T.tanh)
-    nn.add_LR_layer()
-    nn.work(dataset=dataset, n_epochs=60)
-=======
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     nn.add_nLR_layer(2)
     nn.work(dataset=dataset, n_epochs=100)
->>>>>>> fixed length
 
 # Usage: ./multi_convolution_mlp.py dataset.pkl.gz
