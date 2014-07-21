@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Mon Jul 21 02:15:03 2014 -0700
+# Date: Mon Jul 21 16:25:13 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.cm as cm
+import cPickle as pickle
 
 import json
 from json import encoder
@@ -34,29 +35,34 @@ class ParamsLogger(object):
             pass
 
     def save_params(self, epoch, layers, layer_config):
-        fname = os.path.join(self.logdir, "{0}.mat".format(epoch))
+        #fname = os.path.join(self.logdir, "{0}.mat".format(epoch))
+        fname = os.path.join(self.logdir, "param{0}.pkl.gz".format(epoch))
         res = {}
 
         layer_params = [x.params for x in layers]
         cnt = 0
         for layer, pair, config in zip(layers, layer_params, layer_config):
+            dic = {'type': name_dict[type(layer)] }
             cnt += 1
-            W = pair[0].get_value()
-            W = W.tolist()
-            b = pair[1].get_value().tolist()
-            dic = {'type': name_dict[type(layer)],
-                   'W': W,
-                   'b': b}
+
+            if type(layer) == FixedLengthSoftmax:
+                Ws = pair[::2]
+                bs = pair[1::2]
+                dic.update({'Ws': Ws, 'bs': bs})
+            else:
+                W = pair[0].get_value()
+                W = W.tolist()
+                b = pair[1].get_value().tolist()
+                dic.update({ 'W': W, 'b': b})
 
             # extra config info to save
             if type(layer) == LeNetConvPoolLayer:
                 dic['pool_size'] = config['pool_size']
             res['layer' + str(cnt)] = dic
 
-        sio.savemat(fname, res)
-        #with open(fname, 'w') as fout:
-            #json.dump(res, fout)
-
+        #sio.savemat(fname, res)
+        with gzip.open(fname, 'wb') as f:
+            pickle.dump(res, f, -1)
 
 def plot_filters(obj):
     for layer_params in obj:

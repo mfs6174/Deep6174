@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Mon Jul 21 02:26:33 2014 -0700
+# Date: Mon Jul 21 16:34:52 2014 -0700
 import os
 import sys
 import time
@@ -226,11 +226,11 @@ class ConfigurableNN(object):
         epoch = 0
         done_looping = False
 
-        #logger = ParamsLogger()
+        logger = ParamsLogger()
 
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
-            #logger.save_params(epoch, self.layers, self.layer_config)
+            logger.save_params(epoch, self.layers, self.layer_config)
             for minibatch_index in xrange(n_train_batches):
                 iter = (epoch - 1) * n_train_batches + minibatch_index
 
@@ -290,10 +290,21 @@ if __name__ == '__main__':
         sys.exit(0)
     print "Dataset: ", dataset
     train_set = read_data(dataset)[0]
-    print "Input img size is {0}".format(train_set[0][0].shape)
+    shape = train_set[0][0].shape
+    print "Input img size is {0}".format(shape)
+
+    if len(shape) == 1:
+        assert int(np.sqrt(shape[0])) == np.sqrt(shape[0])
+        s = int(np.sqrt(shape[0]))
+        img_size = (s, s)
+        multi_output = False
+    else:
+        img_size = shape
+        # if input is not square, then probably is multiple output.
+        multi_output = True
 
     # config the nn
-    nn = ConfigurableNN(500, train_set[0][0].shape, multi_output=True)
+    nn = ConfigurableNN(500, img_size, multi_output=multi_output)
 
     # a NN with two conv-pool layer
     # params are: (n_filters, filter_size), pooling_size

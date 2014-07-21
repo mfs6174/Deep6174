@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: fixed_length_softmax.py
-# Date: Mon Jul 21 00:56:34 2014 -0700
+# Date: Mon Jul 21 16:30:19 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -50,6 +50,13 @@ class FixedLengthSoftmax(object):
         y = y.dimshuffle(1, 0)
         return sum([self.LRs[k].errors(y[k]) for k in
                     range(self.num_out)]) / self.num_out
+
+    def set_params(self, Ws, bs):
+        assert self.num_out == len(Ws) and len(Ws) == len(bs)
+        for k in range(self.num_out):
+            self.params[2 * k].set_value(Ws[k].astype('float32'))
+            self.params[2 * k + 1].set_value(bs[k].flatten().astype('float32'))
+
 
 # The Following is modified from logistic_sgd.py
 
