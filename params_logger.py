@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Sat Jul 05 19:23:27 2014 +0800
+# Date: Mon Jul 21 02:15:03 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -17,10 +17,12 @@ import os
 from logistic_sgd import LogisticRegression
 from mlp import HiddenLayer
 from convolutional_mlp import LeNetConvPoolLayer
+from fixed_length_softmax import FixedLengthSoftmax
 
 name_dict = {LeNetConvPoolLayer: 'convpool',
              HiddenLayer: 'hidden',
-             LogisticRegression: 'lr'}
+             LogisticRegression: 'lr',
+             FixedLengthSoftmax: 'fl-sm'}
 
 class ParamsLogger(object):
 

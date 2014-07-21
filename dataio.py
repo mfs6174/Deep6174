@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Sun Jun 08 03:48:19 2014 +0000
+# Date: Mon Jul 21 00:35:46 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
 import cPickle as pickle
 import operator
 #from IPython.core.debugger import Tracer
+import sys
 from itertools import izip, count
 import glob
 import numpy as np
@@ -89,13 +90,24 @@ def save_data(data, basename):
 
 def get_dataset_imgsize(dataset):
     train = read_data(dataset)[0]
-    size = int(np.sqrt(train[0][0].shape[0]))
-    return size
+    shape = train[0][0].shape
+    if len(shape) == 1:
+        size = int(np.sqrt(shape[0]))
+        return size
+    else:
+        print "Not Square!"
+        raise NotImplementedError
 
 if __name__ == '__main__':
-    t, v, ts = read_data('./mnist.pkl.gz')
-    print "Saving..."
-    _save_data_fallback((t, v, ts), 'testdir')
+    if len(sys.argv) == 2:
+        dataset = sys.argv[1]
+    else:
+        dataset = './mnist.pkl.gz'
 
-    tt, vv, ttss = _read_data_fallback('testdir')
-    print tt[1] == t[1]
+    t, v, ts = read_data(dataset)
+    print len(t[0]), len(v[0]), len(ts[0])
+    #print "Saving..."
+    #_save_data_fallback((t, v, ts), 'testdir')
+
+    #tt, vv, ttss = _read_data_fallback('testdir')
+    #print tt[1] == t[1]

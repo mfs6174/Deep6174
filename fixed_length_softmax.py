@@ -1,95 +1,55 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: sequence_softmax.py
-# Date: Sun Jul 20 22:09:13 2014 -0700
+# File: fixed_length_softmax.py
+# Date: Mon Jul 21 00:56:34 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
-from itertools import chain
+import itertools
 import gzip
 import os
 import sys
 import time
 
 import numpy
-import numpy as np
 
 import theano
 import theano.tensor as T
-import theano.printing as PP
 
-class SequenceSoftmax(object):
-    def __init__(self, input, n_in, seq_max_len, n_out):
+from logistic_sgd import LogisticRegression
+
+class FixedLengthSoftmax(object):
+    """ Combination of multiple LogisticRegression output layer"""
+
+    def __init__(self, input, n_in, n_out, num_out):
+        """ n_in: number of input units
+            n_out: number of output units for each LR output layer
+            num_out: number of output layer
         """
-        :type input: theano.tensor.TensorType
-        :param input: symbolic variable that describes the input of the
-                      architecture (one minibatch)
 
-        possible length is 1 ... seq_max_len
+        print "FixedLengthSoftmax with n_in={0}, n_out={1}, num_out={2}".format(n_in, n_out, num_out)
+        self.num_out = num_out
+        self.LRs = [LogisticRegression(input, n_in, n_out) for _ in range(self.num_out)]
 
-        it is actually a layer with (seq_max_len + seq_max_len * n_out) output.
-        """
-        self.n_softmax = seq_max_len + 1
-
-        def gen_W(out, k):
-            return theano.shared(value=numpy.zeros((n_in, out),
-                                             dtype=theano.config.floatX),
-                            name='W' + str(k), borrow=True)
-        self.Ws = [gen_W(seq_max_len, 0)]
-        self.Ws.extend([gen_W(n_out, _ + 1) for _ in range(seq_max_len)])
-
-        def gen_b(out, k):
-            return theano.shared(value=numpy.zeros((out,),
-                                                   dtype=theano.config.floatX),
-                                 name='b' + str(k), borrow=True)
-
-        self.bs = [gen_b(seq_max_len, 0)]
-        self.bs.extend([gen_b(n_out, _ + 1) for _ in range(seq_max_len)])
-
-        self.p_y_given_xs = [T.nnet.softmax(T.dot(input, self.Ws[k]) +
-                                            self.bs[k]) for k in
-                             xrange(self.n_softmax)]
-        self.pred = [T.argmax(self.p_y_given_xs[k], axis=1) for k in
-                     xrange(self.n_softmax)]
-
-        self.params = self.Ws
-        self.params.extend(self.bs)
+        self.params = list(itertools.chain.from_iterable([lr.params for lr in
+                                                          self.LRs]))
 
     def negative_log_likelihood(self, y):
-        """ y: a batch_size x n_softmax 2d matrix. each row: (len, l1, l2, l3, ...)
+        """ y: a matrix, each row is the correct labels of each example
         """
-        M = [T.log(self.p_y_given_xs[k])[T.arange(y.shape[0]), y[:,k]] for k in range(self.n_softmax)]
-        M = T.stacklists(M)
-        #return -T.sum(T.sum(M)) / y.shape[0]
+        y = y.dimshuffle(1, 0)
 
-        # switch line and row
-        M = M.dimshuffle(1, 0)
+        ret = sum([self.LRs[k].negative_log_likelihood(y[k]) for k in
+                   range(self.num_out)]) / self.num_out
 
-        #M = [T.sum(M[:t[0] + 1]) for t in M]
-        #return -T.sum(M) / y.shape[0]
-
-        #from operator import add
-        def f(probs, label):
-            # +1 is real length, + 1 include first element (length)
-            return T.sum(probs[:label[0] + 1 + 1])
-        sr, su = theano.map(fn=f, sequences=[M, y])
-
-        return -T.sum(sr) / y.shape[0]
+        return ret
 
     def errors(self, y):
-        print "InError y.shape", y.shape
-
-        if not y.dtype.startswith('int'):
-            raise NotImplementedError()
-
-        #from operator import mul
-        #corr = reduce(mul, [PP.Print("neq for each")(T.neq(self.pred, y[:,k])) for k in
-                            #range(self.n_softmax)])
-        #return T.mean(corr)
-
-        return sum([T.mean(T.neq(self.pred[k], y[:,k])) for k in
-                        range(self.n_softmax)]) / self.n_softmax
-
+        """ y: a matrix, each row is the correct labels of each example
+        """
+        y = y.dimshuffle(1, 0)
+        return sum([self.LRs[k].errors(y[k]) for k in
+                    range(self.num_out)]) / self.num_out
 
 # The Following is modified from logistic_sgd.py
 
@@ -107,8 +67,7 @@ def load_data(dataset):
         variable) would lead to a large decrease in performance.
         """
         data_x, data_y = data_xy
-# 1 + 1 is the length of sequence
-        data_y = [[1, t, t] for t in data_y]
+        data_x = [k.flatten() for k in data_x]
         shared_x = theano.shared(numpy.asarray(data_x,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
@@ -177,7 +136,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
 
     # construct the logistic regression class
     # Each MNIST image has size 28*28
-    classifier = SequenceSoftmax(input=x, n_in=28 * 28, seq_max_len = 2, n_out=10)
+    classifier = FixedLengthSoftmax(input=x, n_in=56 * 28, n_out=10, num_out=2)
 
     # the cost we minimize during training is the negative log likelihood of
     # the model in symbolic format
@@ -278,6 +237,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                          test_score * 100.))
 
             if patience <= iter:
+                print "Patience Done: {0}, {1}".format(patience, iter)
                 done_looping = True
                 break
 
@@ -292,4 +252,4 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                           ' ran for %.1fs' % ((end_time - start_time)))
 
 if __name__ == '__main__':
-    sgd_optimization_mnist()
+    sgd_optimization_mnist(dataset='digits2.pkl.gz')
