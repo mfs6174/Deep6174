@@ -4,7 +4,7 @@
 import numpy as np
 import scipy
 import scipy.io as sio
-from scipy.misc import imsave
+from scipy.misc import imsave, toimage
 import theano.tensor as T
 import theano
 
@@ -93,7 +93,7 @@ class NetworkRunner(object):
         results = []
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
-                results.append(self.funcs[idx]([[img]])[0])
+                results.append(self.funcs[idx]([[img]]))
             else:
                 results.append(self.funcs[idx]([[img]]))
         return results
@@ -157,10 +157,17 @@ def get_an_image(dataset, label):
     """ get an image with label=number"""
     train_set, valid_set, test_set = read_data(dataset)
     for idx, img in enumerate(test_set[0]):
-        if int(test_set[1][idx]) != label:
+        ys = test_set[1][idx]
+        if hasattr(ys, '__iter__'):
+            ys = ys[0]
+        if int(ys) != label:
             continue
-        size = int(np.sqrt(img.shape[0]))
-        return img.reshape(size, size)
+        size = img.shape
+        if len(size) == 1:
+            size = int(np.sqrt(size[0]))
+            return img.reshape(size, size)
+        else:
+            return img
 
 def save_LR_W_img(W, n_filter):
     """ save W as images """
@@ -192,7 +199,8 @@ if __name__ == '__main__':
     img = get_an_image(dataset, label)
     # run the network
     results = nn.run(img)
-    print results
+    print results[-1]
+    toimage(img).show()
 
     # save all the representations
     #sio.savemat('logs/representations.mat', mdict={'results': results})
@@ -203,8 +211,13 @@ if __name__ == '__main__':
         #for idx, pic in enumerate(layer):
             #imsave('convolved_layer{0}.{1}.jpg'.format(nl, idx), pic)
 
-    # the predicted results
+    # the predicted results for single digit output
     #label = max(enumerate(results[-1]), key=operator.itemgetter(1))
     #print "Predicted Label(prob): ", label
+
+    # predicted results for multiple digit output
+    for r in results[-1]:
+        label = max(enumerate(r[0]), key=operator.itemgetter(1))
+        print label
 
 # Usage ./run_network.py dataset.pkl.gz 60 [label]
