@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Mon Jul 21 02:24:03 2014 -0700
+# Date: Mon Jul 21 16:52:25 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
@@ -93,10 +93,9 @@ def get_dataset_imgsize(dataset):
     shape = train[0][0].shape
     if len(shape) == 1:
         size = int(np.sqrt(shape[0]))
-        return size
+        return (size, size)
     else:
-        print "Not Square!"
-        raise NotImplementedError
+        return shape
 
 def sample_dataset(imgs, labels, cnt):
     """ sample `cnt' images from the dataset (imgs, labels)"""

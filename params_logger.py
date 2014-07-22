@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Mon Jul 21 16:25:13 2014 -0700
+# Date: Mon Jul 21 17:00:59 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -51,8 +51,7 @@ class ParamsLogger(object):
                 dic.update({'Ws': Ws, 'bs': bs})
             else:
                 W = pair[0].get_value()
-                W = W.tolist()
-                b = pair[1].get_value().tolist()
+                b = pair[1].get_value()
                 dic.update({ 'W': W, 'b': b})
 
             # extra config info to save

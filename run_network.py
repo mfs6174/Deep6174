@@ -23,7 +23,7 @@ class NetworkRunner(object):
 
     def __init__(self, input_size):
         self.input_size = input_size
-        self.nn = ConfigurableNN(1, (input_size, input_size))
+        self.nn = ConfigurableNN(1, input_size)
         self.n_conv_layer = 0
 
     def add_convpool_layer(self, W, b, pool_size):
@@ -88,7 +88,7 @@ class NetworkRunner(object):
             self.funcs.append(f)
 
     def run(self, img):
-        assert img.shape == (self.input_size, self.input_size)
+        assert img.shape == self.input_size
 
         results = []
         for (idx, layer) in enumerate(self.nn.layers):
@@ -108,7 +108,7 @@ class NetworkRunner(object):
 
 def build_nn_with_params(params, input_size):
     """ params: the object load from param{epoch}.mat file
-        input_size: an integer. e.g. 28
+        input_size: a tuple
     """
     runner = NetworkRunner(input_size)
     for nlayer in count(start=1, step=1):
@@ -140,7 +140,7 @@ def get_nn(filename, image_size):
        caller should gurantee that
        img size is the same size as those used to build the network
     """
-    if filename.endswith('.mat')
+    if filename.endswith('.mat'):
         data = sio.loadmat(filename)
     else:
         with gzip.open(filename, 'r') as f:
@@ -177,8 +177,8 @@ if __name__ == '__main__':
     except:
         label = 3
 
-    print "Using dataset {0} with size {1}x{1}".format(dataset, size)
-    nn = get_nn('logs/{0}.pkl.gz'.format(epoch), size)
+    print "Using dataset {0} with size {1}".format(dataset, size)
+    nn = get_nn('logs/param{0}.pkl.gz'.format(epoch), size)
 
     # save W matrix in LR layer
     #W = nn.get_LR_W()
@@ -188,18 +188,19 @@ if __name__ == '__main__':
     img = get_an_image(dataset, label)
     # run the network
     results = nn.run(img)
+    print results
 
     # save all the representations
     #sio.savemat('logs/representations.mat', mdict={'results': results})
 
     # save convolved images
-    for nl in xrange(nn.n_conv_layer):
-        layer = results[nl][0]
-        for idx, pic in enumerate(layer):
-            imsave('convolved_layer{0}.{1}.jpg'.format(nl, idx), pic)
+    #for nl in xrange(nn.n_conv_layer):
+        #layer = results[nl][0]
+        #for idx, pic in enumerate(layer):
+            #imsave('convolved_layer{0}.{1}.jpg'.format(nl, idx), pic)
 
     # the predicted results
-    label = max(enumerate(results[-1]), key=operator.itemgetter(1))
-    print "Predicted Label(prob): ", label
+    #label = max(enumerate(results[-1]), key=operator.itemgetter(1))
+    #print "Predicted Label(prob): ", label
 
 # Usage ./run_network.py dataset.pkl.gz 60 [label]

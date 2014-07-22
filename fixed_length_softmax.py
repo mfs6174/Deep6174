@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: fixed_length_softmax.py
-# Date: Mon Jul 21 16:30:19 2014 -0700
+# Date: Mon Jul 21 16:56:10 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -33,6 +33,8 @@ class FixedLengthSoftmax(object):
 
         self.params = list(itertools.chain.from_iterable([lr.params for lr in
                                                           self.LRs]))
+
+        self.p_y_given_x = [k.p_y_given_x for k in self.LRs]
 
     def negative_log_likelihood(self, y):
         """ y: a matrix, each row is the correct labels of each example
