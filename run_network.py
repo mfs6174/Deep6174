@@ -1,23 +1,23 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
+
 import numpy as np
 import scipy
 import scipy.io as sio
-import scipy.signal as signal
 from scipy.misc import imsave
 import theano.tensor as T
 import theano
+
 import sys, gzip
 import cPickle as pickle
-
-
-from dataio import read_data, save_data, get_dataset_imgsize
+from IPython.core.debugger import Tracer
 import operator
+import itertools
 from itertools import count
+
 from convolutional_mlp import LeNetConvPoolLayer
 from multi_convolution_mlp import ConfigurableNN
-
-from IPython.core.debugger import Tracer
+from dataio import read_data, save_data, get_dataset_imgsize
 
 class NetworkRunner(object):
 
@@ -38,7 +38,7 @@ class NetworkRunner(object):
         assert ninput == shape[1]
         filter_size = shape[2]
         assert shape[2] == shape[3]
-        assert b.shape[1] == nfilter
+        assert b.shape[0] == nfilter
 
         self.nn.add_convpoollayer((nfilter, filter_size), pool_size)
         last_layer = self.nn.layers[-1]
@@ -47,7 +47,7 @@ class NetworkRunner(object):
 
     def add_hidden_layer(self, W, b):
         n_out = W.shape[1]
-        assert b.shape[1] == W.shape[1]
+        assert b.shape[0] == W.shape[1]
 
         self.nn.add_hidden_layer(n_out, activation=T.tanh)
         last_layer = self.nn.layers[-1]
@@ -57,7 +57,7 @@ class NetworkRunner(object):
     def add_LR_layer(self, W, b):
         self.LR_W = W
         assert W.shape[1] == 10
-        assert b.shape[1] == 10
+        assert b.shape[0] == 10
 
         self.nn.add_LR_layer()
         last_layer = self.nn.layers[-1]
@@ -69,7 +69,7 @@ class NetworkRunner(object):
         num_out = len(Ws)
         for W, b in itertools.izip(Ws, bs):
             assert W.shape[1] == 10
-            assert b.shape[1] == 10
+            assert b.shape[0] == 10
 
         self.nn.add_nLR_layer(num_out)
         last_layer = self.nn.layers[-1]
@@ -118,6 +118,10 @@ def build_nn_with_params(params, input_size):
         layerdata = params[layername]
         layertype = layerdata['type']
         print "Layer ", nlayer, ' is ', layertype
+
+        for k, v in layerdata.iteritems():
+            if type(v) == list:
+                layerdata[k] = np.asarray(v)
 
         if layertype == 'convpool':
             runner.add_convpool_layer(layerdata['W'],

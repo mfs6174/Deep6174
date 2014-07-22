@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Mon Jul 21 17:00:59 2014 -0700
+# Date: Mon Jul 21 17:27:30 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.cm as cm
 import cPickle as pickle
+import gzip
 
 import json
 from json import encoder
@@ -46,8 +47,8 @@ class ParamsLogger(object):
             cnt += 1
 
             if type(layer) == FixedLengthSoftmax:
-                Ws = pair[::2]
-                bs = pair[1::2]
+                Ws = [k.get_value() for k in pair[::2]]
+                bs = [k.get_value() for k in pair[1::2]]
                 dic.update({'Ws': Ws, 'bs': bs})
             else:
                 W = pair[0].get_value()
