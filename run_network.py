@@ -7,6 +7,7 @@ import scipy.io as sio
 from scipy.misc import imsave, toimage
 import theano.tensor as T
 import theano
+from utils import tile_raster_images
 
 import sys, gzip
 import cPickle as pickle
@@ -199,15 +200,20 @@ if __name__ == '__main__':
     img = get_an_image(dataset, label)
     # run the network
     results = nn.run(img)
-    print results[-1]
-    toimage(img).show()
 
     # save all the representations
     #sio.savemat('logs/representations.mat', mdict={'results': results})
 
     # save convolved images
-    #for nl in xrange(nn.n_conv_layer):
-        #layer = results[nl][0]
+    for nl in xrange(nn.n_conv_layer):
+        layer = results[nl][0]
+        img_shape = layer[0].shape
+        tile_len = int(np.sqrt(len(layer)))
+        tile_shape = (tile_len, tile_len)
+        layer = layer.reshape((layer.shape[0], -1))
+        raster = tile_raster_images(layer, img_shape, tile_shape,
+                                    tile_spacing=(3, 3))
+        imsave('{0}.jpg'.format(nl), raster)
         #for idx, pic in enumerate(layer):
             #imsave('convolved_layer{0}.{1}.jpg'.format(nl, idx), pic)
 
