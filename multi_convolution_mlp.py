@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Mon Jul 21 16:34:52 2014 -0700
+# Date: Tue Jul 22 09:27:50 2014 -0700
 import os
 import sys
 import time
@@ -10,6 +10,7 @@ import cPickle
 import gzip
 
 import numpy
+import numpy as np
 from numpy import random
 
 import theano

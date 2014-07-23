@@ -4,7 +4,7 @@
 import numpy as np
 import scipy
 import scipy.io as sio
-from scipy.misc import imsave, toimage
+from scipy.misc import imsave, toimage, imread
 import theano.tensor as T
 import theano
 from utils import tile_raster_images
@@ -197,7 +197,8 @@ if __name__ == '__main__':
     #save_LR_W_img(W, 20)        # 20 is the number of filters in the last convpool layer
     #sio.savemat('W.mat', mdict={'W': W})
 
-    img = get_an_image(dataset, label)
+    #img = get_an_image(dataset, label)
+    img = imread('3.png')
     # run the network
     results = nn.run(img)
 
@@ -208,8 +209,8 @@ if __name__ == '__main__':
     for nl in xrange(nn.n_conv_layer):
         layer = results[nl][0]
         img_shape = layer[0].shape
-        tile_len = int(np.sqrt(len(layer)))
-        tile_shape = (tile_len, tile_len)
+        tile_len = int(np.ceil(np.sqrt(len(layer))))
+        tile_shape = (tile_len, int(np.ceil(len(layer) * 1.0 / tile_len)))
         layer = layer.reshape((layer.shape[0], -1))
         raster = tile_raster_images(layer, img_shape, tile_shape,
                                     tile_spacing=(3, 3))
@@ -217,13 +218,14 @@ if __name__ == '__main__':
         #for idx, pic in enumerate(layer):
             #imsave('convolved_layer{0}.{1}.jpg'.format(nl, idx), pic)
 
-    # the predicted results for single digit output
-    #label = max(enumerate(results[-1]), key=operator.itemgetter(1))
-    #print "Predicted Label(prob): ", label
-
-    # predicted results for multiple digit output
-    for r in results[-1]:
-        label = max(enumerate(r[0]), key=operator.itemgetter(1))
-        print label
+    if img.shape[0] == img.shape[1]:
+        # the predicted results for single digit output
+        label = max(enumerate(results[-1][0]), key=operator.itemgetter(1))
+        print "Predicted Label(prob): ", label
+    else:
+        # predicted results for multiple digit output
+        for r in results[-1]:
+            label = max(enumerate(r[0]), key=operator.itemgetter(1))
+            print label
 
 # Usage ./run_network.py dataset.pkl.gz 60 [label]
