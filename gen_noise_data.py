@@ -1,12 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_noise_data.py
-# Date: Wed Jun 04 20:28:14 2014 +0800
+# Date: Tue Jul 22 17:27:12 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
 from numpy import random
-from dataio import save_data, save_data
+from dataio import read_data, save_data
 import sys
 
 # prepare params
@@ -15,7 +15,7 @@ NOISE_MAX = float(sys.argv[2])
 output_basename = input[:-6] + "noise{0}".format(NOISE_MAX)
 
 # Load the dataset
-train_set, valid_set, test_set = save_data(input)
+train_set, valid_set, test_set = read_data(input)
 print len(train_set[0]), len(valid_set[0]), len(test_set[0])
 
 

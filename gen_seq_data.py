@@ -1,16 +1,18 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Tue Jul 22 17:05:53 2014 -0700
+# Date: Thu Jul 24 08:54:45 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
+from scipy.misc import imrotate
 import numpy as np
 import dataio
 from IPython.core.debugger import Tracer
 import cPickle as pickle
 import gzip
 import sys
+from itertools import izip
 
 def random_slice(k, N):
     """ randomly return k integers which sum to N"""
@@ -31,6 +33,11 @@ def random_slice(k, N):
     seeds = map(int, seeds)
     assert sum(seeds) == N and len(seeds) == k, "{0}, {1}".format(seeds, sum(seeds))
     return seeds
+
+def random_rotate(imgs):
+    angles = np.random.randint(-40, 41, (len(imgs), ))
+    imgs = [imrotate(img, ang) for img, ang in izip(imgs, angles)]
+    return imgs
 
 class SeqDataGenerator(object):
 
@@ -88,6 +95,8 @@ class SeqDataGenerator(object):
         assert self.img_size[0] == imgs[0].shape[0]
         height = self.img_size[0]
 
+        imgs = random_rotate(imgs)
+
         n_chunks = len(imgs) + 1
         space_left = self.img_size[1] - len(imgs) * imgs[0].shape[1]
         assert space_left > 0
@@ -120,7 +129,7 @@ if __name__ == '__main__':
 
     generator = SeqDataGenerator({seq_len: 1.0}, dataset, max_width = 100)
 
-    generator.write_dataset(50000, 10000, 10000, fout)
+    generator.write_dataset(80000, 15000, 15000, fout)
 
 
 

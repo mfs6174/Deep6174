@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: view_data.py
-# Date: Tue Jul 22 17:17:44 2014 -0700
+# Date: Thu Jul 24 08:45:48 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
@@ -33,4 +33,3 @@ for k in train_set[0]:
     # show images in blocking way
     plot.imshow(k)
     plot.show()
-    print 'here'
