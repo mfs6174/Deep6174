@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Thu Jul 24 08:54:45 2014 -0700
+# Date: Fri Jul 25 16:05:02 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -25,17 +25,18 @@ def random_slice(k, N):
         seeds[-1] += N - s
     elif s > N:
         for idx, t in enumerate(seeds):
-            if t > N - s:
+            if t > s - N:
                 seeds[idx] -= s - N
                 break
         else:
             return random_slice(k, N)
     seeds = map(int, seeds)
     assert sum(seeds) == N and len(seeds) == k, "{0}, {1}".format(seeds, sum(seeds))
+    assert all([lambda x: x >= 0, seeds])
     return seeds
 
 def random_rotate(imgs):
-    angles = np.random.randint(-40, 41, (len(imgs), ))
+    angles = np.random.randint(-10, 11, (len(imgs), ))
     imgs = [imrotate(img, ang) for img, ang in izip(imgs, angles)]
     return imgs
 
@@ -95,7 +96,7 @@ class SeqDataGenerator(object):
         assert self.img_size[0] == imgs[0].shape[0]
         height = self.img_size[0]
 
-        imgs = random_rotate(imgs)
+        #imgs = random_rotate(imgs)
 
         n_chunks = len(imgs) + 1
         space_left = self.img_size[1] - len(imgs) * imgs[0].shape[1]
@@ -109,11 +110,11 @@ class SeqDataGenerator(object):
         return ret
 
     def write_dataset(self, n_train, n_valid, n_test, fname):
-        print "Writing to {0}...".format(fname)
         train = self.gen_n_samples(n_train, self.dataset[0])
         valid = self.gen_n_samples(n_valid, self.dataset[1])
         test = self.gen_n_samples(n_test, self.dataset[2])
         dataset = (train, valid, test)
+        print "Writing to {0}...".format(fname)
 
         fout = gzip.open(fname, 'wb')
         pickle.dump(dataset, fout, -1)

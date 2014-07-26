@@ -14,7 +14,8 @@ import cPickle as pickle
 from IPython.core.debugger import Tracer
 import operator
 import itertools
-from itertools import count
+from itertools import count, izip
+import time
 
 from convolutional_mlp import LeNetConvPoolLayer
 from multi_convolution_mlp import ConfigurableNN
@@ -93,11 +94,12 @@ class NetworkRunner(object):
 
         results = []
         for (idx, layer) in enumerate(self.nn.layers):
-            if idx == len(self.nn.layers) - 1:
-                results.append(self.funcs[idx]([[img]]))
-            else:
-                results.append(self.funcs[idx]([[img]]))
+            results.append(self.funcs[idx]([[img]]))
         return results
+
+    def run_only_last(self, img):
+        assert img.shape == self.input_size
+        return self.funcs[-1]([[img]])
 
     def predict(self, img):
         res = self.funcs[-1]([[img]])[0]
@@ -179,33 +181,20 @@ def save_LR_W_img(W, n_filter):
         for idx, img in enumerate(imgs):
             imsave('LRW-label{0}-weight{1}.jpg'.format(l, idx), img)
 
-if __name__ == '__main__':
-    epoch = int(sys.argv[2])
-    dataset = sys.argv[1]
-    size = get_dataset_imgsize(dataset)
+def get_label_from_result(img, results):
+    if img.shape[0] == img.shape[1]:
+        # the predicted results for single digit output
+        label = max(enumerate(results[-1][0]), key=operator.itemgetter(1))
+        return label[0]
+    else:
+        # predicted results for multiple digit output
+        ret = []
+        for r in results[-1]:
+            label = max(enumerate(r[0]), key=operator.itemgetter(1))
+            ret.append(label[0])
+        return ret
 
-    try:
-        label = int(sys.argv[3])
-    except:
-        label = 3
-
-    print "Using dataset {0} with size {1}".format(dataset, size)
-    nn = get_nn('logs/param{0}.pkl.gz'.format(epoch), size)
-
-    # save W matrix in LR layer
-    #W = nn.get_LR_W()
-    #save_LR_W_img(W, 20)        # 20 is the number of filters in the last convpool layer
-    #sio.savemat('W.mat', mdict={'W': W})
-
-    #img = get_an_image(dataset, label)
-    img = imread('3.png')
-    # run the network
-    results = nn.run(img)
-
-    # save all the representations
-    #sio.savemat('logs/representations.mat', mdict={'results': results})
-
-    # save convolved images
+def save_convolved_images(nn, results):
     for nl in xrange(nn.n_conv_layer):
         layer = results[nl][0]
         img_shape = layer[0].shape
@@ -215,17 +204,47 @@ if __name__ == '__main__':
         raster = tile_raster_images(layer, img_shape, tile_shape,
                                     tile_spacing=(3, 3))
         imsave('{0}.jpg'.format(nl), raster)
-        #for idx, pic in enumerate(layer):
-            #imsave('convolved_layer{0}.{1}.jpg'.format(nl, idx), pic)
 
-    if img.shape[0] == img.shape[1]:
-        # the predicted results for single digit output
-        label = max(enumerate(results[-1][0]), key=operator.itemgetter(1))
-        print "Predicted Label(prob): ", label
-    else:
-        # predicted results for multiple digit output
-        for r in results[-1]:
-            label = max(enumerate(r[0]), key=operator.itemgetter(1))
-            print label
+if __name__ == '__main__':
+    params_file = sys.argv[2]
+    dataset = sys.argv[1]   # ignore this param
+    #size = get_dataset_imgsize(dataset)
+    size = (28, 100)
 
-# Usage ./run_network.py dataset.pkl.gz 60 [label]
+    print "Size={0}".format(size)
+    nn = get_nn(params_file, size)
+
+    # save W matrix in LR layer
+    #W = nn.get_LR_W()
+    #save_LR_W_img(W, 20)        # 20 is the number of filters in the last convpool layer
+    #sio.savemat('W.mat', mdict={'W': W})
+
+    #img = get_an_image(dataset, label)
+
+    train, valid, test = read_data(sys.argv[3])
+    corr, tot = 0, 0
+    for img, label in izip(test[0], test[1]):
+        # run the network
+        results = [nn.run_only_last(img)]
+        pred = get_label_from_result(img, results)
+        #print "Real Label: {0}".format(label)
+
+        #if hasattr(label, '__iter__'):
+            #tot += len(pred)
+            #corr += len([k for k, _ in izip(pred, label) if k == _])
+        #else:
+            #tot += 1
+            #corr += label == pred
+        #tot += 1
+        #pred = ''.join(map(str, pred))
+        #ans = ''.join(map(str, label))
+        #if pred in [ans[0] + ans[2]]:
+            #corr += 1
+        tot += 1
+        if label[0] in pred:
+            corr += 1
+        if tot % 1000 == 0:
+            print "Rate: {0}".format(corr * 1.0 / tot)
+
+
+# Usage ./run_network.py dataset.pkl.gz param_file.pkl.gz [label]
