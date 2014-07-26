@@ -7,7 +7,7 @@ import scipy.io as sio
 from scipy.misc import imsave, toimage, imread
 import theano.tensor as T
 import theano
-from utils import tile_raster_images
+from utils import tile_raster_images, get_image_matrix
 
 import sys, gzip
 import cPickle as pickle
@@ -109,10 +109,11 @@ class NetworkRunner(object):
     def get_LR_W(self):
         return self.LR_W
 
-def build_nn_with_params(params, input_size):
+def build_nn_with_params(params):
     """ params: the object load from param{epoch}.mat file
-        input_size: a tuple
     """
+    input_size = params['input_shape']
+    print "Size={0}".format(input_size)
     runner = NetworkRunner(input_size)
     for nlayer in count(start=1, step=1):
         layername = 'layer' + str(nlayer)
@@ -142,7 +143,7 @@ def build_nn_with_params(params, input_size):
     runner.finish()
     return runner
 
-def get_nn(filename, image_size):
+def get_nn(filename):
     """ img: a (size x size) matrix
        caller should gurantee that
        img size is the same size as those used to build the network
@@ -153,7 +154,7 @@ def get_nn(filename, image_size):
         with gzip.open(filename, 'r') as f:
             data = pickle.load(f)
 
-    nn = build_nn_with_params(data, image_size)
+    nn = build_nn_with_params(data)
     return nn
 
 def get_an_image(dataset, label):
@@ -165,12 +166,7 @@ def get_an_image(dataset, label):
             ys = ys[0]
         if int(ys) != label:
             continue
-        size = img.shape
-        if len(size) == 1:
-            size = int(np.sqrt(size[0]))
-            return img.reshape(size, size)
-        else:
-            return img
+        img = get_image_matrix(img)
 
 def save_LR_W_img(W, n_filter):
     """ save W as images """
@@ -206,13 +202,9 @@ def save_convolved_images(nn, results):
         imsave('{0}.jpg'.format(nl), raster)
 
 if __name__ == '__main__':
-    params_file = sys.argv[2]
-    dataset = sys.argv[1]   # ignore this param
+    params_file = sys.argv[1]
     #size = get_dataset_imgsize(dataset)
-    size = (28, 100)
-
-    print "Size={0}".format(size)
-    nn = get_nn(params_file, size)
+    nn = get_nn(params_file)
 
     # save W matrix in LR layer
     #W = nn.get_LR_W()
@@ -221,28 +213,31 @@ if __name__ == '__main__':
 
     #img = get_an_image(dataset, label)
 
-    train, valid, test = read_data(sys.argv[3])
+    train, valid, test = read_data(sys.argv[2])
     corr, tot = 0, 0
     for img, label in izip(test[0], test[1]):
+        img = get_image_matrix(img)
         # run the network
         results = [nn.run_only_last(img)]
         pred = get_label_from_result(img, results)
         #print "Real Label: {0}".format(label)
 
-        #if hasattr(label, '__iter__'):
-            #tot += len(pred)
-            #corr += len([k for k, _ in izip(pred, label) if k == _])
-        #else:
-            #tot += 1
-            #corr += label == pred
+        if hasattr(label, '__iter__'):
+            tot += len(pred)
+            corr += len([k for k, _ in izip(pred, label) if k == _])
+        else:
+            tot += 1
+            corr += label == pred
+
         #tot += 1
         #pred = ''.join(map(str, pred))
         #ans = ''.join(map(str, label))
         #if pred in [ans[0] + ans[2]]:
             #corr += 1
-        tot += 1
-        if label[0] in pred:
-            corr += 1
+
+        #tot += 1
+        #if label[0] in pred:
+            #corr += 1
         if tot % 1000 == 0:
             print "Rate: {0}".format(corr * 1.0 / tot)
 

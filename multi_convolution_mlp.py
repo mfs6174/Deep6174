@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Tue Jul 22 09:27:50 2014 -0700
+# Date: Fri Jul 25 22:58:29 2014 -0700
 import os
 import sys
 import time
@@ -227,7 +227,7 @@ class ConfigurableNN(object):
         epoch = 0
         done_looping = False
 
-        logger = ParamsLogger()
+        logger = ParamsLogger(self.input_shape)
 
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
@@ -313,7 +313,10 @@ if __name__ == '__main__':
     nn.add_convpoollayer((20, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
-    nn.add_nLR_layer(2)
+    if multi_output:
+        nn.add_nLR_layer(2)
+    else:
+        nn.add_LR_layer()
     nn.work(dataset=dataset, n_epochs=100)
 
 # Usage: ./multi_convolution_mlp.py dataset.pkl.gz

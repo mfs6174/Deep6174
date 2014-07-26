@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Mon Jul 21 17:27:30 2014 -0700
+# Date: Fri Jul 25 22:59:29 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -28,7 +28,8 @@ name_dict = {LeNetConvPoolLayer: 'convpool',
 
 class ParamsLogger(object):
 
-    def __init__(self, logdir='logs'):
+    def __init__(self, input_shape, logdir='logs'):
+        self.input_shape = input_shape
         self.logdir = logdir
         try:
             os.mkdir(self.logdir)
@@ -59,6 +60,7 @@ class ParamsLogger(object):
             if type(layer) == LeNetConvPoolLayer:
                 dic['pool_size'] = config['pool_size']
             res['layer' + str(cnt)] = dic
+        res['input_shape'] = self.input_shape
 
         #sio.savemat(fname, res)
         with gzip.open(fname, 'wb') as f:

@@ -133,3 +133,12 @@ def tile_raster_images(X, img_shape, tile_shape, tile_spacing=(0, 0),
                         tile_col * (W + Ws): tile_col * (W + Ws) + W
                         ] = this_img * c
         return out_array
+
+
+def get_image_matrix(img):
+    shape = img.shape
+    if len(shape) == 2:
+        return img
+    l = int(numpy.sqrt(shape[0]))
+    assert l * l == int(shape[0])
+    return img.reshape((l, l))
