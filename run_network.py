@@ -201,17 +201,27 @@ def save_convolved_images(nn, results):
                                     tile_spacing=(3, 3))
         imsave('{0}.jpg'.format(nl), raster)
 
+def label_match(l1, l2):
+    """ whether two sequences of labels match"""
+    l1, l2 = list(l1), list(l2)
+    if len(l1) > len(l2):
+        l1, l2 = l2, l1
+    now = -1
+    for k in l1:
+        try:
+            now = l2.index(k, now + 1)
+        except:
+            return False
+    return True
+
 if __name__ == '__main__':
     params_file = sys.argv[1]
-    #size = get_dataset_imgsize(dataset)
     nn = get_nn(params_file)
 
     # save W matrix in LR layer
     #W = nn.get_LR_W()
     #save_LR_W_img(W, 20)        # 20 is the number of filters in the last convpool layer
     #sio.savemat('W.mat', mdict={'W': W})
-
-    #img = get_an_image(dataset, label)
 
     train, valid, test = read_data(sys.argv[2])
     corr, tot = 0, 0
@@ -220,24 +230,18 @@ if __name__ == '__main__':
         # run the network
         results = [nn.run_only_last(img)]
         pred = get_label_from_result(img, results)
-        #print "Real Label: {0}".format(label)
 
         if hasattr(label, '__iter__'):
-            tot += len(pred)
-            corr += len([k for k, _ in izip(pred, label) if k == _])
+            if len(label) == len(pred):
+                tot += len(label)
+                corr += len([k for k, _ in izip(pred, label) if k == _])
+            else:
+                tot += 1
+                corr += label_match(pred, label)
         else:
             tot += 1
             corr += label == pred
 
-        #tot += 1
-        #pred = ''.join(map(str, pred))
-        #ans = ''.join(map(str, label))
-        #if pred in [ans[0] + ans[2]]:
-            #corr += 1
-
-        #tot += 1
-        #if label[0] in pred:
-            #corr += 1
         if tot % 1000 == 0:
             print "Rate: {0}".format(corr * 1.0 / tot)
 

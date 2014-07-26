@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Fri Jul 25 16:05:02 2014 -0700
+# Date: Sat Jul 26 08:57:48 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -36,7 +36,7 @@ def random_slice(k, N):
     return seeds
 
 def random_rotate(imgs):
-    angles = np.random.randint(-10, 11, (len(imgs), ))
+    angles = np.random.randint(-20, 21, (len(imgs), ))
     imgs = [imrotate(img, ang) for img, ang in izip(imgs, angles)]
     return imgs
 
@@ -96,7 +96,7 @@ class SeqDataGenerator(object):
         assert self.img_size[0] == imgs[0].shape[0]
         height = self.img_size[0]
 
-        #imgs = random_rotate(imgs)
+        imgs = random_rotate(imgs)
 
         n_chunks = len(imgs) + 1
         space_left = self.img_size[1] - len(imgs) * imgs[0].shape[1]
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         print "Usage: {0} <output.pkl.gz> <sequence length>"
         sys.exit()
-    dataset = dataio.read_data('./mnist.pkl.gz')
+    dataset = dataio.read_data('./data/mnist.pkl.gz')
     fout = sys.argv[1]
     seq_len = int(sys.argv[2])
 
