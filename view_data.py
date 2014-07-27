@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: view_data.py
-# Date: Thu Jul 24 08:45:48 2014 -0700
+# Date: Sat Jul 26 20:29:25 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
@@ -11,6 +11,7 @@ from scipy.ndimage import zoom
 from scipy.misc import toimage
 from dataio import read_data
 import matplotlib.pyplot as plot
+from utils import get_image_matrix
 #toimage(data).show()
 
 import sys
@@ -25,11 +26,7 @@ print len(train_set[0]), len(valid_set[0]), len(test_set[0])
 #toimage(test_set[0][0].reshape(28, 28)).show()
 
 for k in train_set[0]:
-    shape = k.shape
-    if len(shape) == 1:
-        size = int(np.sqrt(shape[0]))
-        assert size * size == shape[0]
-        k = k.reshape((size, size))
+    k = get_image_matrix(k)
     # show images in blocking way
     plot.imshow(k)
     plot.show()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Sat Jul 26 08:57:48 2014 -0700
+# Date: Sun Jul 27 01:14:15 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -40,9 +40,24 @@ def random_rotate(imgs):
     imgs = [imrotate(img, ang) for img, ang in izip(imgs, angles)]
     return imgs
 
+def fill_vertical_blank(imgs, height):
+    seeds = np.random.random_sample((len(imgs), ))
+    def fill(idx, img):
+        assert img.shape[0] <= height
+        if img.shape[0] == height:
+            return img
+        space = (height - img.shape[0])
+        offset = int(space * seeds[idx])
+        img = np.vstack((np.zeros((offset, img.shape[1])),
+                         img,
+                         np.zeros((space - offset, img.shape[1]))
+                       ))
+        return img
+    return [fill(idx, img) for idx, img in enumerate(imgs)]
+
 class SeqDataGenerator(object):
 
-    def __init__(self, len_dist, dataset, max_width=None):
+    def __init__(self, len_dist, dataset, max_width=None, max_height=None):
         """ len_dist: a dict containing the distribution of length.
         """
         lens = len_dist.keys()
@@ -57,11 +72,15 @@ class SeqDataGenerator(object):
                                                                         #dataset[1][1], dataset[2][1]))
         #self.dataset_len = len(self.dataset[0])
         self.dataset = dataset
+        shape = self.dataset[0][0][0].shape
 
-        self.orig_image_shape = int(np.sqrt(self.dataset[0][0][0].shape[0]))
+        self.orig_image_shape = int(np.sqrt(shape[0]))
+        assert self.orig_image_shape ** 2 == int(shape[0])
         if max_width is None:
             max_width = self.orig_image_shape * self.max_len
-        self.img_size = (self.orig_image_shape, max_width)
+        if max_height is None:
+            max_height = self.orig_image_shape
+        self.img_size = (max_height, max_width)
         print "Original dataset size: {0}, {1}, {2}".format(len(dataset[0][0]),
                                                          len(dataset[1][0]),
                                                          len(dataset[2][0]))
@@ -72,10 +91,13 @@ class SeqDataGenerator(object):
 
         rets = []
         labels = []
-        for l in lens:
+        for idx, l in enumerate(lens):
             img, label = self.select_n_images(l, dataset)
             rets.append(img)
             labels.append(label)
+
+            if idx % 1000 == 0:
+                print "Progress: {0}".format(idx)
         return rets, labels
 
     def select_n_images(self, n, dataset):
@@ -93,19 +115,20 @@ class SeqDataGenerator(object):
             return paste, labels
 
     def paste_image(self, imgs):
-        assert self.img_size[0] == imgs[0].shape[0]
-        height = self.img_size[0]
-
+        max_height = self.img_size[0]
         imgs = random_rotate(imgs)
+        # imgs = random_resize(imgs, min([max_height, max_width]))
+
+        imgs = fill_vertical_blank(imgs, max_height)
 
         n_chunks = len(imgs) + 1
-        space_left = self.img_size[1] - len(imgs) * imgs[0].shape[1]
+        space_left = self.img_size[1] - sum([k.shape[1] for k in imgs])
         assert space_left > 0
         chunks = random_slice(n_chunks, space_left)
 
-        ret = np.zeros((height, chunks[0]))
+        ret = np.zeros((max_height, chunks[0]))
         for idx, k in enumerate(imgs):
-            ret = np.hstack((ret, k, np.zeros((height, chunks[idx + 1]))))
+            ret = np.hstack((ret, k, np.zeros((self.img_size[0], chunks[idx + 1]))))
         assert ret.shape == self.img_size
         return ret
 
@@ -128,7 +151,8 @@ if __name__ == '__main__':
     fout = sys.argv[1]
     seq_len = int(sys.argv[2])
 
-    generator = SeqDataGenerator({seq_len: 1.0}, dataset, max_width = 100)
+    generator = SeqDataGenerator({seq_len: 1.0}, dataset, max_width = 100,
+                                 max_height = 50)
 
     generator.write_dataset(80000, 15000, 15000, fout)
 
