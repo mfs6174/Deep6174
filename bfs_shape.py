@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: bfs_shape.py
-# Date: Tue Jul 29 13:05:17 2014 -0700
+# Date: Tue Jul 29 14:10:37 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data, save_data
@@ -67,9 +67,12 @@ train, valid, test = read_data("mnist.pkl.gz")
 
 def work_dataset(X, y):
     Z = []
-    for img in X:
+    for idx, img in enumerate(X):
         img = get_image_matrix(img)
         Z.append(find_shape(img))
+        if idx % 1000 == 0:
+            print "Progress: {0} / {1}".format(idx, len(X))
+    Z = np.asarray(Z)
     return (X, y, Z)
 
 train = work_dataset(*train)

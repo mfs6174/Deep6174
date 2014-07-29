@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Tue Jul 29 13:03:40 2014 -0700
+# Date: Tue Jul 29 14:10:44 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -14,7 +14,7 @@ import cPickle as pickle
 import gzip
 import sys
 from itertools import izip
-from utils import show_img_sync, get_image_matrix
+from utils import show_img_sync, get_image_matrix, timeit
 
 def random_slice(k, N):
     """ randomly return k integers which sum to N"""
@@ -54,17 +54,20 @@ def random_resize(imgs, max_len):
         return imresize(img, frac)
     return [resize(k, idx) for idx, k in enumerate(imgs)]
 
-def random_place(img, shape):
-    """ put img randomly inside a zero frame in shape
+def random_place(img, frame_size, digit_shape=None):
+    """ put img randomly inside a zero frame in frame_size
         return flags and results"""
     offsets = np.random.random_sample((2, ))
-    offsets = (int(offsets[0] * (shape[0] - img.shape[0])),
-               int(offsets[1] * (shape[1] - img.shape[1])))
-    ret = np.zeros(shape)
-    flag = np.zeros(shape)
+    offsets = (int(offsets[0] * (frame_size[0] - img.shape[0])),
+               int(offsets[1] * (frame_size[1] - img.shape[1])))
+    ret = np.zeros(frame_size)
+    flag = np.zeros(frame_size)
     for x in range(img.shape[0]):
         ret[x + offsets[0]][offsets[1]:offsets[1] + img.shape[1]] = img[x]
-        flag[x + offsets[0]][offsets[1]:offsets[1] + img.shape[1]] = np.array([1] * img.shape[1])
+        if digit_shape is None:
+            flag[x + offsets[0]][offsets[1]:offsets[1] + img.shape[1]] = np.array([1] * img.shape[1])
+        else:
+            flag[x + offsets[0]][offsets[1]:offsets[1] + img.shape[1]] = digit_shape[x]
     return flag, ret
 
 def fill_vertical_blank(imgs, height):
@@ -143,12 +146,19 @@ class SeqDataGenerator(object):
         if img.shape == self.img_size:
             return img, labels
         else:
-            return self.paste_image(imgs, labels)
+            if self.crazy:
+                # has shape information
+                if len(dataset) == 3:
+                    return self.crazy_paste_image(imgs, labels,
+                                                  [dataset[2][k] for k in
+                                                   index])
+                else:
+                    return self.crazy_paste_image(imgs, labels)
 
-    def paste_image(self, imgs, labels):
-        if self.crazy:
-            return self.crazy_paste_image(imgs, labels)
+            else:
+                return self.paste_image(imgs), labels
 
+    def paste_image(self, imgs):
         max_height = self.img_size[0]
 
         if self.do_rotate:
@@ -167,15 +177,19 @@ class SeqDataGenerator(object):
         for idx, k in enumerate(imgs):
             ret = np.hstack((ret, k, np.zeros((self.img_size[0], chunks[idx + 1]))))
         assert ret.shape == self.img_size
-        return ret, labels
+        return ret
 
-    def crazy_paste_image(self, imgs, labels):
-        frames = [random_place(k, self.img_size) for k in imgs]
+    def crazy_paste_image(self, imgs, labels, shapes=None):
+        if shapes is None:
+            frames = [random_place(k, self.img_size) for k in imgs]
+        else:
+            frames = [random_place(k, self.img_size, shape)
+                      for k, shape in izip(imgs, shapes)]
         flags = [x[0] for x in frames]
         centers = [ndimage.measurements.center_of_mass(f) for f in flags]
         n_overlap = np.sum(sum(flags) > 1)
         if n_overlap > 0:
-            return self.crazy_paste_image(imgs, labels)
+            return self.crazy_paste_image(imgs, labels, shapes)
         labels = sorted(enumerate(labels),
                         key=lambda tp: centers[tp[0]][1] * 1000 + centers[tp[0]][0])
         labels = np.asarray([k[1] for k in labels])
@@ -196,7 +210,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         print "Usage: {0} <output.pkl.gz> <sequence length>"
         sys.exit()
-    dataset = dataio.read_data('./data/mnist.pkl.gz')
+    dataset = dataio.read_data('./mnist.shaped.pkl.gz')
     fout = sys.argv[1]
     seq_len = int(sys.argv[2])
 
@@ -205,7 +219,7 @@ if __name__ == '__main__':
         dataset, max_width=100, max_height=50,
         rotate=True, resize=True, crazy=True)
 
-    generator.write_dataset(8000, 1500, 1500, fout)
+    generator.write_dataset(80000, 15000, 15000, fout)
 
 
 
