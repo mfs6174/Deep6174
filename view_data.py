@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: view_data.py
-# Date: Mon Jul 28 22:19:50 2014 -0700
+# Date: Tue Jul 29 13:00:20 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
@@ -25,8 +25,10 @@ print len(train_set[0]), len(valid_set[0]), len(test_set[0])
 #print train_set[0][0].shape
 #toimage(test_set[0][0].reshape(28, 28)).show()
 
-for k in train_set[0]:
+for idx, k in enumerate(train_set[0]):
+    print train_set[1][idx]
     k = get_image_matrix(k)
     # show images in blocking way
     plot.imshow(k)
     plot.show()
+

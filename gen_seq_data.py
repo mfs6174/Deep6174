@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Tue Jul 29 01:52:56 2014 -0700
+# Date: Tue Jul 29 13:03:40 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
 from scipy.misc import imrotate, imresize
+from scipy import ndimage
 import numpy as np
 import dataio
 from IPython.core.debugger import Tracer
@@ -142,12 +143,11 @@ class SeqDataGenerator(object):
         if img.shape == self.img_size:
             return img, labels
         else:
-            paste = self.paste_image(imgs)
-            return paste, labels
+            return self.paste_image(imgs, labels)
 
-    def paste_image(self, imgs):
+    def paste_image(self, imgs, labels):
         if self.crazy:
-            return self.crazy_paste_image(imgs)
+            return self.crazy_paste_image(imgs, labels)
 
         max_height = self.img_size[0]
 
@@ -167,15 +167,19 @@ class SeqDataGenerator(object):
         for idx, k in enumerate(imgs):
             ret = np.hstack((ret, k, np.zeros((self.img_size[0], chunks[idx + 1]))))
         assert ret.shape == self.img_size
-        return ret
+        return ret, labels
 
-    def crazy_paste_image(self, imgs):
+    def crazy_paste_image(self, imgs, labels):
         frames = [random_place(k, self.img_size) for k in imgs]
         flags = [x[0] for x in frames]
+        centers = [ndimage.measurements.center_of_mass(f) for f in flags]
         n_overlap = np.sum(sum(flags) > 1)
         if n_overlap > 0:
-            return self.crazy_paste_image(imgs)
-        return sum([x[1] for x in frames])
+            return self.crazy_paste_image(imgs, labels)
+        labels = sorted(enumerate(labels),
+                        key=lambda tp: centers[tp[0]][1] * 1000 + centers[tp[0]][0])
+        labels = np.asarray([k[1] for k in labels])
+        return sum([x[1] for x in frames]), labels
 
     def write_dataset(self, n_train, n_valid, n_test, fname):
         train = self.gen_n_samples(n_train, self.dataset[0])
@@ -201,7 +205,7 @@ if __name__ == '__main__':
         dataset, max_width=100, max_height=50,
         rotate=True, resize=True, crazy=True)
 
-    generator.write_dataset(80000, 15000, 15000, fout)
+    generator.write_dataset(8000, 1500, 1500, fout)
 
 
 

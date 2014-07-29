@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: bfs_shape.py
-# Date: Mon Jul 28 21:11:56 2014 -0700
+# Date: Tue Jul 29 13:05:17 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data, save_data
@@ -38,6 +38,10 @@ def find_shape(img):
             add(top[0] + 1, top[1])
             add(top[0], top[1] - 1)
             add(top[0], top[1] + 1)
+            add(top[0] - 1, top[1] - 1)
+            add(top[0] - 1, top[1] + 1)
+            add(top[0] + 1, top[1] - 1)
+            add(top[0] + 1, top[1] + 1)
 
 
     for i in range(img.shape[0]):
