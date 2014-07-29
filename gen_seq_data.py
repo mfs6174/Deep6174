@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Sun Jul 27 01:14:15 2014 -0700
+# Date: Tue Jul 29 01:52:56 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
-from scipy.misc import imrotate
+from scipy.misc import imrotate, imresize
 import numpy as np
 import dataio
 from IPython.core.debugger import Tracer
@@ -13,6 +13,7 @@ import cPickle as pickle
 import gzip
 import sys
 from itertools import izip
+from utils import show_img_sync, get_image_matrix
 
 def random_slice(k, N):
     """ randomly return k integers which sum to N"""
@@ -40,9 +41,34 @@ def random_rotate(imgs):
     imgs = [imrotate(img, ang) for img, ang in izip(imgs, angles)]
     return imgs
 
+def random_resize(imgs, max_len):
+    seeds = np.random.random_sample((len(imgs),))
+    def resize(img, idx):
+        assert img.shape[0] < max_len
+        assert img.shape[0] == img.shape[1]
+# valid interval is [15, max_len]
+        assert max_len > 15
+        new_size = seeds[idx] * (max_len - 15) + 15
+        frac = new_size * 1.0 / img.shape[0]
+        return imresize(img, frac)
+    return [resize(k, idx) for idx, k in enumerate(imgs)]
+
+def random_place(img, shape):
+    """ put img randomly inside a zero frame in shape
+        return flags and results"""
+    offsets = np.random.random_sample((2, ))
+    offsets = (int(offsets[0] * (shape[0] - img.shape[0])),
+               int(offsets[1] * (shape[1] - img.shape[1])))
+    ret = np.zeros(shape)
+    flag = np.zeros(shape)
+    for x in range(img.shape[0]):
+        ret[x + offsets[0]][offsets[1]:offsets[1] + img.shape[1]] = img[x]
+        flag[x + offsets[0]][offsets[1]:offsets[1] + img.shape[1]] = np.array([1] * img.shape[1])
+    return flag, ret
+
 def fill_vertical_blank(imgs, height):
     seeds = np.random.random_sample((len(imgs), ))
-    def fill(idx, img):
+    def fill(img, idx):
         assert img.shape[0] <= height
         if img.shape[0] == height:
             return img
@@ -53,17 +79,22 @@ def fill_vertical_blank(imgs, height):
                          np.zeros((space - offset, img.shape[1]))
                        ))
         return img
-    return [fill(idx, img) for idx, img in enumerate(imgs)]
+    return [fill(img, idx) for idx, img in enumerate(imgs)]
 
 class SeqDataGenerator(object):
 
-    def __init__(self, len_dist, dataset, max_width=None, max_height=None):
+    def __init__(self, len_dist, dataset, max_width=None, max_height=None,
+                rotate=False, resize=False, crazy=False):
         """ len_dist: a dict containing the distribution of length.
         """
         lens = len_dist.keys()
         self.max_len = max(lens)
         probs = [len_dist[k] for k in lens]
         assert sum(probs) == 1.0
+
+        self.do_rotate = rotate
+        self.do_resize = resize
+        self.crazy = crazy
 
         self.len_rvg = stats.rv_discrete(values=(lens, probs))
         # merge train/valid/test
@@ -115,9 +146,15 @@ class SeqDataGenerator(object):
             return paste, labels
 
     def paste_image(self, imgs):
+        if self.crazy:
+            return self.crazy_paste_image(imgs)
+
         max_height = self.img_size[0]
-        imgs = random_rotate(imgs)
-        # imgs = random_resize(imgs, min([max_height, max_width]))
+
+        if self.do_rotate:
+            imgs = random_rotate(imgs)
+        if self.do_resize:
+            imgs = random_resize(imgs, min(self.img_size))
 
         imgs = fill_vertical_blank(imgs, max_height)
 
@@ -131,6 +168,14 @@ class SeqDataGenerator(object):
             ret = np.hstack((ret, k, np.zeros((self.img_size[0], chunks[idx + 1]))))
         assert ret.shape == self.img_size
         return ret
+
+    def crazy_paste_image(self, imgs):
+        frames = [random_place(k, self.img_size) for k in imgs]
+        flags = [x[0] for x in frames]
+        n_overlap = np.sum(sum(flags) > 1)
+        if n_overlap > 0:
+            return self.crazy_paste_image(imgs)
+        return sum([x[1] for x in frames])
 
     def write_dataset(self, n_train, n_valid, n_test, fname):
         train = self.gen_n_samples(n_train, self.dataset[0])
@@ -151,8 +196,10 @@ if __name__ == '__main__':
     fout = sys.argv[1]
     seq_len = int(sys.argv[2])
 
-    generator = SeqDataGenerator({seq_len: 1.0}, dataset, max_width = 100,
-                                 max_height = 50)
+    generator = SeqDataGenerator(
+        {seq_len: 1.0},
+        dataset, max_width=100, max_height=50,
+        rotate=True, resize=True, crazy=True)
 
     generator.write_dataset(80000, 15000, 15000, fout)
 

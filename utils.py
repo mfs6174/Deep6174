@@ -142,3 +142,10 @@ def get_image_matrix(img):
     l = int(numpy.sqrt(shape[0]))
     assert l * l == int(shape[0])
     return img.reshape((l, l))
+
+import matplotlib.pyplot as plot
+def show_img_sync(img):
+    k = get_image_matrix(img)
+    plot.imshow(k)
+    plot.show()
+

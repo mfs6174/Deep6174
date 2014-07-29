@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: view_data.py
-# Date: Sat Jul 26 20:29:25 2014 -0700
+# Date: Mon Jul 28 22:19:50 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy

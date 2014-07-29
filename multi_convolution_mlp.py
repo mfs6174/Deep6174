@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Fri Jul 25 22:58:29 2014 -0700
+# Date: Sun Jul 27 09:42:21 2014 -0700
 import os
 import sys
 import time
