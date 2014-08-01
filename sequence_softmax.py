@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Sun Jul 20 22:09:13 2014 -0700
+# Date: Fri Aug 01 12:44:13 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -77,8 +77,6 @@ class SequenceSoftmax(object):
         return -T.sum(sr) / y.shape[0]
 
     def errors(self, y):
-        print "InError y.shape", y.shape
-
         if not y.dtype.startswith('int'):
             raise NotImplementedError()
 

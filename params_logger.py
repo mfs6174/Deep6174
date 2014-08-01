@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Fri Jul 25 23:27:14 2014 -0700
+# Date: Fri Aug 01 12:21:15 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -20,11 +20,13 @@ from logistic_sgd import LogisticRegression
 from mlp import HiddenLayer
 from convolutional_mlp import LeNetConvPoolLayer
 from fixed_length_softmax import FixedLengthSoftmax
+from sequence_softmax import SequenceSoftmax
 
 name_dict = {LeNetConvPoolLayer: 'convpool',
              HiddenLayer: 'hidden',
              LogisticRegression: 'lr',
-             FixedLengthSoftmax: 'fl-sm'}
+             FixedLengthSoftmax: 'fl-sm',
+             SequenceSoftmax: 'ssm'}
 
 class ParamsLogger(object):
 
@@ -47,7 +49,7 @@ class ParamsLogger(object):
             dic = {'type': name_dict[type(layer)] }
             cnt += 1
 
-            if type(layer) == FixedLengthSoftmax:
+            if type(layer) in [FixedLengthSoftmax, SequenceSoftmax]:
                 Ws = [k.get_value() for k in pair[::2]]
                 bs = [k.get_value() for k in pair[1::2]]
                 dic.update({'Ws': Ws, 'bs': bs})

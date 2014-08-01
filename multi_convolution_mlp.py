@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Sun Jul 27 09:42:21 2014 -0700
+# Date: Fri Aug 01 12:29:37 2014 -0700
 import os
 import sys
 import time
@@ -22,6 +22,7 @@ from dataio import read_data, save_data, get_dataset_imgsize
 from mlp import HiddenLayer
 from convolutional_mlp import LeNetConvPoolLayer
 from fixed_length_softmax import FixedLengthSoftmax
+from sequence_softmax import SequenceSoftmax
 
 class ConfigurableNN(object):
     """ Configurable Neural Network,
@@ -147,13 +148,29 @@ class ConfigurableNN(object):
         self.layers.append(layer)
         self.layer_config.append(None)
 
+    def add_sequence_softmax(self, max_len):
+        n_out = 10
+        assert type(self.layers[-1]) == HiddenLayer
+        layer = SequenceSoftmax(input=self.layers[-1].output,
+                                   n_in=self.layer_config[-1]['n_out'],
+                                   seq_max_len = max_len,
+                                   n_out=n_out)
+        self.layers.append(layer)
+        self.layer_config.append({'max_len': max_len})
+
     def work(self, learning_rate=0.1, n_epochs=60, dataset='mnist.pkl.gz'):
         """ read data and start training"""
         print self.layers
         print self.layer_config
-        assert type(self.layers[-1]) in [LogisticRegression, FixedLengthSoftmax]
+        assert type(self.layers[-1]) in [LogisticRegression,
+                                         FixedLengthSoftmax, SequenceSoftmax]
 
-        datasets = load_data(dataset)
+        if type(self.layers[-1]) == SequenceSoftmax:
+            max_len = self.layer_config[-1]['max_len']
+            print "Using Sequence Softmax Output with max_len = {0}".format(max_len)
+            datasets = load_data(dataset, with_length=max_len)
+        else:
+            datasets = load_data(dataset)
 
         train_set_x, train_set_y = datasets[0]
         valid_set_x, valid_set_y = datasets[1]
@@ -314,7 +331,7 @@ if __name__ == '__main__':
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_nLR_layer(2)
+        nn.add_sequence_softmax(2)
     else:
         nn.add_LR_layer()
     nn.work(dataset=dataset, n_epochs=100)

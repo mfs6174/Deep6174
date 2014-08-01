@@ -40,6 +40,7 @@ import gzip
 import os
 import sys
 import time
+from itertools import chain
 
 import numpy
 
@@ -145,7 +146,7 @@ class LogisticRegression(object):
 
 
 from dataio import read_data
-def load_data(dataset):
+def load_data(dataset, with_length=0):
     train_set, valid_set, test_set = read_data(dataset)
 
     def shared_dataset(data_xy, borrow=True):
@@ -159,6 +160,9 @@ def load_data(dataset):
         """
         data_x, data_y = data_xy
         data_x = [k.flatten() for k in data_x]
+        if with_length > 0:
+            data_y = [list(chain.from_iterable(([len(k)], k, [-1] * (with_length -
+                                                               len(k))))) for k in data_y]
         shared_x = theano.shared(numpy.asarray(data_x,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
