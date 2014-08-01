@@ -161,7 +161,7 @@ def load_data(dataset, with_length=0):
         data_x, data_y = data_xy
         data_x = [k.flatten() for k in data_x]
         if with_length > 0:
-            data_y = [list(chain.from_iterable(([len(k)], k, [-1] * (with_length -
+            data_y = [list(chain.from_iterable(([len(k) - 1], k, [-1] * (with_length -
                                                                len(k))))) for k in data_y]
         shared_x = theano.shared(numpy.asarray(data_x,
                                                dtype=theano.config.floatX),

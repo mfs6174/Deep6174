@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Fri Aug 01 12:44:13 2014 -0700
+# Date: Fri Aug 01 14:58:53 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -51,6 +51,7 @@ class SequenceSoftmax(object):
                              xrange(self.n_softmax)]
         self.pred = [T.argmax(self.p_y_given_xs[k], axis=1) for k in
                      xrange(self.n_softmax)]
+        # self.pred[k]: output of the kth softmax predictor
 
         self.params = self.Ws
         self.params.extend(self.bs)
@@ -70,7 +71,7 @@ class SequenceSoftmax(object):
 
         #from operator import add
         def f(probs, label):
-            # +1 is real length, + 1 include first element (length)
+            # + 1 is real sequence length, + 1 include first element (length)
             return T.sum(probs[:label[0] + 1 + 1])
         sr, su = theano.map(fn=f, sequences=[M, y])
 

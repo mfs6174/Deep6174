@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Wed Jul 30 15:01:44 2014 -0700
+# Date: Fri Aug 01 14:51:05 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -54,13 +54,13 @@ def random_resize(imgs, max_len, digit_shapes=None):
         assert max_len > 20
         new_size = seeds[idx] * (max_len - 20) + 20
         frac = new_size * 1.0 / img.shape[0]
+        ret = imresize(img, frac)
 
         if digit_shapes is not None:
             assert digit_shapes[idx].shape == img.shape
             digit_shapes[idx] = imresize(digit_shapes[idx], frac)
             digit_shapes[idx] = digit_shapes[idx] / 255.0
-        ret = imresize(img, frac)
-        assert digit_shapes[idx].shape == ret.shape, "{0}!={1}".format(digit_shapes[idx].shape, ret.shape)
+            assert digit_shapes[idx].shape == ret.shape, "{0}!={1}".format(digit_shapes[idx].shape, ret.shape)
         return ret
     return [resize(k, idx) for idx, k in enumerate(imgs)]
 
@@ -176,6 +176,7 @@ class SeqDataGenerator(object):
             return self.paste_image(imgs), labels
 
     def paste_image(self, imgs):
+        orig_imgs = imgs
         max_height = self.img_size[0]
         if self.do_rotate:
             imgs = random_rotate(imgs)
@@ -186,6 +187,8 @@ class SeqDataGenerator(object):
 
         n_chunks = len(imgs) + 1
         space_left = self.img_size[1] - sum([k.shape[1] for k in imgs])
+        if space_left <= 0:
+            return self.paste_image(orig_imgs)
         assert space_left > 0
         chunks = random_slice(n_chunks, space_left)
 
@@ -253,11 +256,11 @@ if __name__ == '__main__':
     seq_len = int(sys.argv[2])
 
     generator = SeqDataGenerator(
-        {seq_len: 1.0},
+        {seq_len: 0.5, seq_len + 1: 0.5},
         dataset, max_width=100, max_height=50,
-        rotate=False, resize=True, crazy=True, max_dist=25)
+        rotate=False, resize=True, crazy=False, max_dist=25)
 
-    generator.write_dataset(800, 150, 150, fout)
+    generator.write_dataset(80000, 15000, 15000, fout)
 
 
 
