@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Fri Aug 01 12:21:15 2014 -0700
+# Date: Sat Aug 02 01:56:42 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -45,17 +45,22 @@ class ParamsLogger(object):
 
         layer_params = [x.params for x in layers]
         cnt = 0
-        for layer, pair, config in zip(layers, layer_params, layer_config):
+        for layer, param, config in zip(layers, layer_params, layer_config):
             dic = {'type': name_dict[type(layer)] }
             cnt += 1
 
-            if type(layer) in [FixedLengthSoftmax, SequenceSoftmax]:
-                Ws = [k.get_value() for k in pair[::2]]
-                bs = [k.get_value() for k in pair[1::2]]
+            if type(layer) == FixedLengthSoftmax:
+                Ws = [k.get_value() for k in param[::2]]
+                bs = [k.get_value() for k in param[1::2]]
+                dic.update({'Ws': Ws, 'bs': bs})
+            elif type(layer) == SequenceSoftmax:
+                n_softmax = len(param) / 2
+                Ws = [k.get_value() for k in param[:n_softmax]]
+                bs = [k.get_value() for k in param[n_softmax:]]
                 dic.update({'Ws': Ws, 'bs': bs})
             else:
-                W = pair[0].get_value()
-                b = pair[1].get_value()
+                W = param[0].get_value()
+                b = param[1].get_value()
                 dic.update({ 'W': W, 'b': b})
 
             # extra config info to save

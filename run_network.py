@@ -77,6 +77,20 @@ class NetworkRunner(object):
         last_layer = self.nn.layers[-1]
         last_layer.set_params(Ws, bs)
 
+    def add_sequence_softmax(self, Ws, bs):
+        n_softmax = len(Ws)
+        assert len(bs) == n_softmax
+
+        max_seq_len = n_softmax - 1
+        assert Ws[0].shape[1] == max_seq_len
+        assert bs[0].shape[0] == max_seq_len
+        for W, b in itertools.izip(Ws[1:], bs[1:]):
+            assert W.shape[1] == 10
+            assert b.shape[0] == 10
+        self.nn.add_sequence_softmax(max_seq_len)
+        last_layer = self.nn.layers[-1]
+        last_layer.set_params(Ws, bs)
+
     def finish(self):
         """ compile all the functions """
         self.funcs = []
@@ -140,6 +154,9 @@ def build_nn_with_params(params):
         elif layertype == 'fl-sm':
             runner.add_FLSM_layer(layerdata['Ws'],
                                  layerdata['bs'])
+        elif layertype == 'ssm':
+            runner.add_sequence_softmax(
+                layerdata['Ws'], layerdata['bs'])
     runner.finish()
     return runner
 
@@ -241,6 +258,8 @@ if __name__ == '__main__':
         else:
             tot += 1
             corr += label == pred
+
+        time.sleep(10)
 
         if tot % 1000 == 0:
             print "Rate: {0}".format(corr * 1.0 / tot)

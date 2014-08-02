@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Fri Aug 01 12:29:37 2014 -0700
+# Date: Fri Aug 01 23:45:43 2014 -0700
 import os
 import sys
 import time
@@ -331,7 +331,7 @@ if __name__ == '__main__':
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_sequence_softmax(2)
+        nn.add_sequence_softmax(3)
     else:
         nn.add_LR_layer()
     nn.work(dataset=dataset, n_epochs=100)

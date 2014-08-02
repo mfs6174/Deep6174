@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Fri Aug 01 14:58:53 2014 -0700
+# Date: Sat Aug 02 01:52:01 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -30,8 +30,10 @@ class SequenceSoftmax(object):
         it is actually a layer with (seq_max_len + seq_max_len * n_out) output.
         """
         self.n_softmax = seq_max_len + 1
+        self.n_out = n_out
 
         def gen_W(out, k):
+            # TODO init with other values
             return theano.shared(value=numpy.zeros((n_in, out),
                                              dtype=theano.config.floatX),
                             name='W' + str(k), borrow=True)
@@ -51,7 +53,8 @@ class SequenceSoftmax(object):
                              xrange(self.n_softmax)]
         self.pred = [T.argmax(self.p_y_given_xs[k], axis=1) for k in
                      xrange(self.n_softmax)]
-        # self.pred[k]: output of the kth softmax predictor
+        self.pred = T.stacklists(self.pred).dimshuffle(1, 0)
+        # self.pred[idx]: output labels of the 'idx' input
 
         self.params = self.Ws
         self.params.extend(self.bs)
@@ -81,14 +84,24 @@ class SequenceSoftmax(object):
         if not y.dtype.startswith('int'):
             raise NotImplementedError()
 
+        def f(pred, label):
+            return T.mean(T.neq(pred[:label[0] + 2], label[:label[0] + 2]))
+        sr, su = theano.map(fn=f, sequences=[self.pred, y])
+        return T.sum(sr) / y.shape[0]
+
+        #return sum([T.mean(T.neq(self.pred[k], y[:,k])) for k in
+                        #range(self.n_softmax)]) / self.n_softmax
+
         #from operator import mul
         #corr = reduce(mul, [PP.Print("neq for each")(T.neq(self.pred, y[:,k])) for k in
                             #range(self.n_softmax)])
         #return T.mean(corr)
 
-        return sum([T.mean(T.neq(self.pred[k], y[:,k])) for k in
-                        range(self.n_softmax)]) / self.n_softmax
-
+    def set_params(self, Ws, bs):
+        assert self.n_softmax == len(Ws) and len(Ws) == len(bs)
+        for k in range(self.n_softmax):
+            self.Ws[k].set_value(Ws[k].astype('float32'))
+            self.bs[k].set_value(bs[k].astype('float32'))
 
 # The Following is modified from logistic_sgd.py
 
