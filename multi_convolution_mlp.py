@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: multi_convolution_mlp.py
-# Date: Fri Aug 01 23:45:43 2014 -0700
+# Date: Sat Aug 02 10:48:03 2014 -0700
 import os
 import sys
 import time
@@ -307,8 +307,9 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-    train_set = read_data(dataset)[0]
-    shape = train_set[0][0].shape
+    #train_set = read_data(dataset)[0]
+    #shape = train_set[0][0].shape
+    shape = (50, 100)
     print "Input img size is {0}".format(shape)
 
     if len(shape) == 1:

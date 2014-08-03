@@ -81,6 +81,9 @@ class NetworkRunner(object):
         n_softmax = len(Ws)
         assert len(bs) == n_softmax
 
+        print [k.shape for k in Ws]
+        print [k.shape for k in bs]
+
         max_seq_len = n_softmax - 1
         assert Ws[0].shape[1] == max_seq_len
         assert bs[0].shape[0] == max_seq_len
@@ -247,6 +250,7 @@ if __name__ == '__main__':
         # run the network
         results = [nn.run_only_last(img)]
         pred = get_label_from_result(img, results)
+        print pred
 
         if hasattr(label, '__iter__'):
             if len(label) == len(pred):
