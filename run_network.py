@@ -18,15 +18,18 @@ from itertools import count, izip
 import time
 
 from convolutional_mlp import LeNetConvPoolLayer
-from multi_convolution_mlp import ConfigurableNN
+from train_network import NNTrainer
 from dataio import read_data, save_data, get_dataset_imgsize
 
-class NetworkRunner(object):
+N_OUT = 10
 
+class NetworkRunner(object):
     def __init__(self, input_size):
         self.input_size = input_size
-        self.nn = ConfigurableNN(1, input_size)
+        self.nn = NNTrainer(1, input_size)
         self.n_conv_layer = 0
+        self.var_len_output = False
+        self.multi_output = False
 
     def add_convpool_layer(self, W, b, pool_size):
         self.n_conv_layer += 1
@@ -58,8 +61,8 @@ class NetworkRunner(object):
 
     def add_LR_layer(self, W, b):
         self.LR_W = W
-        assert W.shape[1] == 10
-        assert b.shape[0] == 10
+        assert W.shape[1] == N_OUT
+        assert b.shape[0] == N_OUT
 
         self.nn.add_LR_layer()
         last_layer = self.nn.layers[-1]
@@ -68,16 +71,19 @@ class NetworkRunner(object):
 
     def add_FLSM_layer(self, Ws, bs):
         """ add a FixedLengthSoftmax layer, with list of W and b"""
+        self.multi_output = True
         num_out = len(Ws)
         for W, b in itertools.izip(Ws, bs):
-            assert W.shape[1] == 10
-            assert b.shape[0] == 10
+            assert W.shape[1] == N_OUT
+            assert b.shape[0] == N_OUT
 
         self.nn.add_nLR_layer(num_out)
         last_layer = self.nn.layers[-1]
         last_layer.set_params(Ws, bs)
 
     def add_sequence_softmax(self, Ws, bs):
+        self.var_len_output = True
+        self.multi_output = True
         n_softmax = len(Ws)
         assert len(bs) == n_softmax
 
@@ -88,8 +94,8 @@ class NetworkRunner(object):
         assert Ws[0].shape[1] == max_seq_len
         assert bs[0].shape[0] == max_seq_len
         for W, b in itertools.izip(Ws[1:], bs[1:]):
-            assert W.shape[1] == 10
-            assert b.shape[0] == 10
+            assert W.shape[1] == N_OUT
+            assert b.shape[0] == N_OUT
         self.nn.add_sequence_softmax(max_seq_len)
         last_layer = self.nn.layers[-1]
         last_layer.set_params(Ws, bs)
@@ -122,9 +128,6 @@ class NetworkRunner(object):
         res = self.funcs[-1]([[img]])[0]
         label = max(enumerate(res), key=operator.itemgetter(1))
         return label
-
-    def get_LR_W(self):
-        return self.LR_W
 
 def build_nn_with_params(params):
     """ params: the object load from param{epoch}.mat file
@@ -186,7 +189,7 @@ def get_an_image(dataset, label):
 
 def save_LR_W_img(W, n_filter):
     """ save W as images """
-    for l in range(10):
+    for l in range(N_OUT):
         w = W[:,l]
         size = int(np.sqrt(w.shape[0] / n_filter))
         imgs = w.reshape(n_filter, size, size)
@@ -234,11 +237,6 @@ if __name__ == '__main__':
     params_file = sys.argv[1]
     nn = get_nn(params_file)
 
-    # save W matrix in LR layer
-    #W = nn.get_LR_W()
-    #save_LR_W_img(W, 20)        # 20 is the number of filters in the last convpool layer
-    #sio.savemat('W.mat', mdict={'W': W})
-
     train, valid, test = read_data(sys.argv[2])
     corr, tot = 0, 0
     for img, label in izip(test[0], test[1]):
@@ -246,11 +244,14 @@ if __name__ == '__main__':
         # run the network
         results = [nn.run_only_last(img)]
         pred = get_label_from_result(img, results)
-        print pred
-        print label
+        print pred, label
 
-        if hasattr(label, '__iter__'):
-            if len(label) == len(pred):
+        if nn.multi_output:
+            if nn.var_len_output:
+                tot += pred[0]
+                corr += sum([1 for i, j in izip(pred[1:1 + pred[0]], label)
+                             if i == j])
+            elif len(label) == len(pred):
                 tot += len(label)
                 corr += len([k for k, _ in izip(pred, label) if k == _])
             else:
@@ -259,8 +260,6 @@ if __name__ == '__main__':
         else:
             tot += 1
             corr += label == pred
-
-        time.sleep(10)
 
         if tot % 1000 == 0:
             print "Rate: {0}".format(corr * 1.0 / tot)

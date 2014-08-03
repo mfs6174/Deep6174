@@ -65,6 +65,8 @@ class LeNetConvPoolLayer(object):
 
         assert image_shape[1] == filter_shape[1]
         self.input = input
+        if type(poolsize) == int:
+            poolsize = (poolsize, poolsize)
         self.pool_size = poolsize
 
         # there are "num input feature maps * filter height * filter width"
