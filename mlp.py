@@ -101,6 +101,9 @@ class HiddenLayer(object):
         # parameters of the model
         self.params = [self.W, self.b]
 
+    def get_params(self):
+        return {'W': self.W, 'b': self.b}
+
 
 class MLP(object):
     """Multi-Layer Perceptron Class

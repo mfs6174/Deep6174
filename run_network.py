@@ -140,10 +140,6 @@ def build_nn_with_params(params):
         layertype = layerdata['type']
         print "Layer ", nlayer, ' is ', layertype
 
-        for k, v in layerdata.iteritems():
-            if type(v) == list:
-                layerdata[k] = np.asarray(v)
-
         if layertype == 'convpool':
             runner.add_convpool_layer(layerdata['W'],
                                       layerdata['b'],
@@ -251,6 +247,7 @@ if __name__ == '__main__':
         results = [nn.run_only_last(img)]
         pred = get_label_from_result(img, results)
         print pred
+        print label
 
         if hasattr(label, '__iter__'):
             if len(label) == len(pred):

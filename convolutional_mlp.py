@@ -65,6 +65,7 @@ class LeNetConvPoolLayer(object):
 
         assert image_shape[1] == filter_shape[1]
         self.input = input
+        self.pool_size = poolsize
 
         # there are "num input feature maps * filter height * filter width"
         # inputs to each hidden unit
@@ -101,6 +102,10 @@ class LeNetConvPoolLayer(object):
 
         # store parameters of this layer
         self.params = [self.W, self.b]
+
+    def get_params(self):
+        return {'W': self.W, 'b': self.b,
+                'pool_size': self.pool_size}
 
 
 def evaluate_lenet5(learning_rate=0.1, n_epochs=100,

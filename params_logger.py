@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Sun Aug 03 10:49:45 2014 -0700
+# Date: Sun Aug 03 11:27:31 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -9,11 +9,7 @@ import matplotlib.pylab as plt
 import matplotlib.cm as cm
 import cPickle as pickle
 import gzip
-
-import json
-from json import encoder
 import scipy.io as sio
-encoder.FLOAT_REPR = lambda o: format(o, '.7f')
 import os
 
 from logistic_sgd import LogisticRegression
@@ -40,7 +36,7 @@ class ParamsLogger(object):
 
     def save_params(self, epoch, layers, layer_config):
         #fname = os.path.join(self.logdir, "{0}.mat".format(epoch))
-        fname = os.path.join(self.logdir, "param{0:02d}.pkl.gz".format(epoch))
+        fname = os.path.join(self.logdir, "param{0:03d}.pkl.gz".format(epoch))
         res = {}
 
         layer_params = [x.params for x in layers]
@@ -48,24 +44,8 @@ class ParamsLogger(object):
         for layer, param, config in zip(layers, layer_params, layer_config):
             dic = {'type': name_dict[type(layer)] }
             cnt += 1
+            dic.update(layer.get_params())
 
-            if type(layer) == FixedLengthSoftmax:
-                Ws = [k.get_value() for k in param[::2]]
-                bs = [k.get_value() for k in param[1::2]]
-                dic.update({'Ws': Ws, 'bs': bs})
-            elif type(layer) == SequenceSoftmax:
-                n_softmax = len(param) / 2
-                Ws = [k.get_value() for k in param[:n_softmax]]
-                bs = [k.get_value() for k in param[n_softmax:]]
-                dic.update({'Ws': Ws, 'bs': bs})
-            else:
-                W = param[0].get_value()
-                b = param[1].get_value()
-                dic.update({ 'W': W, 'b': b})
-
-            # extra config info to save
-            if type(layer) == LeNetConvPoolLayer:
-                dic['pool_size'] = config['pool_size']
             res['layer' + str(cnt)] = dic
         res['input_shape'] = self.input_shape
 
