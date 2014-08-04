@@ -246,9 +246,11 @@ if __name__ == '__main__':
         if nn.multi_output:
             if nn.var_len_output:
                 seq_len = pred[0] + 1
-                tot += seq_len
-                corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label)
-                             if i == j])
+                #tot += seq_len
+                #corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label)
+                             #if i == j])
+                tot += 1
+                corr += list(pred[1:1+seq_len]) == list(label)
             elif len(label) == len(pred):
                 tot += len(label)
                 corr += len([k for k, _ in izip(pred, label) if k == _])

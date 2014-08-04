@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sun Aug 03 13:18:51 2014 -0700
+# Date: Sun Aug 03 23:45:01 2014 -0700
 import os
 import sys
 import time
 from itertools import chain
 import cPickle
 import gzip
+import operator
 
 import numpy
 import numpy as np
@@ -156,6 +157,15 @@ class NNTrainer(object):
         self.layers.append(layer)
         self.layer_config.append({'max_len': max_len})
 
+    def n_params(self):
+        """ number of params in this model"""
+        def get_layer_nparam(layer):
+            prms = layer.params
+            ret = sum([reduce(operator.mul, k.get_value().shape) for k in prms])
+            print "Layer {0} has {1} params".format(type(layer), ret)
+            return ret
+        return sum([get_layer_nparam(l) for l in self.layers])
+
     def work(self, learning_rate=0.1, n_epochs=60, dataset='mnist.pkl.gz'):
         """ read data and start training"""
         print self.layers
@@ -250,7 +260,7 @@ class NNTrainer(object):
             for minibatch_index in xrange(n_train_batches):
                 iter = (epoch - 1) * n_train_batches + minibatch_index
 
-                if iter % 100 == 0:
+                if iter % 100 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
                     print 'training @ iter = ', iter
                 cost_ij = train_model(minibatch_index)
 
@@ -325,7 +335,8 @@ if __name__ == '__main__':
 
     # a NN with two conv-pool layer
     # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((20, 5), 2)
+    nn.add_convpoollayer((20, 5), (1, 2))
+    nn.add_convpoollayer((50, 5), 2)
     nn.add_convpoollayer((20, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
@@ -333,6 +344,7 @@ if __name__ == '__main__':
         nn.add_sequence_softmax(3)
     else:
         nn.add_LR_layer()
+    print "Network has {0} params in total. ", nn.n_params()
     nn.work(dataset=dataset, n_epochs=100)
 
 # Usage: ./multi_convolution_mlp.py dataset.pkl.gz
