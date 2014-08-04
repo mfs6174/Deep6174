@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Sun Aug 03 17:18:43 2014 -0700
+# Date: Sun Aug 03 18:17:13 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -10,6 +10,7 @@ import gzip
 import os
 import sys
 import time
+from copy import copy
 
 import numpy
 import numpy as np
@@ -56,7 +57,7 @@ class SequenceSoftmax(object):
         self.pred = T.stacklists(self.pred).dimshuffle(1, 0)
         # self.pred[idx]: output labels of the 'idx' input
 
-        self.params = self.Ws
+        self.params = copy(self.Ws)
         self.params.extend(self.bs)
 
     def negative_log_likelihood(self, y):

@@ -85,10 +85,7 @@ class NetworkRunner(object):
         self.var_len_output = True
         self.multi_output = True
         n_softmax = len(Ws)
-        assert len(bs) == n_softmax
-
-        print [k.shape for k in Ws]
-        print [k.shape for k in bs]
+        assert len(bs) == n_softmax, "{0}!={1}".format(len(bs), n_softmax)
 
         max_seq_len = n_softmax - 1
         assert Ws[0].shape[1] == max_seq_len
@@ -244,12 +241,13 @@ if __name__ == '__main__':
         # run the network
         results = [nn.run_only_last(img)]
         pred = get_label_from_result(img, results)
-        print pred, label
+        #print pred, label
 
         if nn.multi_output:
             if nn.var_len_output:
-                tot += pred[0]
-                corr += sum([1 for i, j in izip(pred[1:1 + pred[0]], label)
+                seq_len = pred[0] + 1
+                tot += seq_len
+                corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label)
                              if i == j])
             elif len(label) == len(pred):
                 tot += len(label)
