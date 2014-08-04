@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Fri Aug 01 14:51:05 2014 -0700
+# Date: Sun Aug 03 23:21:39 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     generator = SeqDataGenerator(
         {seq_len: 0.5, seq_len + 1: 0.5},
         dataset, max_width=100, max_height=50,
-        rotate=False, resize=True, crazy=False, max_dist=25)
+        rotate=False, resize=True, crazy=True, max_dist=25)
 
     generator.write_dataset(80000, 15000, 15000, fout)
 

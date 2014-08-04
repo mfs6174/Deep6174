@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: fixed_length_softmax.py
-# Date: Sun Aug 03 11:11:14 2014 -0700
+# Date: Mon Aug 04 00:10:54 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -60,6 +60,6 @@ class FixedLengthSoftmax(object):
             self.params[2 * k + 1].set_value(bs[k].flatten().astype('float32'))
 
     def get_params(self):
-        Ws = [k.get_value() for k in self.param[::2]]
-        bs = [k.get_value() for k in self.param[1::2]]
+        Ws = [k.get_value() for k in self.params[::2]]
+        bs = [k.get_value() for k in self.params[1::2]]
         return {"Ws": Ws, "bs": bs}

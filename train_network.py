@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sun Aug 03 23:45:01 2014 -0700
+# Date: Mon Aug 04 00:12:36 2014 -0700
 import os
 import sys
 import time
@@ -24,6 +24,7 @@ from mlp import HiddenLayer
 from convolutional_mlp import LeNetConvPoolLayer
 from fixed_length_softmax import FixedLengthSoftmax
 from sequence_softmax import SequenceSoftmax
+from progress import Progressor
 
 N_OUT = 10
 
@@ -253,9 +254,11 @@ class NNTrainer(object):
         done_looping = False
 
         logger = ParamsLogger(self.input_shape)
+        progressor = Progressor(n_epochs)
 
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
+            progressor.report(1, True)
             logger.save_params(epoch, self.layers, self.layer_config)
             for minibatch_index in xrange(n_train_batches):
                 iter = (epoch - 1) * n_train_batches + minibatch_index
@@ -335,16 +338,17 @@ if __name__ == '__main__':
 
     # a NN with two conv-pool layer
     # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((20, 5), (1, 2))
+    #nn.add_convpoollayer((20, 5), (1, 2))
     nn.add_convpoollayer((50, 5), 2)
     nn.add_convpoollayer((20, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_sequence_softmax(3)
+        #nn.add_sequence_softmax(3)
+        nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
-    print "Network has {0} params in total. ", nn.n_params()
+    print "Network has {0} params in total.".format(nn.n_params())
     nn.work(dataset=dataset, n_epochs=100)
 
 # Usage: ./multi_convolution_mlp.py dataset.pkl.gz
