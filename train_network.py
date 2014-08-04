@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sun Aug 03 13:17:27 2014 -0700
+# Date: Sun Aug 03 13:18:51 2014 -0700
 import os
 import sys
 import time
@@ -47,8 +47,10 @@ class NNTrainer(object):
 
     def add_convpoollayer(self, filter_config, pool_size):
         """ filter_config: tuple(nfilters, filter_size)
-            pool_size: tuple
+            pool_size: tuple or int
         """
+        if type(pool_size) == int:
+            pool_size = (pool_size, pool_size)
         if len(self.layer_config):
             assert type(self.layers[-1]) == LeNetConvPoolLayer, \
                 "currently convpool layer must come after a convpool layer"

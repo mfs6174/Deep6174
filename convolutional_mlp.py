@@ -106,7 +106,7 @@ class LeNetConvPoolLayer(object):
         self.params = [self.W, self.b]
 
     def get_params(self):
-        return {'W': self.W, 'b': self.b,
+        return {'W': self.W.get_value(), 'b': self.b.get_value(),
                 'pool_size': self.pool_size}
 
 

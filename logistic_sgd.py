@@ -145,7 +145,7 @@ class LogisticRegression(object):
             raise NotImplementedError()
 
     def get_params(self):
-        return {'W': self.W, 'b': self.b}
+        return {'W': self.W.get_value(), 'b': self.b.get_value()}
 
 
 from dataio import read_data

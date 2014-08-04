@@ -40,7 +40,7 @@ class NetworkRunner(object):
             ninput = self.nn.layer_config[-1]['filter_shape'][0]
         shape = W.shape
         nfilter = shape[0]
-        assert ninput == shape[1]
+        assert ninput == shape[1], "{0}!={1}".format(ninput, shape[1])
         filter_size = shape[2]
         assert shape[2] == shape[3]
         assert b.shape[0] == nfilter
