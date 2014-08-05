@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Sun Aug 03 23:21:39 2014 -0700
+# Date: Mon Aug 04 19:13:55 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -199,12 +199,22 @@ class SeqDataGenerator(object):
         return ret
 
     def crazy_paste_image(self, imgs, labels, shapes=None):
-        orig_imgs, orig_shapes = copy(imgs), copy(shapes)
+        while True:
+            orig_shapes = copy(shapes)
+            ret = self._do_crazy_paste_image(imgs, labels, orig_shapes)
+            if ret != False:
+                return ret
 
+    def _do_crazy_paste_image(self, imgs, labels, shapes=None):
+        """ return False when test failed.
+            will modify shapes in place
+        """
         if self.do_rotate:
             imgs = random_rotate(imgs)
         if self.do_resize:
-            imgs = random_resize(imgs, min(self.img_size), shapes)
+            max_resize =  min(self.img_size)
+            max_resize = 100
+            imgs = random_resize(imgs, max_resize, shapes)
 
         if shapes is None:
             frames = [random_place(k, self.img_size) for k in imgs]
@@ -215,7 +225,7 @@ class SeqDataGenerator(object):
         centers = [ndimage.measurements.center_of_mass(f) for f in flags]
         n_overlap = np.sum(sum(flags) > 1.0)
         if n_overlap > 1 or not self._dist_ok(centers):
-            return self.crazy_paste_image(orig_imgs, labels, orig_shapes)
+            return False
         labels = sorted(enumerate(labels),
                         key=lambda tp: centers[tp[0]][1] * 1000 + centers[tp[0]][0])
         labels = np.asarray([k[1] for k in labels])
@@ -257,10 +267,10 @@ if __name__ == '__main__':
 
     generator = SeqDataGenerator(
         {seq_len: 0.5, seq_len + 1: 0.5},
-        dataset, max_width=100, max_height=50,
-        rotate=False, resize=True, crazy=True, max_dist=25)
+        dataset, max_width=200, max_height=200,
+        rotate=False, resize=True, crazy=True, max_dist=50)
 
-    generator.write_dataset(80000, 15000, 15000, fout)
+    generator.write_dataset(28000, 1000, 1000, fout)
 
 
 

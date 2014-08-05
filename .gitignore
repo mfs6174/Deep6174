@@ -6,3 +6,4 @@
 *.pkl.gz
 logs
 mnist-data
+*.log

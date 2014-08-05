@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Sun Aug 03 18:17:13 2014 -0700
+# Date: Mon Aug 04 02:12:34 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -105,6 +105,6 @@ class SequenceSoftmax(object):
             self.bs[k].set_value(bs[k].astype('float32'))
 
     def get_params(self):
-        Ws = [k.get_value() for k in self.Ws]
-        bs = [k.get_value() for k in self.bs]
+        Ws = [k.get_value(borrow=True) for k in self.Ws]
+        bs = [k.get_value(borrow=True) for k in self.bs]
         return {"Ws": Ws, "bs": bs}

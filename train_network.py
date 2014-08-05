@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Mon Aug 04 00:12:36 2014 -0700
+# Date: Mon Aug 04 22:45:13 2014 -0700
 import os
 import sys
 import time
@@ -25,6 +25,7 @@ from convolutional_mlp import LeNetConvPoolLayer
 from fixed_length_softmax import FixedLengthSoftmax
 from sequence_softmax import SequenceSoftmax
 from progress import Progressor
+from shared_dataio import SharedDataIO
 
 N_OUT = 10
 
@@ -167,51 +168,27 @@ class NNTrainer(object):
             return ret
         return sum([get_layer_nparam(l) for l in self.layers])
 
-    def work(self, learning_rate=0.1, n_epochs=60, dataset='mnist.pkl.gz'):
+    def work(self, learning_rate=0.1, n_epochs=60, dataset='mnist.pkl.gz',
+             load_all_data=True):
         """ read data and start training"""
         print self.layers
         print self.layer_config
         assert type(self.layers[-1]) in [LogisticRegression,
                                          FixedLengthSoftmax, SequenceSoftmax]
 
+        dataset = read_data(dataset)
         if type(self.layers[-1]) == SequenceSoftmax:
             max_len = self.layer_config[-1]['max_len']
             print "Using Sequence Softmax Output with max_len = {0}".format(max_len)
-            datasets = load_data(dataset, with_length=max_len)
+            shared_io = SharedDataIO(dataset, self.batch_size, load_all_data, max_len)
         else:
-            datasets = load_data(dataset)
-
-        train_set_x, train_set_y = datasets[0]
-        valid_set_x, valid_set_y = datasets[1]
-        test_set_x, test_set_y = datasets[2]
-
-        n_train_batches = train_set_x.get_value(borrow=True).shape[0]
-        n_valid_batches = valid_set_x.get_value(borrow=True).shape[0]
-        n_test_batches = test_set_x.get_value(borrow=True).shape[0]
-        n_train_batches /= self.batch_size
-        n_valid_batches /= self.batch_size
-        n_test_batches /= self.batch_size
-
-        index = T.lscalar()
-
-        layer = self.layers[-1]
+            shared_io = SharedDataIO(dataset, self.batch_size, load_all_data)
 
         print "... compiling"
+        layer = self.layers[-1]
 
         # cost to minimize
         cost = layer.negative_log_likelihood(self.y)
-
-        # symbolic function to test model error
-        test_model = theano.function([index], layer.errors(self.y),
-                 givens={
-                    self.x: test_set_x[index * self.batch_size: (index + 1) * self.batch_size],
-                    self.y: test_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
-
-        # symbolic function to validate model error
-        validate_model = theano.function([index], layer.errors(self.y),
-                givens={
-                    self.x: valid_set_x[index * self.batch_size: (index + 1) * self.batch_size],
-                    self.y: valid_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
 
         # all the params to optimize on
         params = list(chain.from_iterable([x.params for x in self.layers]))
@@ -224,13 +201,57 @@ class NNTrainer(object):
         for param_i, grad_i in zip(params, grads):
             updates.append((param_i, param_i - learning_rate * grad_i))
 
-        train_model = theano.function([index],
-              cost,
-              updates=updates,
-              givens={
-                self.x: train_set_x[index * self.batch_size: (index + 1) * self.batch_size],
-                self.y: train_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
+        n_batches = list(shared_io.get_dataset_size())
+        n_batches = [x / self.batch_size for x in n_batches]
 
+        if load_all_data:
+            datasets = shared_io.shared_dataset
+            train_set_x, train_set_y = datasets[0]
+            valid_set_x, valid_set_y = datasets[1]
+            test_set_x, test_set_y = datasets[2]
+            index = T.lscalar()
+
+            # symbolic function to train and update
+            train_model = theano.function([index], cost,
+                  updates=updates,
+                  givens={
+                    self.x: train_set_x[index * self.batch_size: (index + 1) * self.batch_size],
+                    self.y: train_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
+
+            # symbolic function to validate and test model error
+            validate_model = theano.function([index], layer.errors(self.y),
+                    givens={
+                        self.x: valid_set_x[index * self.batch_size: (index + 1) * self.batch_size],
+                        self.y: valid_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
+            test_model = theano.function([index], layer.errors(self.y),
+                     givens={
+                        self.x: test_set_x[index * self.batch_size: (index + 1) * self.batch_size],
+                        self.y: test_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
+        else:
+            do_train_model = theano.function([], cost,
+                updates=updates,
+                givens={
+                    self.x: shared_io.shared_Xs[0],
+                    self.y: shared_io.shared_ys[0]})
+            def train_model(index):
+                shared_io.get_train(index)
+                return do_train_model()
+
+            do_valid_model = theano.function([], layer.errors(self.y),
+                givens={
+                    self.x: shared_io.shared_Xs[1],
+                    self.y: shared_io.shared_ys[1]})
+            def validate_model(index):
+                shared_io.get_valid(index)
+                return do_valid_model()
+
+            do_test_model = theano.function([], layer.errors(self.y),
+                givens={
+                    self.x: shared_io.shared_Xs[2],
+                    self.y: shared_io.shared_ys[2]})
+            def test_model(index):
+                shared_io.get_test(index)
+                return do_test_model()
 
         print '... training'
         # early-stopping parameters
@@ -239,7 +260,7 @@ class NNTrainer(object):
                                # found
         improvement_threshold = 0.995  # a relative improvement of this much is
                                        # considered significant
-        validation_frequency = min(n_train_batches, patience / 2)
+        validation_frequency = min(n_batches[0], patience / 2)
                                       # go through this many
                                       # minibatche before checking the network
                                       # on the validation set; in this case we
@@ -260,23 +281,23 @@ class NNTrainer(object):
             epoch = epoch + 1
             progressor.report(1, True)
             logger.save_params(epoch, self.layers, self.layer_config)
-            for minibatch_index in xrange(n_train_batches):
-                iter = (epoch - 1) * n_train_batches + minibatch_index
+            for minibatch_index in xrange(n_batches[0]):
+                iter = (epoch - 1) * n_batches[0] + minibatch_index
 
                 if iter % 100 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
                     print 'training @ iter = ', iter
                 cost_ij = train_model(minibatch_index)
 
 
-                if (iter + 1) % validation_frequency == 0:
+                if (iter + 1) % validation_frequency == 0 or iter < 3:
                     # do a validation
 
                     # compute zero-one loss on validation set
                     validation_losses = [validate_model(i) for i
-                                         in xrange(n_valid_batches)]
+                                         in xrange(n_batches[1])]
                     this_validation_loss = numpy.mean(validation_losses)
                     print('epoch %i, minibatch %i/%i, validation error %f %%' % \
-                          (epoch, minibatch_index + 1, n_train_batches, \
+                          (epoch, minibatch_index + 1, n_batches[0], \
                            this_validation_loss * 100.))
 
                     # if we got the best validation score until now
@@ -292,11 +313,11 @@ class NNTrainer(object):
                         best_iter = iter
 
                         # test it on the test set
-                        test_losses = [test_model(i) for i in xrange(n_test_batches)]
+                        test_losses = [test_model(i) for i in xrange(n_batches[2])]
                         test_score = numpy.mean(test_losses)
                         print(('     epoch %i, minibatch %i/%i, test error of best '
                                'model %f %%') %
-                              (epoch, minibatch_index + 1, n_train_batches,
+                              (epoch, minibatch_index + 1, n_batches[0],
                                test_score * 100.))
 
                 if patience <= iter:
@@ -320,7 +341,8 @@ if __name__ == '__main__':
     print "Dataset: ", dataset
     #train_set = read_data(dataset)[0]
     #shape = train_set[0][0].shape
-    shape = (50, 100)
+    #shape = (50, 100)
+    shape = (784, )
     print "Input img size is {0}".format(shape)
 
     if len(shape) == 1:
@@ -339,7 +361,7 @@ if __name__ == '__main__':
     # a NN with two conv-pool layer
     # params are: (n_filters, filter_size), pooling_size
     #nn.add_convpoollayer((20, 5), (1, 2))
-    nn.add_convpoollayer((50, 5), 2)
+    #nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((20, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
@@ -349,6 +371,6 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(dataset=dataset, n_epochs=100)
+    nn.work(dataset=dataset, n_epochs=100, load_all_data=False)
 
 # Usage: ./multi_convolution_mlp.py dataset.pkl.gz
