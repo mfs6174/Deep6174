@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Mon Jul 21 16:52:25 2014 -0700
+# Date: Tue Aug 05 04:03:58 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
@@ -77,6 +77,10 @@ def save_data(data, basename):
     print 'Writing data to {0}'.format(basename)
     output = basename + '.pkl.gz'
     assert not os.path.exists(output), "Path exists! " + str(output)
+
+    data[0][0] = np.asarray(data[0][0], dtype='float32')
+    data[1][0] = np.asarray(data[1][0], dtype='float32')
+    data[2][0] = np.asarray(data[2][0], dtype='float32')
 
     try:
         # first try pickle

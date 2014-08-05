@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Mon Aug 04 19:13:55 2014 -0700
+# Date: Tue Aug 05 04:03:17 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -72,7 +72,7 @@ def random_place(img, frame_size, digit_shape=None):
     offsets = np.random.random_sample((2, ))
     offsets = (int(offsets[0] * (frame_size[0] - img.shape[0])),
                int(offsets[1] * (frame_size[1] - img.shape[1])))
-    ret = np.zeros(frame_size)
+    ret = np.zeros(frame_size, dtype='float32')
     flag = np.zeros(frame_size, dtype='float32')
     for x in range(img.shape[0]):
         ret[x + offsets[0]][offsets[1]:offsets[1] + img.shape[1]] = img[x]
@@ -147,6 +147,8 @@ class SeqDataGenerator(object):
 
             if idx % 1000 == 0:
                 print "Progress: {0}".format(idx)
+        rets = np.asarray(rets, dtype='float32')
+        labels = np.asarray(labels, dtype='int32')
         return rets, labels
 
     def select_n_images(self, n, dataset):
@@ -261,7 +263,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         print "Usage: {0} <output.pkl.gz> <sequence length>"
         sys.exit()
-    dataset = dataio.read_data('./mnist.shaped.pkl.gz')
+    dataset = dataio.read_data('./data/mnist.shaped.pkl.gz')
     fout = sys.argv[1]
     seq_len = int(sys.argv[2])
 
@@ -270,7 +272,7 @@ if __name__ == '__main__':
         dataset, max_width=200, max_height=200,
         rotate=False, resize=True, crazy=True, max_dist=50)
 
-    generator.write_dataset(28000, 1000, 1000, fout)
+    generator.write_dataset(80000, 10000, 10000, fout)
 
 
 

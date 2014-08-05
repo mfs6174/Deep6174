@@ -1,13 +1,15 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: shared_dataio.py
-# Date: Mon Aug 04 22:44:35 2014 -0700
+# Date: Tue Aug 05 13:00:53 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
 import theano
 import numpy as np
+from IPython.core.debugger import Tracer
 import theano.tensor as T
+from itertools import chain
 
 class SharedDataIO(object):
     """ provide api to generate theano shared variable of datasets
@@ -31,7 +33,6 @@ class SharedDataIO(object):
             n_in = dataset[0][0][0].flatten().shape[0]
             self.shared_Xs = [theano.shared(np.zeros((self.batch_size, n_in),
                                                     dtype=theano.config.floatX)) for _ in range(3)]
-
             label = dataset[0][1][0]
             if len(label.shape) == 0:
                 # numpy.int label
@@ -59,7 +60,9 @@ class SharedDataIO(object):
         assert self.share_all == False
 
         data_x, data_y = self.dataset[dataset]
-        data_x = data_x[index * self.batch_size: (index + 1) * self.batch_size]
+        data_x = np.asarray(data_x[index * self.batch_size:
+                                   (index + 1) * self.batch_size],
+                            dtype=theano.config.floatX)
         data_y = data_y[index * self.batch_size: (index + 1) * self.batch_size]
         data_x, data_y = self.process_pair(data_x, data_y)
         self.shared_Xs[dataset].set_value(data_x, borrow=True)
@@ -67,7 +70,7 @@ class SharedDataIO(object):
         return (self.shared_Xs[dataset], self.shared_ys[dataset])
 
     def process_pair(self, X, y):
-        X = [k.flatten() for k in X]
+        X = X.reshape(X.shape[0], -1)
         if self.with_length > 0:
             y = [list(chain.from_iterable((
                 [len(k) - 1],

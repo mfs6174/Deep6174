@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Mon Aug 04 22:45:13 2014 -0700
+# Date: Tue Aug 05 12:55:12 2014 -0700
 import os
 import sys
 import time
@@ -279,7 +279,7 @@ class NNTrainer(object):
 
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
-            progressor.report(1, True)
+            if epoch > 1: progressor.report(1, True)
             logger.save_params(epoch, self.layers, self.layer_config)
             for minibatch_index in xrange(n_batches[0]):
                 iter = (epoch - 1) * n_batches[0] + minibatch_index
@@ -341,8 +341,7 @@ if __name__ == '__main__':
     print "Dataset: ", dataset
     #train_set = read_data(dataset)[0]
     #shape = train_set[0][0].shape
-    #shape = (50, 100)
-    shape = (784, )
+    shape = (200, 200)
     print "Input img size is {0}".format(shape)
 
     if len(shape) == 1:
@@ -356,18 +355,18 @@ if __name__ == '__main__':
         multi_output = True
 
     # config the nn
-    nn = NNTrainer(500, img_size, multi_output=multi_output)
+    nn = NNTrainer(300, img_size, multi_output=multi_output)
 
     # a NN with two conv-pool layer
     # params are: (n_filters, filter_size), pooling_size
-    #nn.add_convpoollayer((20, 5), (1, 2))
-    #nn.add_convpoollayer((20, 5), 2)
+    nn.add_convpoollayer((20, 5), 2)
+    nn.add_convpoollayer((50, 5), 2)
     nn.add_convpoollayer((20, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        #nn.add_sequence_softmax(3)
-        nn.add_nLR_layer(2)
+        nn.add_sequence_softmax(3)
+        #nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
