@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Tue Aug 05 04:03:17 2014 -0700
+# Date: Wed Aug 06 00:27:49 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -54,12 +54,11 @@ def random_resize(imgs, max_len, digit_shapes=None):
         assert max_len > 20
         new_size = seeds[idx] * (max_len - 20) + 20
         frac = new_size * 1.0 / img.shape[0]
-        ret = imresize(img, frac)
+        ret = imresize(img, frac) / 255.0
 
         if digit_shapes is not None:
             assert digit_shapes[idx].shape == img.shape
-            digit_shapes[idx] = imresize(digit_shapes[idx], frac)
-            digit_shapes[idx] = digit_shapes[idx] / 255.0
+            digit_shapes[idx] = imresize(digit_shapes[idx], frac) / 255.0
             assert digit_shapes[idx].shape == ret.shape, "{0}!={1}".format(digit_shapes[idx].shape, ret.shape)
         return ret
     return [resize(k, idx) for idx, k in enumerate(imgs)]
@@ -142,13 +141,12 @@ class SeqDataGenerator(object):
         labels = []
         for idx, l in enumerate(lens):
             img, label = self.select_n_images(l, dataset)
-            rets.append(img)
+            rets.append(np.asarray(img, dtype='float32'))
             labels.append(label)
 
             if idx % 1000 == 0:
                 print "Progress: {0}".format(idx)
-        rets = np.asarray(rets, dtype='float32')
-        labels = np.asarray(labels, dtype='int32')
+        #rets = np.asarray(rets, dtype='float32')
         return rets, labels
 
     def select_n_images(self, n, dataset):
@@ -194,18 +192,22 @@ class SeqDataGenerator(object):
         assert space_left > 0
         chunks = random_slice(n_chunks, space_left)
 
-        ret = np.zeros((max_height, chunks[0]))
+        ret = np.zeros((max_height, chunks[0]), dtype='float32')
         for idx, k in enumerate(imgs):
             ret = np.hstack((ret, k, np.zeros((self.img_size[0], chunks[idx + 1]))))
         assert ret.shape == self.img_size
         return ret
 
     def crazy_paste_image(self, imgs, labels, shapes=None):
+        cnt = 0
         while True:
             orig_shapes = copy(shapes)
             ret = self._do_crazy_paste_image(imgs, labels, orig_shapes)
             if ret != False:
                 return ret
+            cnt += 1
+            if cnt % 200 == 0:
+                print "Trying {0}...".format(cnt)
 
     def _do_crazy_paste_image(self, imgs, labels, shapes=None):
         """ return False when test failed.
@@ -215,7 +217,7 @@ class SeqDataGenerator(object):
             imgs = random_rotate(imgs)
         if self.do_resize:
             max_resize =  min(self.img_size)
-            max_resize = 100
+            max_resize = 80
             imgs = random_resize(imgs, max_resize, shapes)
 
         if shapes is None:
@@ -230,7 +232,7 @@ class SeqDataGenerator(object):
             return False
         labels = sorted(enumerate(labels),
                         key=lambda tp: centers[tp[0]][1] * 1000 + centers[tp[0]][0])
-        labels = np.asarray([k[1] for k in labels])
+        labels = np.asarray([k[1] for k in labels], dtype='int32')
 
         ret = sum([x[1] for x in frames])
         return ret, labels
@@ -268,11 +270,11 @@ if __name__ == '__main__':
     seq_len = int(sys.argv[2])
 
     generator = SeqDataGenerator(
-        {seq_len: 0.5, seq_len + 1: 0.5},
-        dataset, max_width=200, max_height=200,
+        {seq_len: 1},
+        dataset, max_width=150, max_height=150,
         rotate=False, resize=True, crazy=True, max_dist=50)
 
-    generator.write_dataset(80000, 10000, 10000, fout)
+    generator.write_dataset(50000, 10000, 10000, fout)
 
 
 

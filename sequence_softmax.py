@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Mon Aug 04 23:20:12 2014 -0700
+# Date: Tue Aug 05 20:51:58 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
-from itertools import chain
+from itertools import chain, izip
 import gzip
 import os
 import sys
@@ -49,9 +49,13 @@ class SequenceSoftmax(object):
         self.bs = [gen_b(seq_max_len, 0)]
         self.bs.extend([gen_b(n_out, _ + 1) for _ in range(seq_max_len)])
 
+        assert len(self.Ws) == self.n_softmax
+        assert len(self.bs) == self.n_softmax
+
         self.p_y_given_x = [T.nnet.softmax(T.dot(input, self.Ws[k]) +
                                             self.bs[k]) for k in
                              xrange(self.n_softmax)]
+        # p_y_given_x[k] = kth output for all y, each of size (batch_size * n_out)
         self.pred = [T.argmax(self.p_y_given_x[k], axis=1) for k in
                      xrange(self.n_softmax)]
         self.pred = T.stacklists(self.pred).dimshuffle(1, 0)
@@ -63,23 +67,23 @@ class SequenceSoftmax(object):
     def negative_log_likelihood(self, y):
         """ y: a batch_size x n_softmax 2d matrix. each row: (len, l1, l2, l3, ...)
         """
-        M = [T.log(self.p_y_given_x[k])[T.arange(y.shape[0]), y[:,k]] for k in range(self.n_softmax)]
+        batch_size = y.shape[0]
+        log_matrices = [T.log(self.p_y_given_x[k]) for k in range(self.n_softmax)]
+        idxs = [y[:,k] for k in range(self.n_softmax)]
+        #idxs[3] = PP.Print("idx-1")(idxs[3])
+        rg = T.arange(batch_size)
+        M = [m[rg, idx] for m, idx in izip(log_matrices, idxs)]
         M = T.stacklists(M)
-        #return -T.sum(T.sum(M)) / y.shape[0]
 
         # switch line and row
         M = M.dimshuffle(1, 0)
-
-        #M = [T.sum(M[:t[0] + 1]) for t in M]
-        #return -T.sum(M) / y.shape[0]
 
         #from operator import add
         def f(probs, label):
             # + 1 is real sequence length, + 1 include first element (length)
             return T.sum(probs[:label[0] + 1 + 1])
         sr, su = theano.map(fn=f, sequences=[M, y])
-
-        return -T.sum(sr) / y.shape[0]
+        return -T.mean(sr)
 
     def errors(self, y):
         if not y.dtype.startswith('int'):

@@ -236,6 +236,8 @@ if __name__ == '__main__':
 
     train, valid, test = read_data(sys.argv[2])
     corr, tot = 0, 0
+    if nn.var_len_output:
+        len_tot, len_corr = 0, 0
     for img, label in izip(test[0], test[1]):
         img = get_image_matrix(img)
         # run the network
@@ -249,8 +251,11 @@ if __name__ == '__main__':
                 tot += seq_len
                 corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label)
                              if i == j])
-                #tot += 1
-                #corr += list(pred[1:1+seq_len]) == list(label)
+
+                len_tot += 1
+                len_corr += pred[0] + 1 == len(label)
+                if len_tot % 1000 == 0:
+                    print "Length predict accuracy: {0}".format(len_corr * 1.0 / len_tot)
             elif len(label) == len(pred):
                 tot += len(label)
                 corr += len([k for k, _ in izip(pred, label) if k == _])
