@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Tue Aug 05 20:51:58 2014 -0700
+# Date: Wed Aug 06 16:47:09 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -90,9 +90,11 @@ class SequenceSoftmax(object):
             raise NotImplementedError()
 
         def f(pred, label):
-            return T.mean(T.neq(pred[1:label[0] + 2], label[1:label[0] + 2]))
+            return T.sum(T.neq(pred[1:label[0] + 2], label[1:label[0] + 2]))
         sr, su = theano.map(fn=f, sequences=[self.pred, y])
-        return T.mean(sr)
+
+        len_sum = T.sum(y[:,0] + 1)
+        return T.sum(sr) / len_sum
 
         #return sum([T.mean(T.neq(self.pred[k], y[:,k])) for k in
                         #range(self.n_softmax)]) / self.n_softmax

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Wed Aug 06 14:00:40 2014 -0700
+# Date: Wed Aug 06 16:48:21 2014 -0700
 import os
 import sys
 import time
@@ -347,7 +347,7 @@ if __name__ == '__main__':
     print "Dataset: ", dataset
     #train_set = read_data(dataset)[0]
     #shape = train_set[0][0].shape
-    shape = (150, 150)
+    shape = (50, 100)
     print "Input img size is {0}".format(shape)
 
     if len(shape) == 1:
@@ -367,8 +367,8 @@ if __name__ == '__main__':
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((50, 5), 2)
-    nn.add_convpoollayer((20, 5), 2)
-    nn.add_convpoollayer((20, 5), 2)
+    #nn.add_convpoollayer((20, 5), 2)
+    #nn.add_convpoollayer((20, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
@@ -379,4 +379,4 @@ if __name__ == '__main__':
     print "Network has {0} params in total.".format(nn.n_params())
     nn.work(dataset=dataset, n_epochs=100, load_all_data=False)
 
-# Usage: ./multi_convolution_mlp.py dataset.pkl.gz
+# Usage: ./train_network.py dataset.pkl.gz
