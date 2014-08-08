@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Tue Aug 05 04:03:58 2014 -0700
+# Date: Fri Aug 08 15:33:03 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
@@ -14,6 +14,7 @@ import glob
 import numpy as np
 import os
 import scipy.io as sio
+from utils import memorized
 
 def _read_data_fallback(dataset):
     def read(name):
@@ -33,6 +34,7 @@ def _read_data_fallback(dataset):
         return (all_imgs, all_labels)
     return (read('train'), read('valid'), read('test'))
 
+@memorized
 def read_data(dataset):
     """ return (train, valid, test)"""
     print ' ... loading data from {0}'.format(dataset)
@@ -92,9 +94,11 @@ def save_data(data, basename):
         os.remove(output)
         _save_data_fallback(data, basename)
 
-def get_dataset_imgsize(dataset):
+def get_dataset_imgsize(dataset, transform=True):
     train = read_data(dataset)[0]
     shape = train[0][0].shape
+    if not transform:
+        return shape
     if len(shape) == 1:
         size = int(np.sqrt(shape[0]))
         return (size, size)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Wed Aug 06 16:47:09 2014 -0700
+# Date: Thu Aug 07 12:43:52 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -94,7 +94,7 @@ class SequenceSoftmax(object):
         sr, su = theano.map(fn=f, sequences=[self.pred, y])
 
         len_sum = T.sum(y[:,0] + 1)
-        return T.sum(sr) / len_sum
+        return T.cast(T.sum(sr), 'float32') / len_sum
 
         #return sum([T.mean(T.neq(self.pred[k], y[:,k])) for k in
                         #range(self.n_softmax)]) / self.n_softmax

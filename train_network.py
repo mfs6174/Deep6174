@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Wed Aug 06 16:48:21 2014 -0700
+# Date: Fri Aug 08 15:35:31 2014 -0700
 import os
 import sys
 import time
@@ -174,7 +174,7 @@ class NNTrainer(object):
             return ret
         return sum([get_layer_nparam(l) for l in self.layers])
 
-    def work(self, learning_rate=0.1, n_epochs=60, dataset='mnist.pkl.gz',
+    def work(self, learning_rate=0.1, n_epochs=60, dataset_file='mnist.pkl.gz',
              load_all_data=True):
         """ read data and start training"""
         print self.layers
@@ -182,7 +182,7 @@ class NNTrainer(object):
         assert type(self.layers[-1]) in [LogisticRegression,
                                          FixedLengthSoftmax, SequenceSoftmax]
 
-        dataset = read_data(dataset)
+        dataset = read_data(dataset_file)
         if type(self.layers[-1]) == SequenceSoftmax:
             max_len = self.layer_config[-1]['max_len']
             print "Using Sequence Softmax Output with max_len = {0}".format(max_len)
@@ -280,7 +280,7 @@ class NNTrainer(object):
         epoch = 0
         done_looping = False
 
-        logger = ParamsLogger(self.input_shape)
+        logger = ParamsLogger(self.input_shape, dataset_file + '-models')
         progressor = Progressor(n_epochs)
 
         while (epoch < n_epochs) and (not done_looping):
@@ -345,9 +345,7 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-    #train_set = read_data(dataset)[0]
-    #shape = train_set[0][0].shape
-    shape = (50, 100)
+    shape = get_dataset_imgsize(dataset, False)
     print "Input img size is {0}".format(shape)
 
     if len(shape) == 1:
@@ -367,16 +365,15 @@ if __name__ == '__main__':
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((50, 5), 2)
-    #nn.add_convpoollayer((20, 5), 2)
-    #nn.add_convpoollayer((20, 5), 2)
+    nn.add_convpoollayer((50, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_sequence_softmax(3)
-        #nn.add_nLR_layer(2)
+        #nn.add_sequence_softmax(3)
+        nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(dataset=dataset, n_epochs=100, load_all_data=False)
+    nn.work(dataset_file=dataset, n_epochs=100, load_all_data=False)
 
 # Usage: ./train_network.py dataset.pkl.gz

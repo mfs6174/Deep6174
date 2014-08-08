@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Wed Aug 06 00:27:49 2014 -0700
+# Date: Fri Aug 08 15:26:45 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -217,7 +217,7 @@ class SeqDataGenerator(object):
             imgs = random_rotate(imgs)
         if self.do_resize:
             max_resize =  min(self.img_size)
-            max_resize = 80
+            max_resize = min([80, max_resize])
             imgs = random_resize(imgs, max_resize, shapes)
 
         if shapes is None:
@@ -238,7 +238,7 @@ class SeqDataGenerator(object):
         return ret, labels
 
     def _dist_ok(self, centers):
-        if self.max_dist is None:
+        if self.max_dist is None or len(centers) == 1:
             return True
         for k in centers:
             for k2 in centers:
@@ -270,11 +270,11 @@ if __name__ == '__main__':
     seq_len = int(sys.argv[2])
 
     generator = SeqDataGenerator(
-        {seq_len: 1},
-        dataset, max_width=150, max_height=150,
+        {seq_len: 0.5, seq_len + 1: 0.5},
+        dataset, max_width=150, max_height=140,
         rotate=False, resize=True, crazy=True, max_dist=50)
 
-    generator.write_dataset(50000, 10000, 10000, fout)
+    generator.write_dataset(80000, 10000, 10000, fout)
 
 
 

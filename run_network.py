@@ -193,8 +193,8 @@ def save_LR_W_img(W, n_filter):
         for idx, img in enumerate(imgs):
             imsave('LRW-label{0}-weight{1}.jpg'.format(l, idx), img)
 
-def get_label_from_result(img, results):
-    if img.shape[0] == img.shape[1]:
+def get_label_from_result(img, results, multi_output):
+    if not multi_output:
         # the predicted results for single digit output
         label = max(enumerate(results[-1][0]), key=operator.itemgetter(1))
         return label[0]
@@ -242,10 +242,9 @@ if __name__ == '__main__':
         img = get_image_matrix(img)
         # run the network
         results = [nn.run_only_last(img)]
-        pred = get_label_from_result(img, results)
-        #print pred, label
+        pred = get_label_from_result(img, results, nn.multi_output)
 
-        if nn.multi_output:
+        if nn.multi_output and hasattr(pred, '__iter__'):
             if nn.var_len_output:
                 seq_len = pred[0] + 1
                 tot += seq_len
@@ -258,7 +257,8 @@ if __name__ == '__main__':
                     print "Length predict accuracy: {0}".format(len_corr * 1.0 / len_tot)
             elif len(label) == len(pred):
                 tot += len(label)
-                corr += len([k for k, _ in izip(pred, label) if k == _])
+                corr += len(set(label) & set(pred))
+                #corr += len([k for k, _ in izip(pred, label) if k == _])
             else:
                 tot += 1
                 corr += label_match(pred, label)
