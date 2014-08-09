@@ -196,7 +196,7 @@ def save_LR_W_img(W, n_filter):
 def get_label_from_result(img, results, multi_output):
     if not multi_output:
         # the predicted results for single digit output
-        label = max(enumerate(results[-1][0]), key=operator.itemgetter(1))
+        label = max(enumerate(results[-1]), key=operator.itemgetter(1))
         return label[0]
     else:
         # predicted results for multiple digit output

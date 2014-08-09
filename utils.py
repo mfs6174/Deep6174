@@ -162,7 +162,7 @@ def timeit(f):
 
 import collections
 import functools
-class memoized(object):
+class memorized(object):
    '''Decorator. Caches a function's return value each time it is called.
    If called later with the same arguments, the cached value is returned
    (not reevaluated).

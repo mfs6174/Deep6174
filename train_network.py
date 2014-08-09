@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Fri Aug 08 15:35:31 2014 -0700
+# Date: Sat Aug 09 02:44:10 2014 -0700
 import os
 import sys
 import time
@@ -365,12 +365,11 @@ if __name__ == '__main__':
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((50, 5), 2)
-    nn.add_convpoollayer((50, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        #nn.add_sequence_softmax(3)
-        nn.add_nLR_layer(2)
+        nn.add_sequence_softmax(3)
+        #nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
