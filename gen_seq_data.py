@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Fri Aug 08 22:27:32 2014 -0700
+# Date: Sat Aug 09 02:57:48 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -14,8 +14,10 @@ import cPickle as pickle
 import gzip
 import sys
 from itertools import izip
-from utils import show_img_sync, get_image_matrix, timeit
 from copy import copy
+
+from utils import show_img_sync, get_image_matrix, timeit
+from progress import Progressor
 
 def random_slice(k, N):
     """ randomly return k integers which sum to N"""
@@ -139,13 +141,14 @@ class SeqDataGenerator(object):
 
         rets = []
         labels = []
+        prgs = Progressor(n)
         for idx, l in enumerate(lens):
             img, label = self.select_n_images(l, dataset)
             rets.append(np.asarray(img, dtype='float32'))
             labels.append(label)
 
             if idx % 1000 == 0:
-                print "Progress: {0}".format(idx)
+                prgs.report(1000, True)
         #rets = np.asarray(rets, dtype='float32')
         return rets, labels
 
@@ -270,7 +273,7 @@ if __name__ == '__main__':
     seq_len = int(sys.argv[2])
 
     generator = SeqDataGenerator(
-        {seq_len: 0.5, seq_len + 1: 0.5},
+        {seq_len: 1},
         dataset, max_width=200, max_height=150,
         rotate=False, resize=True, crazy=True, max_dist=50)
 

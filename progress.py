@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: progress.py
-# Date: Mon Aug 04 00:14:27 2014 -0700
+# Date: Sat Aug 09 10:07:56 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import time
@@ -23,5 +23,5 @@ class Progressor(object):
             eta = float('inf')
         else:
             eta = elapsed / prgs - elapsed
-            print "{}elapsed: {:.2f}s ETA: {:.2f}s".format(
-                self.prompt, elapsed, eta)
+            print "{} {} of {} done. elapsed: {:.2f}s ETA: {:.2f}s".format(
+                self.prompt,cnt, self.total, elapsed, eta)
