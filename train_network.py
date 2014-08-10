@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sat Aug 09 02:44:10 2014 -0700
+# Date: Sun Aug 10 00:13:02 2014 -0700
 import os
 import sys
 import time
@@ -18,6 +18,7 @@ import theano
 import theano.tensor as T
 
 from params_logger import ParamsLogger
+from learningrate import LearningRateProvider
 from logistic_sgd import LogisticRegression, load_data
 from dataio import read_data, save_data, get_dataset_imgsize
 from mlp import HiddenLayer
@@ -174,7 +175,7 @@ class NNTrainer(object):
             return ret
         return sum([get_layer_nparam(l) for l in self.layers])
 
-    def work(self, learning_rate=0.1, n_epochs=60, dataset_file='mnist.pkl.gz',
+    def work(self, n_epochs=60, dataset_file='mnist.pkl.gz',
              load_all_data=True):
         """ read data and start training"""
         print self.layers
@@ -202,10 +203,12 @@ class NNTrainer(object):
         # take derivatives on those params
         grads = T.grad(cost, params)
 
-        # gradient descent on those params
-        updates = []
-        for param_i, grad_i in zip(params, grads):
-            updates.append((param_i, param_i - learning_rate * grad_i))
+        def gen_train_with_learning_rate(rate):
+            # gradient descent on those params
+            updates = []
+            for param_i, grad_i in zip(params, grads):
+                updates.append((param_i, param_i - rate * grad_i))
+            return updates
 
         n_batches = list(shared_io.get_dataset_size())
         n_batches = [x / self.batch_size for x in n_batches]
@@ -216,10 +219,11 @@ class NNTrainer(object):
             valid_set_x, valid_set_y = datasets[1]
             test_set_x, test_set_y = datasets[2]
             index = T.lscalar()
+            lr_rate = T.fscalar()
 
             # symbolic function to train and update
-            train_model = theano.function([index], cost,
-                  updates=updates,
+            train_model = theano.function([index, lr_rate], cost,
+                  updates=gen_train_with_learning_rate(lr_rate),
                   givens={
                     self.x: train_set_x[index * self.batch_size: (index + 1) * self.batch_size],
                     self.y: train_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
@@ -234,14 +238,14 @@ class NNTrainer(object):
                         self.x: test_set_x[index * self.batch_size: (index + 1) * self.batch_size],
                         self.y: test_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
         else:
-            do_train_model = theano.function([], cost,
-                updates=updates,
+            do_train_model = theano.function([lr_rate], cost,
+                updates=gen_train_with_learning_rate(lr_rate),
                 givens={
                     self.x: shared_io.shared_Xs[0],
                     self.y: shared_io.shared_ys[0]})
-            def train_model(index):
+            def train_model(index, learning_rate):
                 shared_io.get_train(index)
-                return do_train_model()
+                return do_train_model(learning_rate)
 
             do_valid_model = theano.function([], layer.errors(self.y),
                 givens={
@@ -282,17 +286,20 @@ class NNTrainer(object):
 
         logger = ParamsLogger(self.input_shape, dataset_file + '-models')
         progressor = Progressor(n_epochs)
+        rate_provider = LearningRateProvider(dataset_file + '-learnrate', 0.5)
 
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
             if epoch > 1: progressor.report(1, True)
             logger.save_params(epoch, self.layers, self.layer_config)
+            learning_rate = rate_provider.get_rate(epoch)
+            print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
             for minibatch_index in xrange(n_batches[0]):
                 iter = (epoch - 1) * n_batches[0] + minibatch_index
 
                 if iter % 100 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
                     print 'training @ iter = ', iter
-                cost_ij = train_model(minibatch_index)
+                cost_ij = train_model(minibatch_index, learning_rate)
 
 
                 if (iter + 1) % validation_frequency == 0 or iter < 5:
@@ -373,6 +380,6 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(dataset_file=dataset, n_epochs=100, load_all_data=False)
+    nn.work(dataset_file=dataset, n_epochs=100, load_all_data=True)
 
 # Usage: ./train_network.py dataset.pkl.gz
