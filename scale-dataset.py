@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: scale-dataset.py
-# Date: Sun Aug 10 15:30:31 2014 -0700
+# Date: Mon Aug 11 11:47:03 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import sys
@@ -18,7 +18,7 @@ t, v, ts = read_data(dataset)
 def process(ds):
     return ([imresize(img, factor) for img in ds[0]], ds[1])
 
-newname = dataset[:-6] + '-factor{0}.pkl.gz'.format(factor)
+newname = dataset[:-7] + '-factor{0}'.format(factor)
 newdata = (process(t), process(v), process(ts))
 save_data(newdata, newname)
 
