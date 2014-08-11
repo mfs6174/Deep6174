@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Mon Aug 11 12:03:14 2014 -0700
+# Date: Mon Aug 11 14:27:35 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -68,21 +68,28 @@ class SequenceSoftmax(object):
         """ y: a batch_size x n_softmax 2d matrix. each row: (len, l1, l2, l3, ...)
         """
         batch_size = y.shape[0]
-        log_matrices = [T.log(self.p_y_given_x[k]) for k in range(self.n_softmax)]
-        idxs = [y[:,k] for k in range(self.n_softmax)]
-        #idxs[3] = PP.Print("idx-1")(idxs[3])
         rg = T.arange(batch_size)
-        M = [m[rg, idx] for m, idx in izip(log_matrices, idxs)]
-        M = T.stacklists(M)
 
-        # switch line and row
-        M = M.dimshuffle(1, 0)
+        logs = T.log(self.p_y_given_x[1:])
+        idxs = y.dimshuffle(1, 0)[1:]
+        sr, _ = theano.map(fn=lambda l, idx: return l[rg, idx],
+                            sequences=[logs, idxs])
+        M = sr.dimshuffle(1, 0)
+        label_probs = T.log(self.p_y_given_x[0])[rg, y[:,0]]
+        def f(probs, label, lp):
+            return T.sum(probs[:label[0] + 1]) + lp
+        sr, _ = theano.map(fn=f, sequences=[M, y, label_probs])
 
-        #from operator import add
-        def f(probs, label):
-            # + 1 is real sequence length, + 1 include first element (length)
-            return T.sum(probs[:label[0] + 1 + 1])
-        sr, su = theano.map(fn=f, sequences=[M, y])
+        #log_matrices = [T.log(self.p_y_given_x[k]) for k in range(self.n_softmax)]
+        #idxs = [y[:,k] for k in range(self.n_softmax)]
+        ##idxs[3] = PP.Print("idx-1")(idxs[3])
+        #M = [m[rg, idx] for m, idx in izip(log_matrices, idxs)]
+        #M = T.stacklists(M)
+        #M = M.dimshuffle(1, 0)
+        #def f(probs, label):
+            #return T.sum(probs[:label[0] + 1 + 1])
+        #sr, su = theano.map(fn=f, sequences=[M, y])
+
         return -T.mean(sr)
 
     def errors(self, y):

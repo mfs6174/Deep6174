@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: shared_dataio.py
-# Date: Tue Aug 05 14:30:37 2014 -0700
+# Date: Mon Aug 11 13:58:44 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -32,7 +32,8 @@ class SharedDataIO(object):
         else:
             n_in = dataset[0][0][0].flatten().shape[0]
             self.shared_Xs = [theano.shared(np.zeros((self.batch_size, n_in),
-                                                    dtype=theano.config.floatX)) for _ in range(3)]
+                                                    dtype=theano.config.floatX),
+                                           borrow=True) for _ in range(3)]
             label = dataset[0][1][0]
             if len(label.shape) == 0:
                 # numpy.int label
@@ -69,8 +70,10 @@ class SharedDataIO(object):
         return (self.shared_Xs[dataset], self.shared_ys[dataset])
 
     def process_pair(self, X, y):
-        X = np.asarray(X, dtype='float32')
-        X = X.reshape(X.shape[0], -1)
+        if type(X) == list:
+            X = np.asarray(X, dtype='float32')
+        if len(X[0].shape) != 1:
+            X = X.reshape(X.shape[0], -1)
         if self.with_length > 0:
             y = [list(chain.from_iterable((
                 [len(k) - 1],
@@ -79,8 +82,7 @@ class SharedDataIO(object):
             for k in y:
                 assert len(k) == self.with_length + 1
                 assert k[0] + 2 <= len(k)
-        return (np.asarray(X, dtype=theano.config.floatX),
-                np.asarray(y, dtype='int32'))
+        return (X, np.asarray(y, dtype='int32'))
 
     def share_dataset(self, data_xy, borrow=True):
         """ Function that loads the dataset into shared variables
