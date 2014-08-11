@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Thu Aug 07 12:43:52 2014 -0700
+# Date: Mon Aug 11 11:23:46 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -70,7 +70,7 @@ class SequenceSoftmax(object):
         batch_size = y.shape[0]
         log_matrices = [T.log(self.p_y_given_x[k]) for k in range(self.n_softmax)]
         idxs = [y[:,k] for k in range(self.n_softmax)]
-        #idxs[3] = PP.Print("idx-1")(idxs[3])
+        idxs[3] = PP.Print("idx-1")(idxs[3])
         rg = T.arange(batch_size)
         M = [m[rg, idx] for m, idx in izip(log_matrices, idxs)]
         M = T.stacklists(M)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sun Aug 10 17:26:44 2014 -0700
+# Date: Mon Aug 11 11:24:52 2014 -0700
 import os
 import sys
 import time
@@ -34,7 +34,7 @@ class NNTrainer(object):
     """ Configurable Neural Network Trainer,
         Currently support several convolution-pooling layer followed by hidden layers.
     """
-    def __init__(self, batch_size, input_shape, multi_output=False):
+    def __init__(self, batch_size, input_shape, multi_output=True):
         self.layer_config = []
         self.layers = []
         self.batch_size = batch_size
@@ -291,6 +291,7 @@ class NNTrainer(object):
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
             if epoch > 1: progressor.report(1, True)
+            # save params at the beginning of each epoch
             logger.save_params(epoch, self.layers, self.layer_config)
             learning_rate = rate_provider.get_rate(epoch)
             print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
@@ -309,7 +310,7 @@ class NNTrainer(object):
                     validation_losses = [validate_model(i) for i
                                          in xrange(n_batches[1])]
                     this_validation_loss = numpy.mean(validation_losses)
-                    print('epoch %i, minibatch %i/%i, validation error %f %%' % \
+                    print('After epoch %i, minibatch %i/%i, validation error %f %%' % \
                           (epoch, minibatch_index + 1, n_batches[0], \
                            this_validation_loss * 100.))
 
@@ -329,7 +330,7 @@ class NNTrainer(object):
                         # test it on the test set
                         test_losses = [test_model(i) for i in xrange(n_batches[2])]
                         test_score = numpy.mean(test_losses)
-                        print(('     epoch %i, minibatch %i/%i, test error of best '
+                        print(('     After epoch %i, minibatch %i/%i, test error of best '
                                'model %f %%') %
                               (epoch, minibatch_index + 1, n_batches[0],
                                test_score * 100.))
@@ -365,6 +366,7 @@ if __name__ == '__main__':
         img_size = shape
         # if input is not square, then probably is multiple output.
         multi_output = True
+    load_all = img_size[0] * img_size[1] < 100 ** 2
 
     # config the nn
     nn = NNTrainer(500, img_size, multi_output=multi_output)
@@ -382,7 +384,7 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=100,
-            load_all_data=False)
+    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
+            load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz

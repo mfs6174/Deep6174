@@ -24,9 +24,9 @@ from dataio import read_data, save_data, get_dataset_imgsize
 N_OUT = 10
 
 class NetworkRunner(object):
-    def __init__(self, input_size):
+    def __init__(self, input_size, batch_size=1):
         self.input_size = input_size
-        self.nn = NNTrainer(1, input_size)
+        self.nn = NNTrainer(batch_size, input_size)
         self.n_conv_layer = 0
         self.var_len_output = False
         self.multi_output = False
@@ -126,12 +126,12 @@ class NetworkRunner(object):
         label = max(enumerate(res), key=operator.itemgetter(1))
         return label
 
-def build_nn_with_params(params):
+def build_nn_with_params(params, batch_size=1):
     """ params: the object load from param{epoch}.mat file
     """
     input_size = params['input_shape']
     print "Size={0}".format(input_size)
-    runner = NetworkRunner(input_size)
+    runner = NetworkRunner(input_size, batch_size)
     for nlayer in count(start=1, step=1):
         layername = 'layer' + str(nlayer)
         if layername not in params:
@@ -156,7 +156,6 @@ def build_nn_with_params(params):
         elif layertype == 'ssm':
             runner.add_sequence_softmax(
                 layerdata['Ws'], layerdata['bs'])
-    runner.finish()
     return runner
 
 def get_nn(filename):
@@ -171,6 +170,7 @@ def get_nn(filename):
             data = pickle.load(f)
 
     nn = build_nn_with_params(data)
+    nn.finish()
     return nn
 
 def get_an_image(dataset, label):
