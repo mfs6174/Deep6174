@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sun Aug 10 17:14:34 2014 -0700
+# Date: Sun Aug 10 17:26:44 2014 -0700
 import os
 import sys
 import time
@@ -175,7 +175,7 @@ class NNTrainer(object):
             return ret
         return sum([get_layer_nparam(l) for l in self.layers])
 
-    def work(self, n_epochs=60, dataset_file='mnist.pkl.gz',
+    def work(self, init_learning_rate=0.1, n_epochs=60, dataset_file='mnist.pkl.gz',
              load_all_data=True):
         """ read data and start training"""
         print self.layers
@@ -212,6 +212,7 @@ class NNTrainer(object):
 
         n_batches = list(shared_io.get_dataset_size())
         n_batches = [x / self.batch_size for x in n_batches]
+        lr_rate = T.fscalar()
 
         if load_all_data:
             datasets = shared_io.shared_dataset
@@ -219,7 +220,6 @@ class NNTrainer(object):
             valid_set_x, valid_set_y = datasets[1]
             test_set_x, test_set_y = datasets[2]
             index = T.lscalar()
-            lr_rate = T.fscalar()
 
             # symbolic function to train and update
             train_model = theano.function([index, lr_rate], cost,
@@ -286,7 +286,7 @@ class NNTrainer(object):
 
         logger = ParamsLogger(self.input_shape, dataset_file + '-models')
         progressor = Progressor(n_epochs)
-        rate_provider = LearningRateProvider(dataset_file + '-learnrate', 0.5)
+        rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
 
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
@@ -373,6 +373,7 @@ if __name__ == '__main__':
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((50, 5), 2)
+    nn.add_convpoollayer((50, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
@@ -381,6 +382,7 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(dataset_file=dataset, n_epochs=100, load_all_data=True)
+    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=100,
+            load_all_data=False)
 
 # Usage: ./train_network.py dataset.pkl.gz
