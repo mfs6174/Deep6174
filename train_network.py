@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sun Aug 10 00:13:02 2014 -0700
+# Date: Sun Aug 10 17:14:34 2014 -0700
 import os
 import sys
 import time
@@ -324,6 +324,7 @@ class NNTrainer(object):
                         # save best validation score and iteration number
                         best_validation_loss = this_validation_loss
                         best_iter = iter
+                        logger.save_params('best', self.layers, self.layer_config)
 
                         # test it on the test set
                         test_losses = [test_model(i) for i in xrange(n_batches[2])]

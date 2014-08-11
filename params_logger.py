@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Sun Aug 03 11:27:31 2014 -0700
+# Date: Sun Aug 10 17:14:20 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -35,7 +35,6 @@ class ParamsLogger(object):
             pass
 
     def save_params(self, epoch, layers, layer_config):
-        #fname = os.path.join(self.logdir, "{0}.mat".format(epoch))
         fname = os.path.join(self.logdir, "param{0:03d}.pkl.gz".format(epoch))
         res = {}
 
