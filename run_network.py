@@ -248,16 +248,18 @@ if __name__ == '__main__':
             if nn.var_len_output:
                 seq_len = pred[0] + 1
                 tot += seq_len
-                corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label)
-                             if i == j])
+                #corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label)
+                             #if i == j])
+                corr += len(set(pred[1:]) & set(label))
+                print pred, label
 
                 len_tot += 1
                 len_corr += pred[0] + 1 == len(label)
                 if len_tot % 1000 == 0:
                     print "Length predict accuracy: {0}".format(len_corr * 1.0 / len_tot)
-            elif len(label) == len(pred):
+            elif len(label) == len(pred) - 1:
                 tot += len(label)
-                corr += len(set(label) & set(pred))
+                corr += len(set(label) & set(pred[1:]))
                 #corr += len([k for k, _ in izip(pred, label) if k == _])
             else:
                 tot += 1
@@ -270,4 +272,4 @@ if __name__ == '__main__':
             print "Rate: {0}".format(corr * 1.0 / tot)
 
 
-# Usage ./run_network.py dataset.pkl.gz param_file.pkl.gz [label]
+# Usage ./run_network.py param_file.pkl.gz dataset.pkl.gz

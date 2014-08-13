@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sample_data_to_view.py
-# Date: Fri Aug 08 18:40:10 2014 -0700
+# Date: Tue Aug 12 14:43:21 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -29,6 +29,8 @@ if len(sys.argv) == 3:
     n_img = int(sys.argv[2])
 else:
     n_img = 40
+
+print "Number of samples: {0}".format(n_img)
 
 train = read_data(input_data)[0]
 index = np.random.choice(len(train[0]), n_img)

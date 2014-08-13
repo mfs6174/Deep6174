@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Mon Aug 11 14:27:35 2014 -0700
+# Date: Mon Aug 11 16:46:32 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -72,8 +72,8 @@ class SequenceSoftmax(object):
 
         logs = T.log(self.p_y_given_x[1:])
         idxs = y.dimshuffle(1, 0)[1:]
-        sr, _ = theano.map(fn=lambda l, idx: return l[rg, idx],
-                            sequences=[logs, idxs])
+        sr, _ = theano.map(fn=lambda l, idx: l[rg, idx],
+                           sequences=[logs, idxs])
         M = sr.dimshuffle(1, 0)
         label_probs = T.log(self.p_y_given_x[0])[rg, y[:,0]]
         def f(probs, label, lp):

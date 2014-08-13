@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Mon Aug 11 11:24:52 2014 -0700
+# Date: Wed Aug 13 15:22:39 2014 -0700
 import os
 import sys
 import time
@@ -47,9 +47,9 @@ class NNTrainer(object):
                                                       self.input_shape)).astype('float32')
         if multi_output:
             self.y = T.imatrix('y')
-            t = np.zeros((self.batch_size, 4), dtype='int32')
-            t[:2] = np.asarray([[2, 1, 2, 3], [1, 1, 2, -1]])
-            self.y.tag.test_value = t
+            #t = np.zeros((self.batch_size, 4), dtype='int32')
+            #t[:2] = np.asarray([[2, 1, 2, 3], [1, 1, 2, -1]])
+            #self.y.tag.test_value = t
         else:
             self.y = T.ivector('y')
 
@@ -367,6 +367,7 @@ if __name__ == '__main__':
         # if input is not square, then probably is multiple output.
         multi_output = True
     load_all = img_size[0] * img_size[1] < 100 ** 2
+    print "Load All Data: ", load_all
 
     # config the nn
     nn = NNTrainer(500, img_size, multi_output=multi_output)
@@ -379,7 +380,7 @@ if __name__ == '__main__':
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_sequence_softmax(3)
+        nn.add_sequence_softmax(5)
         #nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
