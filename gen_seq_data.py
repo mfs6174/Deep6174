@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen_seq_data.py
-# Date: Wed Aug 13 02:14:14 2014 -0700
+# Date: Wed Aug 13 15:28:17 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -147,7 +147,7 @@ class SeqDataGenerator(object):
             rets.append(np.asarray(img, dtype='float32'))
             labels.append(label)
 
-            if idx % 1000 == 0:
+            if idx > 0 and idx % 1000 == 0:
                 prgs.report(1000, True)
         #rets = np.asarray(rets, dtype='float32')
         return rets, labels

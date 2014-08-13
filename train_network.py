@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Wed Aug 13 15:22:39 2014 -0700
+# Date: Wed Aug 13 15:29:59 2014 -0700
 import os
 import sys
 import time
@@ -110,7 +110,7 @@ class NNTrainer(object):
 
     def add_hidden_layer(self, n_out, activation):
         if not len(self.layer_config):
-        # XXX do something
+            # XXX do something
             assert len(self.layer_config), "hidden layer must be added after ConvPool layer"
             return
 
@@ -167,7 +167,7 @@ class NNTrainer(object):
         self.layer_config.append({'max_len': max_len})
 
     def n_params(self):
-        """ number of params in this model"""
+        """ total number of params in this model"""
         def get_layer_nparam(layer):
             prms = layer.params
             ret = sum([reduce(operator.mul, k.get_value().shape) for k in prms])
@@ -304,7 +304,7 @@ class NNTrainer(object):
 
 
                 if (iter + 1) % validation_frequency == 0 or iter < 5:
-                    # do a validation
+                    # do a validation:
 
                     # compute zero-one loss on validation set
                     validation_losses = [validate_model(i) for i
@@ -325,6 +325,7 @@ class NNTrainer(object):
                         # save best validation score and iteration number
                         best_validation_loss = this_validation_loss
                         best_iter = iter
+                        # save best params
                         logger.save_params('best', self.layers, self.layer_config)
 
                         # test it on the test set

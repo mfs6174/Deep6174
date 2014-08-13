@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Mon Aug 11 16:46:32 2014 -0700
+# Date: Wed Aug 13 15:27:38 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -55,7 +55,8 @@ class SequenceSoftmax(object):
         self.p_y_given_x = [T.nnet.softmax(T.dot(input, self.Ws[k]) +
                                             self.bs[k]) for k in
                              xrange(self.n_softmax)]
-        # p_y_given_x[k] = kth output for all y, each of size (batch_size * n_out)
+        # p_y_given_x[k]: kth output for all y, each of size (batch_size * n_out)
+
         self.pred = [T.argmax(self.p_y_given_x[k], axis=1) for k in
                      xrange(self.n_softmax)]
         self.pred = T.stacklists(self.pred).dimshuffle(1, 0)
@@ -76,6 +77,8 @@ class SequenceSoftmax(object):
                            sequences=[logs, idxs])
         M = sr.dimshuffle(1, 0)
         label_probs = T.log(self.p_y_given_x[0])[rg, y[:,0]]
+
+        # sum of log_likelihood for digits & length, on each example
         def f(probs, label, lp):
             return T.sum(probs[:label[0] + 1]) + lp
         sr, _ = theano.map(fn=f, sequences=[M, y, label_probs])
@@ -100,16 +103,10 @@ class SequenceSoftmax(object):
             return T.sum(T.neq(pred[1:label[0] + 2], label[1:label[0] + 2]))
         sr, su = theano.map(fn=f, sequences=[self.pred, y])
 
+        # sum of lengths
         len_sum = T.sum(y[:,0] + 1)
+        # avg of errors
         return T.cast(T.sum(sr), 'float32') / len_sum
-
-        #return sum([T.mean(T.neq(self.pred[k], y[:,k])) for k in
-                        #range(self.n_softmax)]) / self.n_softmax
-
-        #from operator import mul
-        #corr = reduce(mul, [PP.Print("neq for each")(T.neq(self.pred, y[:,k])) for k in
-                            #range(self.n_softmax)])
-        #return T.mean(corr)
 
     def set_params(self, Ws, bs):
         assert self.n_softmax == len(Ws) and len(Ws) == len(bs)
