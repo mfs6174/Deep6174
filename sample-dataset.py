@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: sample_data_to_view.py
-# Date: Thu Aug 14 01:51:15 2014 -0700
+# File: sample-dataset.py
+# Date: Thu Aug 14 12:21:15 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
-from utils import get_image_matrix
+from imageutil import get_image_matrix
 
 import sys
 from itertools import izip

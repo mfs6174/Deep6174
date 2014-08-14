@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: run_and_rename.py
-# Date: Thu Aug 14 02:16:19 2014 -0700
+# File: run-and-rename.py
+# Date: Thu Aug 14 12:21:58 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -19,7 +19,7 @@ if len(sys.argv) != 3:
 
 
 from network_runner import NetworkRunner, get_nn
-from utils import get_image_matrix
+from imageutil import get_image_matrix
 from dataio import read_data
 from progress import Progressor
 

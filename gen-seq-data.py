@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: gen_seq_data.py
-# Date: Wed Aug 13 15:28:17 2014 -0700
+# File: gen-seq-data.py
+# Date: Thu Aug 14 12:21:49 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -16,7 +16,8 @@ import sys
 from itertools import izip
 from copy import copy
 
-from utils import show_img_sync, get_image_matrix, timeit
+from imageutil import show_img_sync, get_image_matrix
+from utils import timeit
 from progress import Progressor
 
 def random_slice(k, N):

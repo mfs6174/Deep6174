@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: bfs_shape.py
-# Date: Tue Jul 29 14:10:37 2014 -0700
+# File: bfs-shape.py
+# Date: Thu Aug 14 12:21:32 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data, save_data
-from utils import get_image_matrix
+from imageutil import get_image_matrix
 
 import numpy as np
 from scipy.misc import imread, toimage

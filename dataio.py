@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Sun Aug 10 17:24:54 2014 -0700
+# Date: Thu Aug 14 12:21:23 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip

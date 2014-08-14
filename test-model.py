@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: test_model.py
-# Date: Thu Aug 14 01:04:11 2014 -0700
+# File: test-model.py
+# Date: Thu Aug 14 12:21:39 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -10,7 +10,7 @@ from itertools import izip
 
 from network_runner import NetworkRunner, label_match, get_nn
 from dataio import read_data, save_data, get_dataset_imgsize
-from utils import get_image_matrix
+from imageutil import get_image_matrix
 
 def get_an_image(dataset, label):
     """ get an image with label=number"""

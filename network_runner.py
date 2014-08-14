@@ -7,7 +7,7 @@ import scipy.io as sio
 from scipy.misc import imsave, toimage, imread
 import theano.tensor as T
 import theano
-from utils import tile_raster_images
+from imageutil import tile_raster_images, get_image_matrix
 
 import sys, gzip
 import cPickle as pickle
@@ -18,7 +18,6 @@ import time
 
 from convolutional_mlp import LeNetConvPoolLayer
 from train_network import NNTrainer
-from utils import get_image_matrix
 
 N_OUT = 10
 
