@@ -1,10 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: continue_train.py
-# Date: Mon Aug 11 11:58:26 2014 -0700
+# Date: Thu Aug 14 10:02:07 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from run_network import build_nn_with_params
+from network_runner import build_nn_with_params
 
 import cPickle as pickle
 import gzip
