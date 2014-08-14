@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sample_data_to_view.py
-# Date: Tue Aug 12 14:43:21 2014 -0700
+# Date: Thu Aug 14 01:51:15 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -32,10 +32,11 @@ else:
 
 print "Number of samples: {0}".format(n_img)
 
-train = read_data(input_data)[0]
-index = np.random.choice(len(train[0]), n_img)
-imgs = [train[0][k] for k in index]
-labels = [train[1][k] for k in index]
+# use test dataset to sample with
+data = read_data(input_data)[2]
+index = np.random.choice(len(data[0]), n_img)
+imgs = [data[0][k] for k in index]
+labels = [data[1][k] for k in index]
 
 for idx, img, label in izip(xrange(n_img), imgs, labels):
     if hasattr(label, '__iter__'):

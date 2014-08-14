@@ -7,11 +7,10 @@ import scipy.io as sio
 from scipy.misc import imsave, toimage, imread
 import theano.tensor as T
 import theano
-from utils import tile_raster_images, get_image_matrix
+from utils import tile_raster_images
 
 import sys, gzip
 import cPickle as pickle
-from IPython.core.debugger import Tracer
 import operator
 import itertools
 from itertools import count, izip
@@ -19,7 +18,7 @@ import time
 
 from convolutional_mlp import LeNetConvPoolLayer
 from train_network import NNTrainer
-from dataio import read_data, save_data, get_dataset_imgsize
+from utils import get_image_matrix
 
 N_OUT = 10
 
@@ -122,9 +121,29 @@ class NetworkRunner(object):
         return self.funcs[-1]([[img]])
 
     def predict(self, img):
-        res = self.funcs[-1]([[img]])[0]
-        label = max(enumerate(res), key=operator.itemgetter(1))
+        img = get_image_matrix(img)
+        results = [self.run_only_last(img)]
+        label = NetworkRunner.get_label_from_result(img, results,
+                                                    self.multi_output,
+                                                    self.var_len_output)
         return label
+
+    @staticmethod
+    def get_label_from_result(img, results, multi_output, var_len_output=True):
+        if not multi_output:
+            # the predicted results for single digit output
+            label = max(enumerate(results[-1]), key=operator.itemgetter(1))
+            return label[0]
+        else:
+            # predicted results for multiple digit output
+            ret = []
+            for r in results[-1]:
+                label = max(enumerate(r[0]), key=operator.itemgetter(1))
+                ret.append(label[0])
+            if var_len_output:
+                ret[0] += 1
+            return ret
+
 
 def build_nn_with_params(params, batch_size=1):
     """ params: the object load from param{epoch}.mat file
@@ -173,17 +192,6 @@ def get_nn(filename):
     nn.finish()
     return nn
 
-def get_an_image(dataset, label):
-    """ get an image with label=number"""
-    train_set, valid_set, test_set = read_data(dataset)
-    for idx, img in enumerate(test_set[0]):
-        ys = test_set[1][idx]
-        if hasattr(ys, '__iter__'):
-            ys = ys[0]
-        if int(ys) != label:
-            continue
-        img = get_image_matrix(img)
-
 def save_LR_W_img(W, n_filter):
     """ save W as images """
     for l in range(N_OUT):
@@ -192,19 +200,6 @@ def save_LR_W_img(W, n_filter):
         imgs = w.reshape(n_filter, size, size)
         for idx, img in enumerate(imgs):
             imsave('LRW-label{0}-weight{1}.jpg'.format(l, idx), img)
-
-def get_label_from_result(img, results, multi_output):
-    if not multi_output:
-        # the predicted results for single digit output
-        label = max(enumerate(results[-1]), key=operator.itemgetter(1))
-        return label[0]
-    else:
-        # predicted results for multiple digit output
-        ret = []
-        for r in results[-1]:
-            label = max(enumerate(r[0]), key=operator.itemgetter(1))
-            ret.append(label[0])
-        return ret
 
 def save_convolved_images(nn, results):
     for nl in xrange(nn.n_conv_layer):
@@ -229,47 +224,3 @@ def label_match(l1, l2):
         except:
             return False
     return True
-
-if __name__ == '__main__':
-    params_file = sys.argv[1]
-    nn = get_nn(params_file)
-
-    train, valid, test = read_data(sys.argv[2])
-    corr, tot = 0, 0
-    if nn.var_len_output:
-        len_tot, len_corr = 0, 0
-    for img, label in izip(test[0], test[1]):
-        img = get_image_matrix(img)
-        # run the network
-        results = [nn.run_only_last(img)]
-        pred = get_label_from_result(img, results, nn.multi_output)
-
-        if nn.multi_output and hasattr(pred, '__iter__'):
-            if nn.var_len_output:
-                seq_len = pred[0] + 1
-                tot += seq_len
-                #corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label)
-                             #if i == j])
-                corr += len(set(pred[1:]) & set(label))
-                print pred, label
-
-                len_tot += 1
-                len_corr += pred[0] + 1 == len(label)
-                if len_tot % 1000 == 0:
-                    print "Length predict accuracy: {0}".format(len_corr * 1.0 / len_tot)
-            elif len(label) == len(pred) - 1:
-                tot += len(label)
-                corr += len(set(label) & set(pred[1:]))
-                #corr += len([k for k, _ in izip(pred, label) if k == _])
-            else:
-                tot += 1
-                corr += label_match(pred, label)
-        else:
-            tot += 1
-            corr += label == pred
-
-        if tot % 1000 == 0:
-            print "Rate: {0}".format(corr * 1.0 / tot)
-
-
-# Usage ./run_network.py param_file.pkl.gz dataset.pkl.gz
