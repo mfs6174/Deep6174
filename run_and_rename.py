@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run_and_rename.py
-# Date: Thu Aug 14 01:56:13 2014 -0700
+# Date: Thu Aug 14 02:16:19 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -9,6 +9,7 @@ from scipy.misc import imread, imsave
 from itertools import izip
 import sys
 import os
+import shutil
 import os.path
 import glob
 
@@ -24,10 +25,7 @@ from progress import Progressor
 
 input_dir = sys.argv[1]
 output_dir = os.path.join(input_dir, 'predicted')
-try:
-    os.rmdir(output_dir)
-except:
-    pass
+shutil.rmtree(output_dir, ignore_errors=True)
 os.mkdir(output_dir)
 
 print "Reading images from {0}".format(input_dir)
@@ -46,14 +44,15 @@ for f in glob.glob(input_dir + '/*'):
     label = f.split('-')[-1].split('.')[0]
     real_pred = ''.join(map(str, pred[1:1+pred[0]]))
 
-    new_fname = "{}-{},{}.png".format(label, pred[0],
+    new_fname = "{:04d}:{}-{},{}.png".format(tot, label, pred[0],
                                          ''.join(map(str, pred[1:])))
     new_fname = os.path.join(output_dir, new_fname)
     imsave(new_fname, img)
-    #print label, pred
 
     tot += 1
     corr += label == real_pred
+    if tot > 0 and tot % 1000 == 0:
+        print "Progress:", tot
 print corr, tot
 
 
