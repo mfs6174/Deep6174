@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: imageutil.py
-# Date: Thu Aug 14 12:20:26 2014 -0700
+# Date: Sat Aug 16 10:47:59 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 """ This file contains different utility functions that are not connected
@@ -14,6 +14,7 @@ image from a set of samples or weights.
 
 
 import numpy
+from itertools import izip
 
 def scale_to_unit_interval(ndar, eps=1e-8):
     """ Scales all values in the ndarray ndar to be between 0 and 1 """
