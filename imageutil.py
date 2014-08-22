@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: imageutil.py
-# Date: Sat Aug 16 10:47:59 2014 +0800
+# Date: Thu Aug 21 02:08:49 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 """ This file contains different utility functions that are not connected
@@ -14,6 +14,7 @@ image from a set of samples or weights.
 
 
 import numpy
+import numpy as np
 from itertools import izip
 
 def scale_to_unit_interval(ndar, eps=1e-8):
@@ -160,3 +161,12 @@ def get_label_from_dataset(dt, label):
     for img, l in izip(dt[0], dt[1]):
         if label == l:
             return get_image_matrix(img)
+
+def stack_vectors(vecs):
+    """show a list of vectors in color"""
+    image_dup = 50
+    ret = np.vstack([vecs[0]] * image_dup)
+    shape = vecs[0].shape
+    for k in range(1, len(vecs)):
+        ret = np.vstack((ret, [np.zeros(shape)] * 5, [vecs[k]] * image_dup))
+    return ret
