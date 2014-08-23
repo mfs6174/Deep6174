@@ -1,15 +1,15 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-model.py
-# Date: Fri Aug 22 23:06:31 2014 -0700
+# Date: Fri Aug 22 23:30:36 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 import sys
 from itertools import izip
 
-from network_runner import NetworkRunner, label_match, get_nn
-from dataio import read_data, save_data, get_dataset_imgsize
+from network_runner import get_nn
+from dataio import read_data, save_data
 from imageutil import get_image_matrix
 
 #def get_an_image(dataset, label):
@@ -52,19 +52,25 @@ if nn.var_len_output:
     len_tot, len_corr = 0, 0
 for img, label in izip(test[0], test[1]):
     pred = nn.predict(img)
+    #print pred, label
     if nn.multi_output and hasattr(pred, '__iter__'):
         if nn.var_len_output:
             seq_len = pred[0]
             # per-digit accuracy
+            if len(label) != 5:
+                continue
             tot += seq_len
             corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label) if i == j])
-            print pred, label
+            # absolute accuracy
+            #tot += 1
+            #corr += list(label) == list(pred[1:1+seq_len])
 
             len_tot += 1
             len_corr += pred[0] == len(label)
             if len_tot % 1000 == 0:
                 print "Length predict accuracy: {0}".format(len_corr * 1.0 / len_tot)
-        elif len(label) == len(pred):
+        elif nn.multi_output:
+            # Fixed length output
             tot += len(label)
             corr += len([k for k, _ in izip(pred, label) if k == _])
         else:
@@ -74,8 +80,9 @@ for img, label in izip(test[0], test[1]):
         tot += 1
         corr += label == pred
 
-    if tot % 1000 == 0:
+    if tot % 1000 == 0 and tot > 0:
         print "Rate: {0}".format(corr * 1.0 / tot)
+print "Rate: {0}".format(corr * 1.0 / tot)
 
 
 # Usage ./test_model.py param_file.pkl.gz dataset.pkl.gz

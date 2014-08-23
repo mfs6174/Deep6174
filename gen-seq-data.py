@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen-seq-data.py
-# Date: Thu Aug 14 12:21:49 2014 -0700
+# Date: Fri Aug 22 23:29:37 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -273,13 +273,13 @@ if __name__ == '__main__':
     fout = sys.argv[1]
     seq_len = int(sys.argv[2])
 
-    lengths = range(1, 6)
+    lengths = range(1, 7)
     generator = SeqDataGenerator(
         dict([(k, 1.0 / len(lengths)) for k in lengths]),
-        dataset, max_width=150, max_height=50,
+        dataset, max_width=180, max_height=70,
         rotate=False, resize=True, crazy=True, max_dist=50)
 
-    generator.write_dataset(80000, 10000, 10000, fout)
+    generator.write_dataset(100000, 10000, 10000, fout)
 
 
 

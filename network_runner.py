@@ -111,10 +111,11 @@ class NetworkRunner(object):
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
                 f = theano.function([self.nn.orig_input],
-                                     layer.p_y_given_x)
+                                     layer.p_y_given_x,
+                                    allow_input_downcast=True)
             else:
                 f = theano.function([self.nn.orig_input],
-                                   layer.output)
+                                   layer.output, allow_input_downcast=True)
             self.funcs.append(f)
 
     def run(self, img):
