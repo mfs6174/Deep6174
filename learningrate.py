@@ -1,12 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: learningrate.py
-# Date: Sun Aug 10 00:10:37 2014 -0700
+# Date: Fri Aug 22 22:58:34 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 class LearningRateProvider(object):
-    """ file based learning rate provider
-        can modify the file to control learning rate
+    """ file based learning rate provider.
+        we can then modify the file to control learning rate
     """
 
     def __init__(self, filename, init_value):
@@ -15,6 +15,7 @@ class LearningRateProvider(object):
             f.write('{0}\n'.format(init_value))
 
     def get_rate(self, epoch):
+        """ read learning rate from the file"""
         with open(self.filename, 'r') as f:
             for idx, line in enumerate(f):
                 if idx == epoch - 1:

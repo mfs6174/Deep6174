@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: progress.py
-# Date: Sat Aug 09 10:07:56 2014 -0700
+# Date: Fri Aug 22 23:01:09 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import time
 
 class Progressor(object):
+    """ progress logger"""
     def __init__(self, total, prompt=''):
         self.total = total
         self.prompt = prompt

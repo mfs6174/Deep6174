@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Sun Aug 10 17:43:11 2014 -0700
+# Date: Fri Aug 22 22:57:34 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -11,6 +11,7 @@ import cPickle as pickle
 import gzip
 import scipy.io as sio
 import os
+from itertools import count, izip
 
 from logistic_sgd import LogisticRegression
 from mlp import HiddenLayer
@@ -25,8 +26,10 @@ name_dict = {LeNetConvPoolLayer: 'convpool',
              SequenceSoftmax: 'ssm'}
 
 class ParamsLogger(object):
+    """ class to save network params in each epoch"""
 
     def __init__(self, input_shape, logdir='logs'):
+        """ logdir: a directory to save params to """
         self.input_shape = input_shape
         self.logdir = logdir
         try:
@@ -34,23 +37,23 @@ class ParamsLogger(object):
         except:
             pass
 
-    def save_params(self, epoch, layers, layer_config):
+    def save_params(self, epoch, layers):
+        """ epoch: can be a int, or a string, will be used in the filename
+        """
         if not isinstance(epoch, basestring):
             epoch = "{0:03d}".format(epoch)
         fname = os.path.join(self.logdir, "param{0}.pkl.gz".format(epoch))
         res = {}
 
-        layer_params = [x.params for x in layers]
-        cnt = 0
-        for layer, param, config in zip(layers, layer_params, layer_config):
+        for layer, cnt in izip(layers, count()):
+            # save layer type
             dic = {'type': name_dict[type(layer)] }
-            cnt += 1
+            # save other layer parameters
             dic.update(layer.get_params())
 
             res['layer' + str(cnt)] = dic
         res['input_shape'] = self.input_shape
 
-        #sio.savemat(fname, res)
         with gzip.open(fname, 'wb') as f:
             pickle.dump(res, f, -1)
 

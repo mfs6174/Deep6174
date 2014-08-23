@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-rename.py
-# Date: Thu Aug 14 12:21:58 2014 -0700
+# Date: Fri Aug 22 23:00:49 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -35,6 +35,8 @@ model_file = sys.argv[2]
 nn = get_nn(model_file)
 print "Running network with model {0}".format(model_file)
 
+# Run the network against a directory of images,
+# and put predicted label in the filename
 tot, corr = 0, 0
 for f in glob.glob(input_dir + '/*'):
     if not os.path.isfile(f):
@@ -42,15 +44,13 @@ for f in glob.glob(input_dir + '/*'):
     img = imread(f) / 255.0
     pred = nn.predict(img)
     label = f.split('-')[-1].split('.')[0]
-    real_pred = ''.join(map(str, pred[1:1+pred[0]]))
 
     new_fname = "{:04d}:{}-{},{}.png".format(tot, label, pred[0],
                                          ''.join(map(str, pred[1:])))
-    new_fname = os.path.join(output_dir, new_fname)
-    imsave(new_fname, img)
+    imsave(os.path.join(output_dir, new_fname), img)
 
     tot += 1
-    corr += label == real_pred
+    corr += label == ''.join(map(str, pred[1:1+pred[0]]))
     if tot > 0 and tot % 1000 == 0:
         print "Progress:", tot
 print corr, tot

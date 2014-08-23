@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Wed Aug 13 15:29:59 2014 -0700
+# Date: Fri Aug 22 22:54:34 2014 -0700
 import os
 import sys
 import time
@@ -141,7 +141,8 @@ class NNTrainer(object):
         self.layer_config.append(None)
 
     def add_nLR_layer(self, n):
-        """ Can only be used as output layer"""
+        """ Fixed length sequence output layer, which is equivalent to n LR layers
+        Can only be used as output layer"""
         if type(self.layers[-1]) == HiddenLayer:
             layer = FixedLengthSoftmax(input=self.layers[-1].output,
                                        n_in=self.layer_config[-1]['n_out'],
@@ -157,7 +158,8 @@ class NNTrainer(object):
         self.layer_config.append(None)
 
     def add_sequence_softmax(self, max_len):
-        """ Can only be used as output layer"""
+        """ SequenceSoftmax layer
+        Can only be used as output layer"""
         assert type(self.layers[-1]) == HiddenLayer
         layer = SequenceSoftmax(input=self.layers[-1].output,
                                    n_in=self.layer_config[-1]['n_out'],
@@ -167,7 +169,7 @@ class NNTrainer(object):
         self.layer_config.append({'max_len': max_len})
 
     def n_params(self):
-        """ total number of params in this model"""
+        """ Calculate total number of params in this model"""
         def get_layer_nparam(layer):
             prms = layer.params
             ret = sum([reduce(operator.mul, k.get_value().shape) for k in prms])
@@ -177,7 +179,7 @@ class NNTrainer(object):
 
     def work(self, init_learning_rate=0.1, n_epochs=60, dataset_file='mnist.pkl.gz',
              load_all_data=True):
-        """ read data and start training"""
+        """ read data and train"""
         print self.layers
         print self.layer_config
         assert type(self.layers[-1]) in [LogisticRegression,
@@ -203,7 +205,7 @@ class NNTrainer(object):
         # take derivatives on those params
         grads = T.grad(cost, params)
 
-        def gen_train_with_learning_rate(rate):
+        def gen_updates_with_learning_rate(rate):
             # gradient descent on those params
             updates = []
             for param_i, grad_i in zip(params, grads):
@@ -215,6 +217,7 @@ class NNTrainer(object):
         lr_rate = T.fscalar()
 
         if load_all_data:
+            # load all data into GPU
             datasets = shared_io.shared_dataset
             train_set_x, train_set_y = datasets[0]
             valid_set_x, valid_set_y = datasets[1]
@@ -223,7 +226,7 @@ class NNTrainer(object):
 
             # symbolic function to train and update
             train_model = theano.function([index, lr_rate], cost,
-                  updates=gen_train_with_learning_rate(lr_rate),
+                  updates=gen_updates_with_learning_rate(lr_rate),
                   givens={
                     self.x: train_set_x[index * self.batch_size: (index + 1) * self.batch_size],
                     self.y: train_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
@@ -238,12 +241,14 @@ class NNTrainer(object):
                         self.x: test_set_x[index * self.batch_size: (index + 1) * self.batch_size],
                         self.y: test_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
         else:
+            # only load necessary data as shared variable in each batch
             do_train_model = theano.function([lr_rate], cost,
-                updates=gen_train_with_learning_rate(lr_rate),
+                updates=gen_updates_with_learning_rate(lr_rate),
                 givens={
                     self.x: shared_io.shared_Xs[0],
                     self.y: shared_io.shared_ys[0]})
             def train_model(index, learning_rate):
+                # update the shared variable with data used in this batch
                 shared_io.get_train(index)
                 return do_train_model(learning_rate)
 
@@ -292,7 +297,7 @@ class NNTrainer(object):
             epoch = epoch + 1
             if epoch > 1: progressor.report(1, True)
             # save params at the beginning of each epoch
-            logger.save_params(epoch, self.layers, self.layer_config)
+            logger.save_params(epoch, self.layers)
             learning_rate = rate_provider.get_rate(epoch)
             print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
             for minibatch_index in xrange(n_batches[0]):
@@ -373,7 +378,6 @@ if __name__ == '__main__':
     # config the nn
     nn = NNTrainer(500, img_size, multi_output=multi_output)
 
-    # a NN with two conv-pool layer
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((50, 5), 2)
@@ -386,7 +390,7 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.08, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz

@@ -23,6 +23,7 @@ N_OUT = 10
 
 class NetworkRunner(object):
     def __init__(self, input_size, batch_size=1):
+        """ input size in (height, width)"""
         self.input_size = input_size
         self.nn = NNTrainer(batch_size, input_size)
         self.n_conv_layer = 0
@@ -43,22 +44,23 @@ class NetworkRunner(object):
         assert shape[2] == shape[3]
         assert b.shape[0] == nfilter
 
+        # add a conv layer in network
         self.nn.add_convpoollayer((nfilter, filter_size), pool_size)
         last_layer = self.nn.layers[-1]
         last_layer.W.set_value(W.astype('float32'))
         last_layer.b.set_value(b.flatten().astype('float32'))
 
     def add_hidden_layer(self, W, b):
-        n_out = W.shape[1]
         assert b.shape[0] == W.shape[1]
 
-        self.nn.add_hidden_layer(n_out, activation=T.tanh)
+        self.nn.add_hidden_layer(W.shape[1], activation=T.tanh)
         last_layer = self.nn.layers[-1]
         last_layer.W.set_value(W.astype('float32'))
         last_layer.b.set_value(b.flatten().astype('float32'))
 
     def add_LR_layer(self, W, b):
         self.LR_W = W
+        # LR layer can only be used output
         assert W.shape[1] == N_OUT
         assert b.shape[0] == N_OUT
 
@@ -68,7 +70,10 @@ class NetworkRunner(object):
         last_layer.b.set_value(b.flatten().astype('float32'))
 
     def add_FLSM_layer(self, Ws, bs):
-        """ add a FixedLengthSoftmax layer, with list of W and b"""
+        """ add a FixedLengthSoftmax layer, with a list of W and b
+            Ws: list of W
+            bs: list of b
+        """
         self.multi_output = True
         num_out = len(Ws)
         for W, b in itertools.izip(Ws, bs):
@@ -80,10 +85,15 @@ class NetworkRunner(object):
         last_layer.set_params(Ws, bs)
 
     def add_sequence_softmax(self, Ws, bs):
+        """ add a Sequence Softmax layer, with list of W and b
+            Ws: list of W
+            bs: list of b
+        """
         self.var_len_output = True
         self.multi_output = True
         n_softmax = len(Ws)
-        assert len(bs) == n_softmax, "{0}!={1}".format(len(bs), n_softmax)
+        assert len(bs) == n_softmax, \
+                "{0}!={1}".format(len(bs), n_softmax)
 
         max_seq_len = n_softmax - 1
         assert Ws[0].shape[1] == max_seq_len
@@ -96,7 +106,7 @@ class NetworkRunner(object):
         last_layer.set_params(Ws, bs)
 
     def finish(self):
-        """ compile all the functions """
+        """ compile the output of each layer as function"""
         self.funcs = []
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
@@ -108,6 +118,7 @@ class NetworkRunner(object):
             self.funcs.append(f)
 
     def run(self, img):
+        """ return representations after each layer"""
         assert img.shape == self.input_size
 
         results = []
@@ -116,10 +127,12 @@ class NetworkRunner(object):
         return results
 
     def run_only_last(self, img):
+        """ return representation of the last layer"""
         assert img.shape == self.input_size
         return self.funcs[-1]([[img]])
 
     def predict(self, img):
+        """ return predicted label (either a sequence or a digit)"""
         img = get_image_matrix(img)
         results = [self.run_only_last(img)]
         label = NetworkRunner.get_label_from_result(img, results,
@@ -129,6 +142,9 @@ class NetworkRunner(object):
 
     @staticmethod
     def get_label_from_result(img, results, multi_output, var_len_output=True):
+        """ parse the results and get label
+            results: return value of run() or run_only_last()
+        """
         if not multi_output:
             # the predicted results for single digit output
             label = max(enumerate(results[-1]), key=operator.itemgetter(1))
@@ -140,6 +156,7 @@ class NetworkRunner(object):
                 label = max(enumerate(r[0]), key=operator.itemgetter(1))
                 ret.append(label[0])
             if var_len_output:
+                # the first element is 'length - 1', make it 'length'
                 ret[0] += 1
             return ret
 
@@ -177,49 +194,31 @@ def build_nn_with_params(params, batch_size=1):
     return runner
 
 def get_nn(filename):
-    """ img: a (size x size) matrix
-       caller should gurantee that
-       img size is the same size as those used to build the network
-    """
-    if filename.endswith('.mat'):
-        data = sio.loadmat(filename)
-    else:
-        with gzip.open(filename, 'r') as f:
-            data = pickle.load(f)
+    """ get a network from a saved model file"""
+    with gzip.open(filename, 'r') as f:
+        data = pickle.load(f)
 
     nn = build_nn_with_params(data)
     nn.finish()
     return nn
 
-def save_LR_W_img(W, n_filter):
-    """ save W as images """
-    for l in range(N_OUT):
-        w = W[:,l]
-        size = int(np.sqrt(w.shape[0] / n_filter))
-        imgs = w.reshape(n_filter, size, size)
-        for idx, img in enumerate(imgs):
-            imsave('LRW-label{0}-weight{1}.jpg'.format(l, idx), img)
+#def save_LR_W_img(W, n_filter):
+    #""" save W as images """
+    #for l in range(N_OUT):
+        #w = W[:,l]
+        #size = int(np.sqrt(w.shape[0] / n_filter))
+        #imgs = w.reshape(n_filter, size, size)
+        #for idx, img in enumerate(imgs):
+            #imsave('LRW-label{0}-weight{1}.jpg'.format(l, idx), img)
 
-def save_convolved_images(nn, results):
-    for nl in xrange(nn.n_conv_layer):
-        layer = results[nl][0]
-        img_shape = layer[0].shape
-        tile_len = int(np.ceil(np.sqrt(len(layer))))
-        tile_shape = (tile_len, int(np.ceil(len(layer) * 1.0 / tile_len)))
-        layer = layer.reshape((layer.shape[0], -1))
-        raster = tile_raster_images(layer, img_shape, tile_shape,
-                                    tile_spacing=(3, 3))
-        imsave('{0}.jpg'.format(nl), raster)
+#def save_convolved_images(nn, results):
+    #for nl in xrange(nn.n_conv_layer):
+        #layer = results[nl][0]
+        #img_shape = layer[0].shape
+        #tile_len = int(np.ceil(np.sqrt(len(layer))))
+        #tile_shape = (tile_len, int(np.ceil(len(layer) * 1.0 / tile_len)))
+        #layer = layer.reshape((layer.shape[0], -1))
+        #raster = tile_raster_images(layer, img_shape, tile_shape,
+                                    #tile_spacing=(3, 3))
+        #imsave('{0}.jpg'.format(nl), raster)
 
-def label_match(l1, l2):
-    """ whether two sequences of labels match"""
-    l1, l2 = list(l1), list(l2)
-    if len(l1) > len(l2):
-        l1, l2 = l2, l1
-    now = -1
-    for k in l1:
-        try:
-            now = l2.index(k, now + 1)
-        except:
-            return False
-    return True

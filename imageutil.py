@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: imageutil.py
-# Date: Thu Aug 21 02:08:49 2014 -0700
+# Date: Fri Aug 22 21:10:32 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 """ This file contains different utility functions that are not connected
@@ -143,6 +143,7 @@ def tile_raster_images(X, img_shape, tile_shape, tile_spacing=(0, 0),
 
 
 def get_image_matrix(img):
+    """ if img is flattened, make it a matrix"""
     shape = img.shape
     if len(shape) == 2:
         return img
@@ -152,21 +153,25 @@ def get_image_matrix(img):
 
 import matplotlib.pyplot as plot
 def show_img_sync(img):
+    """ synchronous function to display a image"""
     k = get_image_matrix(img)
     plot.imshow(k)
     plot.show()
 
 
 def get_label_from_dataset(dt, label):
+    """ get a digit with certain label
+        dt: tuple of (imgs, labels)
+    """
     for img, l in izip(dt[0], dt[1]):
         if label == l:
             return get_image_matrix(img)
 
 def stack_vectors(vecs):
-    """show a list of vectors in color"""
-    image_dup = 50
-    ret = np.vstack([vecs[0]] * image_dup)
+    """stack a list of vectors, in order to show them in color"""
+    image_thickness = 50
+    ret = np.vstack([vecs[0]] * image_thickness)
     shape = vecs[0].shape
     for k in range(1, len(vecs)):
-        ret = np.vstack((ret, [np.zeros(shape)] * 5, [vecs[k]] * image_dup))
+        ret = np.vstack((ret, [np.zeros(shape)] * 5, [vecs[k]] * image_thickness))
     return ret
