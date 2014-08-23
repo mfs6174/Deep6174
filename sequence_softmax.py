@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Wed Aug 13 15:27:38 2014 -0700
+# Date: Sat Aug 23 14:02:50 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -33,6 +33,7 @@ class SequenceSoftmax(object):
         self.n_softmax = seq_max_len + 1
         self.n_out = n_out
 
+        # generate n_softmax W matrices
         def gen_W(out, k):
             # TODO init with other values
             return theano.shared(value=numpy.zeros((n_in, out),
@@ -41,6 +42,7 @@ class SequenceSoftmax(object):
         self.Ws = [gen_W(seq_max_len, 0)]
         self.Ws.extend([gen_W(n_out, _ + 1) for _ in range(seq_max_len)])
 
+        # generate n_softmax b vectors
         def gen_b(out, k):
             return theano.shared(value=numpy.zeros((out,),
                                                    dtype=theano.config.floatX),
@@ -69,19 +71,21 @@ class SequenceSoftmax(object):
         """ y: a batch_size x n_softmax 2d matrix. each row: (len, l1, l2, l3, ...)
         """
         batch_size = y.shape[0]
-        rg = T.arange(batch_size)
+        rg = T.arange(batch_size)       # range of the matrix indices
 
-        logs = T.log(self.p_y_given_x[1:])
+        loglikelihood = T.log(self.p_y_given_x[1:])
+        # correct label is the index used in the loglikelihood matrix
         idxs = y.dimshuffle(1, 0)[1:]
+        # select the loglikelihood of the specific label from the matrix
         sr, _ = theano.map(fn=lambda l, idx: l[rg, idx],
-                           sequences=[logs, idxs])
+                           sequences=[loglikelihood, idxs])
         M = sr.dimshuffle(1, 0)
-        label_probs = T.log(self.p_y_given_x[0])[rg, y[:,0]]
+        length_probs = T.log(self.p_y_given_x[0])[rg, y[:,0]]
 
         # sum of log_likelihood for digits & length, on each example
-        def f(probs, label, lp):
-            return T.sum(probs[:label[0] + 1]) + lp
-        sr, _ = theano.map(fn=f, sequences=[M, y, label_probs])
+        def f(probs, label, length_prob):
+            return T.sum(probs[:label[0] + 1]) + length_prob
+        sr, _ = theano.map(fn=f, sequences=[M, y, length_probs])
 
         #log_matrices = [T.log(self.p_y_given_x[k]) for k in range(self.n_softmax)]
         #idxs = [y[:,k] for k in range(self.n_softmax)]
@@ -100,8 +104,10 @@ class SequenceSoftmax(object):
             raise NotImplementedError()
 
         def f(pred, label):
+            # label[0] + 1 == length of sequence;
+            # label[0] + 2 == length of the label (including sequence and length)
             return T.sum(T.neq(pred[1:label[0] + 2], label[1:label[0] + 2]))
-        sr, su = theano.map(fn=f, sequences=[self.pred, y])
+        sr, _ = theano.map(fn=f, sequences=[self.pred, y])
 
         # sum of lengths
         len_sum = T.sum(y[:,0] + 1)
