@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Fri Aug 22 22:54:34 2014 -0700
+# Date: Sat Aug 23 23:25:55 2014 -0700
 import os
 import sys
 import time
@@ -331,7 +331,7 @@ class NNTrainer(object):
                         best_validation_loss = this_validation_loss
                         best_iter = iter
                         # save best params
-                        logger.save_params('best', self.layers, self.layer_config)
+                        logger.save_params('best', self.layers)
 
                         # test it on the test set
                         test_losses = [test_model(i) for i in xrange(n_batches[2])]
@@ -381,11 +381,12 @@ if __name__ == '__main__':
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((50, 5), 2)
-    nn.add_convpoollayer((50, 5), 2)
+    nn.add_convpoollayer((70, 5), 2)
+    nn.add_convpoollayer((70, 3), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_sequence_softmax(5)
+        nn.add_sequence_softmax(6)
         #nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
