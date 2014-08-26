@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-draw-last.py
-# Date: Fri Aug 22 22:39:35 2014 -0700
+# Date: Tue Aug 26 01:08:34 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import matplotlib.pyplot as plt
@@ -46,14 +46,14 @@ def gen_file_list():
                 yield f
 
 # get the weight of the digit '3' at the second position
-prms = nn.nn.layers[-1].get_params()['Ws'][2]
+prms = nn.nn.layers[-1].get_params()['Ws'][2][:,3]
 # save the weight in all_vecs, to draw together with another vector later
-all_vecs = [prms[:,3]]
-vec = nn.nn.layers[-1].get_params()['Ws'][2][:,3]
-draw(vec, './weight-secondposition-3.png')
+all_vecs = [prms]
+draw(prms, './weight-secondposition-3.png')
 
 for idx, f in enumerate(gen_file_list()):
     print "Running {0}...".format(f)
+    # network accepts images ranging from [0, 1]
     img = imread(f) / 255.0
     # run the network against the image
     results = nn.run(img)
@@ -67,7 +67,8 @@ for idx, f in enumerate(gen_file_list()):
     except:
         pass
 
-    # get the representation after the last hidden layer
+    # get the representation after the last hidden layer, which is [-2]
+    # layer. [-1] is the output layer.
     hidden_vec = results[-2].reshape((results[-2].shape[1],))
 
     # build filename

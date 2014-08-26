@@ -25,18 +25,27 @@ class NetworkRunner(object):
     def __init__(self, input_size, batch_size=1):
         """ input size in (height, width)"""
         self.input_size = input_size
+        self.batch_size = batch_size
+        # nn is the underlying neural network object to run with
         self.nn = NNTrainer(batch_size, input_size)
         self.n_conv_layer = 0
         self.var_len_output = False
         self.multi_output = False
 
+    def get_layer_by_index(self, idx):
+        """ return the instance of certain layer.
+            idx can be negative to get layers from the end
+        """
+        return self.nn.layers[idx]
+
     def add_convpool_layer(self, W, b, pool_size):
         self.n_conv_layer += 1
         if len(self.nn.layers) == 0:
-            # this is first layer
+            # this is the first layer
             ninput = 1
         else:
             ninput = self.nn.layer_config[-1]['filter_shape'][0]
+        # check the shapes
         shape = W.shape
         nfilter = shape[0]
         assert ninput == shape[1], "{0}!={1}".format(ninput, shape[1])
@@ -106,24 +115,31 @@ class NetworkRunner(object):
         last_layer.set_params(Ws, bs)
 
     def finish(self):
-        """ compile the output of each layer as function"""
+        """ compile the output of each layer as theano function"""
         self.funcs = []
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
+                # the output layer: use likelihood of the label
                 f = theano.function([self.nn.orig_input],
                                      layer.p_y_given_x,
                                     allow_input_downcast=True)
             else:
+                # layers in the middle: use its output fed into the next layer
                 f = theano.function([self.nn.orig_input],
                                    layer.output, allow_input_downcast=True)
             self.funcs.append(f)
 
     def run(self, img):
-        """ return representations after each layer"""
+        """ return all the representations after each layer"""
+        assert self.batch_size == 1, \
+                "batch_size of runner is not 1, but trying to run against 1 image"
         assert img.shape == self.input_size
 
         results = []
         for (idx, layer) in enumerate(self.nn.layers):
+            # why [[img]]?
+            # theano needs arguments to be listed, although there is only 1 argument here
+            # and the first argument here is a 'batch' of one image
             results.append(self.funcs[idx]([[img]]))
         return results
 
