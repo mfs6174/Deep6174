@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Sat Aug 23 14:02:50 2014 -0700
+# Date: Fri Aug 29 22:36:53 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -18,6 +18,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 import theano.printing as PP
+import scipy.io as sio
 
 class SequenceSoftmax(object):
     def __init__(self, input, n_in, seq_max_len, n_out):
@@ -124,3 +125,19 @@ class SequenceSoftmax(object):
         Ws = [k.get_value(borrow=True) for k in self.Ws]
         bs = [k.get_value(borrow=True) for k in self.bs]
         return {"Ws": Ws, "bs": bs}
+
+    def save_params_mat(self, basename):
+        """ save params in .mat format
+            file name will be built by adding suffix to 'basename'
+        """
+        prms = self.get_params()
+        Ws = prms['Ws']
+        bs = prms['bs']
+        def save(name, idx):
+            """ save each classifier separately"""
+            sio.savemat(basename + '-{0}.mat'.format(name),
+                        {'W{0}'.format(name): Ws[idx],
+                         'b{0}'.format(name): bs[idx]})
+        save('length', 0)
+        for k in range(1, self.n_softmax):
+            save('position{0}'.format(k), k)

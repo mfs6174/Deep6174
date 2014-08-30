@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Fri Aug 22 22:57:34 2014 -0700
+# Date: Fri Aug 29 22:14:41 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -13,24 +13,14 @@ import scipy.io as sio
 import os
 from itertools import count, izip
 
-from logistic_sgd import LogisticRegression
-from mlp import HiddenLayer
-from convolutional_mlp import LeNetConvPoolLayer
-from fixed_length_softmax import FixedLengthSoftmax
-from sequence_softmax import SequenceSoftmax
-
-name_dict = {LeNetConvPoolLayer: 'convpool',
-             HiddenLayer: 'hidden',
-             LogisticRegression: 'lr',
-             FixedLengthSoftmax: 'fl-sm',
-             SequenceSoftmax: 'ssm'}
+from layers.layers import name_dict
 
 class ParamsLogger(object):
     """ class to save network params in each epoch"""
 
-    def __init__(self, input_shape, logdir='logs'):
+    def __init__(self, rgb_input_shape, logdir='logs'):
         """ logdir: a directory to save params to """
-        self.input_shape = input_shape
+        self.rgb_input_shape = rgb_input_shape
         self.logdir = logdir
         try:
             os.mkdir(self.logdir)
@@ -52,14 +42,14 @@ class ParamsLogger(object):
             dic.update(layer.get_params())
 
             res['layer' + str(cnt)] = dic
-        res['input_shape'] = self.input_shape
+        res['input_shape'] = self.rgb_input_shape
 
         with gzip.open(fname, 'wb') as f:
             pickle.dump(res, f, -1)
 
 def plot_filters(obj):
     for layer_params in obj:
-        if layer_params['type'] == name_dict[LeNetConvPoolLayer]:
+        if layer_params['type'] == 'convpool':
             W = np.asarray(layer_params['W'])
             print W.shape
             filter_cnt = W.shape[0]

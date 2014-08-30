@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Thu Aug 28 13:25:59 2014 -0700
 import os
 import sys
 import time
@@ -19,12 +18,9 @@ import theano.tensor as T
 
 from params_logger import ParamsLogger
 from learningrate import LearningRateProvider
-from logistic_sgd import LogisticRegression, load_data
 from dataio import read_data, save_data, get_dataset_imgsize
-from mlp import HiddenLayer
-from convolutional_mlp import LeNetConvPoolLayer
-from fixed_length_softmax import FixedLengthSoftmax
-from sequence_softmax import SequenceSoftmax
+
+from layers.layers import *
 from progress import Progressor
 from shared_dataio import SharedDataIO
 
@@ -34,17 +30,23 @@ class NNTrainer(object):
     """ Configurable Neural Network Trainer,
         Currently support several convolution-pooling layer followed by hidden layers.
     """
-    def __init__(self, batch_size, input_shape, multi_output=True):
+    def __init__(self, batch_size, rgb_input_shape, multi_output=True):
+        """ input_shape: either (x, y) or (3, x, y) for rgb"""
         self.layer_config = []
         self.layers = []
         self.batch_size = batch_size
-        self.input_shape = input_shape
+        if len(rgb_input_shape) == 3:
+            self.input_shape = (rgb_input_shape[1], rgb_input_shape[2])
+            self.rgb_input = True
+        else:
+            self.input_shape = rgb_input_shape
+            self.rgb_input = False
         self.rng = numpy.random.RandomState(23455)
 
         self.x = T.matrix('x')
-        self.x.tag.test_value = np.random.rand(self.batch_size,
-                                               reduce(operator.mul,
-                                                      self.input_shape)).astype('float32')
+        #self.x.tag.test_value = np.random.rand(self.batch_size,
+                                               #reduce(operator.mul,
+                                                      #self.input_shape)).astype('float32')
         if multi_output:
             self.y = T.imatrix('y')
             #t = np.zeros((self.batch_size, 4), dtype='int32')
@@ -53,7 +55,8 @@ class NNTrainer(object):
         else:
             self.y = T.ivector('y')
 
-        self.orig_input = self.x.reshape((self.batch_size, 1) + input_shape)
+        self.orig_input = self.x.reshape((self.batch_size,
+                                          3 if self.rgb_input else 1) + self.input_shape)
 
     def add_convpoollayer(self, filter_config, pool_size):
         """ filter_config: tuple(nfilters, filter_size)
@@ -68,7 +71,7 @@ class NNTrainer(object):
 
         if not len(self.layers):
             # This is the First Convolutional Layer
-            image_shape = (self.batch_size, 1) + self.input_shape
+            image_shape = (self.batch_size, 3 if self.rgb_input else 1) + self.input_shape
             filter_shape = (filter_config[0], 1,
                             filter_config[1], filter_config[1])
 
@@ -289,7 +292,8 @@ class NNTrainer(object):
         epoch = 0
         done_looping = False
 
-        logger = ParamsLogger(self.input_shape, dataset_file + '-models')
+        rgb_input_shape = (3,) + self.input_shape if self.rgb_input else self.input_shape
+        logger = ParamsLogger(rgb_input_shape, dataset_file + '-models')
         progressor = Progressor(n_epochs)
         rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
 

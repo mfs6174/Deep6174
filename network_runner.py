@@ -7,8 +7,6 @@ import scipy.io as sio
 from scipy.misc import imsave, toimage, imread
 import theano.tensor as T
 import theano
-from imageutil import tile_raster_images, get_image_matrix
-
 import sys, gzip
 import cPickle as pickle
 import operator
@@ -16,8 +14,8 @@ import itertools
 from itertools import count, izip
 import time
 
-from convolutional_mlp import LeNetConvPoolLayer
 from train_network import NNTrainer
+from imageutil import tile_raster_images, get_image_matrix
 
 N_OUT = 10
 

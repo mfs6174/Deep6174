@@ -1,8 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-draw-last.py
-# Date: Fri Aug 29 17:07:36 2014 -0700
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Date: Fri Aug 29 21:35:40 2014 -0700
 
 import matplotlib.pyplot as plt
 from scipy.misc import imread, imsave
@@ -34,13 +33,6 @@ def draw(vec, ofname):
         f.write(repr(vec))
     fig = plt.figure()
 
-# We have already saved the learned parameters in sys.argv[1]
-# build nn with params
-model_file = sys.argv[1]
-# get a network from the saved file
-nn = get_nn(model_file)
-print "Running network with model {0}".format(model_file)
-
 def gen_file_list():
     """ generate image filenames from arguments given in the command line"""
     for k in range(2, len(sys.argv)):
@@ -48,6 +40,13 @@ def gen_file_list():
         for f in glob.glob(pattern):
             if os.path.isfile(f):
                 yield f
+
+# We have already saved the learned parameters in sys.argv[1]
+# build nn with params
+model_file = sys.argv[1]
+# get a network from the saved file
+nn = get_nn(model_file)
+print "Running network with model {0}".format(model_file)
 
 # get the weight of the digit '3' at the second position
 prms = nn.nn.layers[-1].get_params()['Ws'][2][:,3]
