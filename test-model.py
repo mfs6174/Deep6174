@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-model.py
-# Date: Fri Aug 22 23:30:36 2014 -0700
+# Date: Tue Aug 26 21:36:02 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -56,14 +56,14 @@ for img, label in izip(test[0], test[1]):
     if nn.multi_output and hasattr(pred, '__iter__'):
         if nn.var_len_output:
             seq_len = pred[0]
-            # per-digit accuracy
-            if len(label) != 5:
-                continue
-            tot += seq_len
-            corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label) if i == j])
+            #if len(label) != 5:
+                #continue
+            # digit level accuracy
+            #tot += seq_len
+            #corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label) if i == j])
             # absolute accuracy
-            #tot += 1
-            #corr += list(label) == list(pred[1:1+seq_len])
+            tot += 1
+            corr += list(label) == list(pred[1:1+seq_len])
 
             len_tot += 1
             len_corr += pred[0] == len(label)

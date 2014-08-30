@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train_network.py
-# Date: Sat Aug 23 23:25:55 2014 -0700
+# Date: Thu Aug 28 13:25:59 2014 -0700
 import os
 import sys
 import time
@@ -379,19 +379,19 @@ if __name__ == '__main__':
     nn = NNTrainer(500, img_size, multi_output=multi_output)
 
     # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((20, 5), 2)
     nn.add_convpoollayer((50, 5), 2)
-    nn.add_convpoollayer((70, 5), 2)
-    nn.add_convpoollayer((70, 3), 2)
+    nn.add_convpoollayer((100, 5), 2)
+    nn.add_convpoollayer((150, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
+    nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_sequence_softmax(6)
+        nn.add_sequence_softmax(4)
         #nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.08, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz

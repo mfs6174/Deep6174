@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-draw-last.py
-# Date: Tue Aug 26 01:08:34 2014 -0700
+# Date: Fri Aug 29 17:07:36 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import matplotlib.pyplot as plt
@@ -21,7 +21,9 @@ if len(sys.argv) < 3:
     sys.exit()
 
 def draw(vec, ofname):
-    """ draw a vector in dots or lines, also save the vector"""
+    """ draw a vector in dots or lines, also save the vector
+        ofname: output filename
+    """
     fig = plt.figure(figsize = (38, 2))
     plt.plot(range(len(vec)), vec,'bo')
     fig.savefig(ofname)
@@ -32,8 +34,10 @@ def draw(vec, ofname):
         f.write(repr(vec))
     fig = plt.figure()
 
+# We have already saved the learned parameters in sys.argv[1]
 # build nn with params
 model_file = sys.argv[1]
+# get a network from the saved file
 nn = get_nn(model_file)
 print "Running network with model {0}".format(model_file)
 
@@ -68,10 +72,10 @@ for idx, f in enumerate(gen_file_list()):
         pass
 
     # get the representation after the last hidden layer, which is [-2]
-    # layer. [-1] is the output layer.
+    # layer[-1] is the output layer.
     hidden_vec = results[-2].reshape((results[-2].shape[1],))
 
-    # build filename
+    # build filename for output
     pred = str(pred[0]) + '-' + ''.join(map(str, pred[1:]))
     basename = os.path.basename(f)[:-4]
     fname = os.path.join(outdir, basename + '-{0}-vec.jpg'.format(pred))

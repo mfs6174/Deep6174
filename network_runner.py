@@ -47,6 +47,7 @@ class NetworkRunner(object):
             ninput = self.nn.layer_config[-1]['filter_shape'][0]
         # check the shapes
         shape = W.shape
+        print shape
         nfilter = shape[0]
         assert ninput == shape[1], "{0}!={1}".format(ninput, shape[1])
         filter_size = shape[2]
@@ -149,7 +150,7 @@ class NetworkRunner(object):
         return self.funcs[-1]([[img]])
 
     def predict(self, img):
-        """ return predicted label (either a sequence or a digit)"""
+        """ return predicted label (either a list or a digit)"""
         img = get_image_matrix(img)
         results = [self.run_only_last(img)]
         label = NetworkRunner.get_label_from_result(img, results,
@@ -179,15 +180,21 @@ class NetworkRunner(object):
 
 
 def build_nn_with_params(params, batch_size=1):
-    """ params: the object load from param{epoch}.mat file
+    """ build a network and return it
+        params: the object load from param{epoch}.pkl.gz file
     """
     input_size = params['input_shape']
     print "Size={0}".format(input_size)
     runner = NetworkRunner(input_size, batch_size)
-    for nlayer in count(start=1, step=1):
+    for nlayer in count(start=0, step=1):
         layername = 'layer' + str(nlayer)
         if layername not in params:
-            break
+        # BACKWARD COMPATIBILITY:
+        # some old models I generated starts counting layers from one
+            if nlayer == 0:
+                continue
+            else:
+                break
         layerdata = params[layername]
         layertype = layerdata['type']
         print "Layer ", nlayer, ' is ', layertype
@@ -216,6 +223,7 @@ def get_nn(filename):
         data = pickle.load(f)
 
     nn = build_nn_with_params(data)
+    # compile all the functions
     nn.finish()
     return nn
 
