@@ -316,16 +316,15 @@ class NNTrainer(object):
                     # do a validation:
 
                     # compute zero-one loss on validation set
-                    validation_losses = [validate_model(i) for i
+                    validation_losses = [test_model(i) for i
                                          in xrange(n_batches[1])]
                     this_validation_loss = numpy.mean(validation_losses)
-                    print('After epoch %i, minibatch %i/%i, validation error %f %%' % \
+                    print('After epoch %i, minibatch %i/%i, test error %f %%' % \
                           (epoch, minibatch_index + 1, n_batches[0], \
                            this_validation_loss * 100.))
 
                     # if we got the best validation score until now
                     if this_validation_loss < best_validation_loss:
-
                         #improve patience if loss improvement is good enough
                         if this_validation_loss < best_validation_loss *  \
                            improvement_threshold:
@@ -336,14 +335,6 @@ class NNTrainer(object):
                         best_iter = iter
                         # save best params
                         logger.save_params('best', self.layers)
-
-                        # test it on the test set
-                        test_losses = [test_model(i) for i in xrange(n_batches[2])]
-                        test_score = numpy.mean(test_losses)
-                        print(('     After epoch %i, minibatch %i/%i, test error of best '
-                               'model %f %%') %
-                              (epoch, minibatch_index + 1, n_batches[0],
-                               test_score * 100.))
 
                 if patience <= iter:
                     done_looping = True
@@ -376,7 +367,7 @@ if __name__ == '__main__':
         img_size = shape
         # if input is not square, then probably is multiple output.
         multi_output = True
-    load_all = img_size[0] * img_size[1] < 100 ** 2
+    load_all = reduce(operator.mul, img_size) < 100 ** 2
     print "Load All Data: ", load_all
 
     # config the nn
@@ -384,13 +375,13 @@ if __name__ == '__main__':
 
     # params are: (n_filters, filter_size), pooling_size
     nn.add_convpoollayer((50, 5), 2)
-    nn.add_convpoollayer((100, 5), 2)
-    nn.add_convpoollayer((150, 5), 2)
+    nn.add_convpoollayer((70, 5), 2)
+    nn.add_convpoollayer((90, 5), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
-        nn.add_sequence_softmax(4)
+        nn.add_sequence_softmax(5)
         #nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
