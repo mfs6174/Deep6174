@@ -309,7 +309,7 @@ class NNTrainer(object):
             for minibatch_index in xrange(n_batches[0]):
                 iter = (epoch - 1) * n_batches[0] + minibatch_index
 
-                if iter % 100 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
+                if iter % 200 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
                     print 'training @ iter = ', iter
                 cost_ij = train_model(minibatch_index, learning_rate)
 

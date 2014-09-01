@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-model.py
-# Date: Mon Sep 01 14:18:05 2014 -0700
+# Date: Mon Sep 01 14:58:05 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -52,7 +52,7 @@ for img, label in izip(test[0], test[1]):
     if nn.multi_output and hasattr(pred, '__iter__'):
         if nn.var_len_output:
             seq_len = pred[0]
-            if len(label) < len(len_sep_accu):
+            if len(label) <= len(len_sep_accu):
                 len_sep_accu[len(label) - 1].update(1,
                                list(label) == list(pred[1:1+seq_len]))
             # digit level accuracy
