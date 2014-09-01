@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: imageutil.py
-# Date: Fri Aug 22 21:10:32 2014 -0700
+# Date: Mon Sep 01 11:41:52 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 """ This file contains different utility functions that are not connected
@@ -142,11 +142,29 @@ def tile_raster_images(X, img_shape, tile_shape, tile_spacing=(0, 0),
         return out_array
 
 
-def get_image_matrix(img):
-    """ if img is flattened, make it a matrix"""
+def get_image_matrix(img, show=True):
+    """ if img is flattened, make it a matrix
+        show: if img is (3, x, y), make it (x, y, 3)
+        not show: make img (3, x, y) for run
+    """
     shape = img.shape
     if len(shape) == 2:
         return img
+    if len(shape) == 3:
+        if shape[0] != 3:
+            assert shape[2] == 3
+            if show:
+                return img
+            else:
+                ret = numpy.asarray((img[..., 0], img[..., 1], img[..., 2]))
+                return ret
+        if not show:
+            return img
+        ret = numpy.zeros((shape[1], shape[2], 3))
+        ret[..., 0] = img[0]
+        ret[..., 1] = img[1]
+        ret[..., 2] = img[2]
+        return ret
     l = int(numpy.sqrt(shape[0]))
     assert l * l == int(shape[0])
     return img.reshape((l, l))

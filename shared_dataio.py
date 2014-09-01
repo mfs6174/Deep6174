@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: shared_dataio.py
-# Date: Sat Aug 30 18:19:09 2014 -0700
+# Date: Sat Aug 30 22:20:39 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -31,10 +31,12 @@ class SharedDataIO(object):
                                    self.dataset]
         else:
             n_in = dataset[0][0][0].flatten().shape[0]
-            self.shared_Xs = [theano.shared(np.zeros((self.batch_size, n_in),
+            self.shared_Xs = [theano.shared(np.zeros((self.batch_size, ) +
+                                                     (n_in, ),
                                                     dtype=theano.config.floatX),
                                            borrow=True) for _ in range(3)]
             label = dataset[0][1][0]
+            label = np.asarray(label, dtype='int32')
             if len(label.shape) == 0:
                 # numpy.int label
                 self.shared_ys = [theano.shared(np.zeros((self.batch_size, ),
@@ -72,8 +74,8 @@ class SharedDataIO(object):
     def process_pair(self, X, y):
         if type(X) == list:
             X = np.asarray(X, dtype='float32')
-        #if len(X[0].shape) != 1:
-            #X = X.reshape(X.shape[0], -1)
+        if len(X[0].shape) != 1:
+            X = X.reshape(X.shape[0], -1)       # flatten each image
         if self.with_length > 0:
             y = [list(chain.from_iterable((
                 [len(k) - 1],

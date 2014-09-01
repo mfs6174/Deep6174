@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-model.py
-# Date: Tue Aug 26 21:36:02 2014 -0700
+# Date: Mon Sep 01 11:44:33 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -11,17 +11,6 @@ from itertools import izip
 from network_runner import get_nn
 from dataio import read_data, save_data
 from imageutil import get_image_matrix
-
-#def get_an_image(dataset, label):
-    #""" get an image with label=number"""
-    #train_set, valid_set, test_set = read_data(dataset)
-    #for idx, img in enumerate(test_set[0]):
-        #ys = test_set[1][idx]
-        #if hasattr(ys, '__iter__'):
-            #ys = ys[0]
-        #if int(ys) != label:
-            #continue
-        #img = get_image_matrix(img)
 
 if len(sys.argv) != 3:
     print "Usage: {0} <model file> <dataset.pkl.gz>".format(sys.argv[0])

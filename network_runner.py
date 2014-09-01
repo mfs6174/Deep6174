@@ -20,12 +20,12 @@ from imageutil import tile_raster_images, get_image_matrix
 N_OUT = 10
 
 class NetworkRunner(object):
-    def __init__(self, input_size, batch_size=1):
+    def __init__(self, rgb_input_size, batch_size=1):
         """ input size in (height, width)"""
-        self.input_size = input_size
+        self.rgb_input_size = rgb_input_size
         self.batch_size = batch_size
         # nn is the underlying neural network object to run with
-        self.nn = NNTrainer(batch_size, input_size)
+        self.nn = NNTrainer(batch_size, rgb_input_size)
         self.n_conv_layer = 0
         self.var_len_output = False
         self.multi_output = False
@@ -40,7 +40,7 @@ class NetworkRunner(object):
         self.n_conv_layer += 1
         if len(self.nn.layers) == 0:
             # this is the first layer
-            ninput = 1
+            ninput = 3 if len(self.rgb_input_size) == 3 else 1
         else:
             ninput = self.nn.layer_config[-1]['filter_shape'][0]
         # check the shapes
@@ -119,12 +119,12 @@ class NetworkRunner(object):
         for (idx, layer) in enumerate(self.nn.layers):
             if idx == len(self.nn.layers) - 1:
                 # the output layer: use likelihood of the label
-                f = theano.function([self.nn.orig_input],
+                f = theano.function([self.nn.x],
                                      layer.p_y_given_x,
                                     allow_input_downcast=True)
             else:
                 # layers in the middle: use its output fed into the next layer
-                f = theano.function([self.nn.orig_input],
+                f = theano.function([self.nn.x],
                                    layer.output, allow_input_downcast=True)
             self.funcs.append(f)
 
@@ -132,24 +132,25 @@ class NetworkRunner(object):
         """ return all the representations after each layer"""
         assert self.batch_size == 1, \
                 "batch_size of runner is not 1, but trying to run against 1 image"
-        assert img.shape == self.input_size
+        assert img.shape == self.rgb_input_size
 
+        img = img.flatten()
         results = []
         for (idx, layer) in enumerate(self.nn.layers):
-            # why [[img]]?
+            # why [img]?
             # theano needs arguments to be listed, although there is only 1 argument here
-            # and the first argument here is a 'batch' of one image
-            results.append(self.funcs[idx]([[img]]))
+            results.append(self.funcs[idx]([img]))
         return results
 
     def run_only_last(self, img):
         """ return representation of the last layer"""
-        assert img.shape == self.input_size
-        return self.funcs[-1]([[img]])
+        assert img.shape == self.rgb_input_size
+        img = img.flatten()
+        return self.funcs[-1]([img])
 
     def predict(self, img):
         """ return predicted label (either a list or a digit)"""
-        img = get_image_matrix(img)
+        img = get_image_matrix(img, show=False)
         results = [self.run_only_last(img)]
         label = NetworkRunner.get_label_from_result(img, results,
                                                     self.multi_output,
@@ -181,9 +182,9 @@ def build_nn_with_params(params, batch_size=1):
     """ build a network and return it
         params: the object load from param{epoch}.pkl.gz file
     """
-    input_size = params['input_shape']
-    print "Size={0}".format(input_size)
-    runner = NetworkRunner(input_size, batch_size)
+    rgb_input_size = params['input_shape']
+    print "Size={0}".format(rgb_input_size)
+    runner = NetworkRunner(rgb_input_size, batch_size)
     for nlayer in count(start=0, step=1):
         layername = 'layer' + str(nlayer)
         if layername not in params:

@@ -59,6 +59,7 @@ class LeNetConvPoolLayer(object):
         :param poolsize: the downsampling (pooling) factor (#rows,#cols)
         """
 
+        print image_shape, filter_shape
         assert image_shape[1] == filter_shape[1]
         self.input = input
         if type(poolsize) == int:

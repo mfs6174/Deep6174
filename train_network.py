@@ -25,6 +25,7 @@ from progress import Progressor
 from shared_dataio import SharedDataIO
 
 N_OUT = 10
+MOMENT = 0.6
 
 class NNTrainer(object):
     """ Configurable Neural Network Trainer,
@@ -72,7 +73,7 @@ class NNTrainer(object):
         if not len(self.layers):
             # This is the First Convolutional Layer
             image_shape = (self.batch_size, 3 if self.rgb_input else 1) + self.input_shape
-            filter_shape = (filter_config[0], 1,
+            filter_shape = (filter_config[0], 3 if self.rgb_input else 1,
                             filter_config[1], filter_config[1])
 
             layer = LeNetConvPoolLayer(self.rng, input=self.orig_input,
@@ -279,6 +280,7 @@ class NNTrainer(object):
         improvement_threshold = 0.995  # a relative improvement of this much is
                                        # considered significant
         validation_frequency = min(n_batches[0], patience / 2)
+        validation_frequency /= 2
                                       # go through this many
                                       # minibatche before checking the network
                                       # on the validation set; in this case we
@@ -336,9 +338,9 @@ class NNTrainer(object):
                         # save best params
                         logger.save_params('best', self.layers)
 
-                if patience <= iter:
-                    done_looping = True
-                    break
+                #if patience <= iter:
+                    #done_looping = True
+                    #break
 
         end_time = time.clock()
         print('Optimization complete.')
@@ -355,28 +357,27 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-    shape = get_dataset_imgsize(dataset, False)
-    print "Input img size is {0}".format(shape)
+    ds = read_data(dataset)[0]
+    shape = ds[0][0].shape
+    multi_output = hasattr(ds[1][0], '__iter__')
+    print "Input img size is {0}, multioutput={1}".format(shape, multi_output)
 
     if len(shape) == 1:
         assert int(np.sqrt(shape[0])) == np.sqrt(shape[0])
         s = int(np.sqrt(shape[0]))
         img_size = (s, s)
-        multi_output = False
     else:
         img_size = shape
-        # if input is not square, then probably is multiple output.
-        multi_output = True
     load_all = reduce(operator.mul, img_size) < 100 ** 2
     print "Load All Data: ", load_all
 
     # config the nn
-    nn = NNTrainer(500, img_size, multi_output=multi_output)
+    nn = NNTrainer(128, img_size, multi_output=multi_output)
 
     # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((50, 5), 2)
-    nn.add_convpoollayer((70, 5), 2)
-    nn.add_convpoollayer((90, 5), 2)
+    nn.add_convpoollayer((50, 3), 2)
+    nn.add_convpoollayer((70, 3), 2)
+    nn.add_convpoollayer((90, 3), 2)
 
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
@@ -386,7 +387,7 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.01, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz
