@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-model.py
-# Date: Mon Sep 01 11:44:33 2014 -0700
+# Date: Mon Sep 01 14:18:05 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -11,6 +11,7 @@ from itertools import izip
 from network_runner import get_nn
 from dataio import read_data, save_data
 from imageutil import get_image_matrix
+from accuracy import AccuracyRecorder
 
 if len(sys.argv) != 3:
     print "Usage: {0} <model file> <dataset.pkl.gz>".format(sys.argv[0])
@@ -35,43 +36,47 @@ params_file = sys.argv[1]
 nn = get_nn(params_file)
 
 train, valid, test = read_data(sys.argv[2])
-corr, tot = 0, 0
+digit_accu = AccuracyRecorder('digit')
+abs_accu = AccuracyRecorder('abs')
+
+len_sep_accu = []
+for l in [1, 2, 3, 4, 5]:
+    len_sep_accu.append(AccuracyRecorder('l{0}-abs'.format(l)))
 if nn.var_len_output:
-    # also record the precision for length
-    len_tot, len_corr = 0, 0
+    # also record the accuracy for length
+    length_accu = AccuracyRecorder('length')
+
 for img, label in izip(test[0], test[1]):
     pred = nn.predict(img)
     #print pred, label
     if nn.multi_output and hasattr(pred, '__iter__'):
         if nn.var_len_output:
             seq_len = pred[0]
-            #if len(label) != 5:
-                #continue
+            if len(label) < len(len_sep_accu):
+                len_sep_accu[len(label) - 1].update(1,
+                               list(label) == list(pred[1:1+seq_len]))
             # digit level accuracy
-            #tot += seq_len
-            #corr += sum([1 for i, j in izip(pred[1:1 + seq_len], label) if i == j])
+            digit_accu.update(seq_len,
+                              sum([1 for i, j in izip(pred[1:1 + seq_len], label) if i == j]))
             # absolute accuracy
-            tot += 1
-            corr += list(label) == list(pred[1:1+seq_len])
+            abs_accu.update(1,
+                            list(label) == list(pred[1:1+seq_len]))
 
-            len_tot += 1
-            len_corr += pred[0] == len(label)
-            if len_tot % 1000 == 0:
-                print "Length predict accuracy: {0}".format(len_corr * 1.0 / len_tot)
+            # length accuracy
+            length_accu.update(1, pred[0] == len(label))
         elif nn.multi_output:
             # Fixed length output
-            tot += len(label)
-            corr += len([k for k, _ in izip(pred, label) if k == _])
+            digit_accu.update(len(label),
+                              len([k for k, _ in izip(pred, label) if k == _]))
         else:
-            tot += 1
-            corr += label_match(pred, label)
+            digit_accu.update(1, label_match(pred, label))
     else:
-        tot += 1
-        corr += label == pred
-
-    if tot % 1000 == 0 and tot > 0:
-        print "Rate: {0}".format(corr * 1.0 / tot)
-print "Rate: {0}".format(corr * 1.0 / tot)
+        abs_accu.update(1, label == pred)
+digit_accu.log()
+abs_accu.log()
+length_accu.log()
+for accu in len_sep_accu:
+    accu.log()
 
 
 # Usage ./test_model.py param_file.pkl.gz dataset.pkl.gz
