@@ -209,11 +209,22 @@ class NNTrainer(object):
         # take derivatives on those params
         grads = T.grad(cost, params)
 
+        # save last updates for momentum
+        last_updates = []
+        for param in params:
+            last_updates.append(
+                theano.shared(
+                    np.zeros(param.get_value(borrow=True).shape,
+                             dtype=theano.config.floatX)
+                ))
+
         def gen_updates_with_learning_rate(rate):
             # gradient descent on those params
             updates = []
-            for param_i, grad_i in zip(params, grads):
-                updates.append((param_i, param_i - rate * grad_i))
+            for param_i, grad_i, last_update in zip(params, grads, last_updates):
+                upd = - rate * grad_i + MOMENT * last_update
+                updates.append((param_i, param_i + upd))
+                updates.append((last_update, upd))
             return updates
 
         n_batches = list(shared_io.get_dataset_size())
@@ -372,14 +383,13 @@ if __name__ == '__main__':
     print "Load All Data: ", load_all
 
     # config the nn
-    nn = NNTrainer(128, img_size, multi_output=multi_output)
+    nn = NNTrainer(400, img_size, multi_output=multi_output)
 
     # params are: (n_filters, filter_size), pooling_size
+    nn.add_convpoollayer((20, 3), 2)
     nn.add_convpoollayer((50, 3), 2)
-    nn.add_convpoollayer((70, 3), 2)
-    nn.add_convpoollayer((90, 3), 2)
+    #nn.add_convpoollayer((90, 3), 2)
 
-    nn.add_hidden_layer(n_out=500, activation=T.tanh)
     nn.add_hidden_layer(n_out=500, activation=T.tanh)
     if multi_output:
         nn.add_sequence_softmax(5)
@@ -387,7 +397,7 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.01, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz
