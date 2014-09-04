@@ -37,7 +37,9 @@ import scipy.io as sio
 class LeNetConvPoolLayer(object):
     """Pool Layer of a convolutional network """
 
-    def __init__(self, rng, input, filter_shape, image_shape, poolsize=(2, 2)):
+    def __init__(self, rng, input,
+                 filter_shape, image_shape,
+                 poolsize=(2, 2), activation='relu'):
         """
         Allocate a LeNetConvPoolLayer with shared variable internal parameters.
 
@@ -97,7 +99,13 @@ class LeNetConvPoolLayer(object):
         # reshape it to a tensor of shape (1,n_filters,1,1). Each bias will
         # thus be broadcasted across mini-batches and feature map
         # width & height
-        self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+        if activation = 'tanh':
+            self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+        elif activation = 'relu':
+            self.output = T.ge(pooled_out +
+                    self.b.dimshuffle('x', 0, 'x', 'x'), 0) * (pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+        else:
+            assert False, 'unknown activation, must be either tanh or relu'
 
         # store parameters of this layer
         self.params = [self.W, self.b]
