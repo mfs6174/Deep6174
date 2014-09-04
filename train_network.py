@@ -351,6 +351,7 @@ class NNTrainer(object):
                         best_validation_loss = this_validation_loss
                         best_iter = iter
                         # save best params
+                        print 'Yay! Saving best model ...'
                         logger.save_params('best', self)
 
                 #if patience <= iter:
@@ -387,21 +388,22 @@ if __name__ == '__main__':
     print "Load All Data: ", load_all
 
     # config the nn
-    nn = NNTrainer(400, img_size, multi_output=multi_output)
+    nn = NNTrainer(64, img_size, multi_output=multi_output)
 
     # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((20, 3), 2)
-    nn.add_convpoollayer((50, 3), 2)
+    nn.add_convpoollayer((48, 3), 2)
+    nn.add_convpoollayer((96, 3), 2)
+    nn.add_convpoollayer((128, 3), 2)
     #nn.add_convpoollayer((90, 3), 2)
 
-    nn.add_hidden_layer(n_out=500, activation=T.tanh)
+    nn.add_hidden_layer(n_out=3182, activation=T.tanh)
     if multi_output:
         nn.add_sequence_softmax(5)
         #nn.add_nLR_layer(2)
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.007, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz

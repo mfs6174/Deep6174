@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sample-dataset.py
-# Date: Mon Sep 01 01:16:31 2014 -0700
+# Date: Tue Sep 02 15:36:32 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -24,7 +24,10 @@ if len(sys.argv) < 2:
 input_data = sys.argv[1]
 assert os.path.isfile(input_data)
 output_dir = input_data + '-samples'
-shutil.rmtree(output_dir)
+try:
+    shutil.rmtree(output_dir)
+except:
+    pass
 os.mkdir(output_dir)
 
 # number of images to sample
