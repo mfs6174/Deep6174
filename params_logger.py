@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Fri Aug 29 22:14:41 2014 -0700
+# Date: Wed Sep 03 17:19:16 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -27,22 +27,33 @@ class ParamsLogger(object):
         except:
             pass
 
-    def save_params(self, epoch, layers):
+    def save_params(self, epoch, trainer):
         """ epoch: can be a int, or a string, will be used in the filename
+            trainer: a 'NNTrainer' instance
         """
+        res = {}
         if not isinstance(epoch, basestring):
             epoch = "{0:03d}".format(epoch)
         fname = os.path.join(self.logdir, "param{0}.pkl.gz".format(epoch))
-        res = {}
 
-        for layer, cnt in izip(layers, count()):
-            # save layer type
-            dic = {'type': name_dict[type(layer)] }
-            # save other layer parameters
-            dic.update(layer.get_params())
+        def update_layers():
+            layers = trainer.layers
 
-            res['layer' + str(cnt)] = dic
+            for layer, cnt in izip(layers, count()):
+                # save layer type
+                dic = {'type': name_dict[type(layer)] }
+                # save other layer parameters
+                dic.update(layer.get_params())
+                res['layer' + str(cnt)] = dic
+
+        update_layers()
         res['input_shape'] = self.rgb_input_shape
+
+        # save last_updates
+        last_updates = []
+        for upd_shared in trainer.last_updates:
+            last_updates.append(upd_shared.get_value())
+        res['last_updates'] = last_updates
 
         with gzip.open(fname, 'wb') as f:
             pickle.dump(res, f, -1)

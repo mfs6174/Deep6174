@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: continue_train.py
-# Date: Thu Aug 28 00:13:51 2014 -0700
+# Date: Wed Sep 03 17:16:06 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from network_runner import build_nn_with_params
@@ -9,6 +9,7 @@ from network_runner import build_nn_with_params
 import cPickle as pickle
 import gzip
 import sys
+import operator
 
 if len(sys.argv) != 3:
     print "Usage: {0} <model file to continue on> dataset.pkl.gz".format(sys.argv[0])
@@ -21,8 +22,8 @@ with gzip.open(model, 'r') as f:
 nn_runner = build_nn_with_params(data, 500)
 nn = nn_runner.nn
 
-input_size = nn_runner.input_size
-load_all = input_size[0] * input_size[1] < 100 ** 2
+input_size = nn_runner.rgb_input_size
+load_all = reduce(operator.mul, input_size) < 100 ** 2
 
 dataset = sys.argv[2]
 nn.work(init_learning_rate=0.01, dataset_file=dataset, n_epochs=1000,

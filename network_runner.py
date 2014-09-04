@@ -36,6 +36,14 @@ class NetworkRunner(object):
         """
         return self.nn.layers[idx]
 
+    def set_last_updates(self, last_updates):
+        """ set last_updates in trainer, for used in momentum
+            last_updates: list of np array for each param
+        """
+        assert len(self.nn.last_updates) == 0
+        for lu in last_updates:
+            self.nn.last_updates.append(theano.shared(lu))
+
     def add_convpool_layer(self, W, b, pool_size):
         self.n_conv_layer += 1
         if len(self.nn.layers) == 0:
@@ -185,6 +193,9 @@ def build_nn_with_params(params, batch_size=1):
     rgb_input_size = params['input_shape']
     print "Size={0}".format(rgb_input_size)
     runner = NetworkRunner(rgb_input_size, batch_size)
+    if 'last_updates' in params:
+        runner.set_last_updates(params['last_updates'])
+
     for nlayer in count(start=0, step=1):
         layername = 'layer' + str(nlayer)
         if layername not in params:

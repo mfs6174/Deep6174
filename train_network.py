@@ -4,7 +4,7 @@
 import os
 import sys
 import time
-from itertools import chain
+from itertools import chain, izip
 import cPickle
 import gzip
 import operator
@@ -58,6 +58,8 @@ class NNTrainer(object):
 
         self.orig_input = self.x.reshape((self.batch_size,
                                           3 if self.rgb_input else 1) + self.input_shape)
+
+        self.last_updates = []
 
     def add_convpoollayer(self, filter_config, pool_size):
         """ filter_config: tuple(nfilters, filter_size)
@@ -210,18 +212,20 @@ class NNTrainer(object):
         grads = T.grad(cost, params)
 
         # save last updates for momentum
-        last_updates = []
-        for param in params:
-            last_updates.append(
-                theano.shared(
-                    np.zeros(param.get_value(borrow=True).shape,
-                             dtype=theano.config.floatX)
-                ))
+        if not self.last_updates:
+            self.last_updates = []
+            for param in params:
+                self.last_updates.append(
+                    theano.shared(
+                        np.zeros(param.get_value(borrow=True).shape,
+                                 dtype=theano.config.floatX)
+                    ))
+        assert len(self.last_updates) == len(params), 'last updates don\'t match params'
 
         def gen_updates_with_learning_rate(rate):
             # gradient descent on those params
             updates = []
-            for param_i, grad_i, last_update in zip(params, grads, last_updates):
+            for param_i, grad_i, last_update in izip(params, grads, self.last_updates):
                 upd = - rate * grad_i + MOMENT * last_update
                 updates.append((param_i, param_i + upd))
                 updates.append((last_update, upd))
@@ -314,7 +318,7 @@ class NNTrainer(object):
             epoch = epoch + 1
             if epoch > 1: progressor.report(1, True)
             # save params at the beginning of each epoch
-            logger.save_params(epoch, self.layers)
+            logger.save_params(epoch, self)
             learning_rate = rate_provider.get_rate(epoch)
             print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
             for minibatch_index in xrange(n_batches[0]):
@@ -347,7 +351,7 @@ class NNTrainer(object):
                         best_validation_loss = this_validation_loss
                         best_iter = iter
                         # save best params
-                        logger.save_params('best', self.layers)
+                        logger.save_params('best', self)
 
                 #if patience <= iter:
                     #done_looping = True
