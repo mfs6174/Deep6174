@@ -34,6 +34,11 @@ from theano.tensor.nnet import conv
 import theano.printing as PP
 import scipy.io as sio
 
+def mean_filter(kernel_size):
+    s = kernel_size ** 2
+    x = numpy.repeat(1./s, s).reshape((kernel_size, kernel_size))
+    return x
+
 class ConvPoolLayer(object):
     """Pool Layer of a convolutional network """
 
@@ -91,20 +96,42 @@ class ConvPoolLayer(object):
         conv_out = conv.conv2d(input=self.input, filters=self.W,
                 filter_shape=filter_shape, image_shape=image_shape)
 
-        # downsample each feature map individually, using maxpooling
-        pooled_out = downsample.max_pool_2d(input=conv_out,
-                                            ds=poolsize, ignore_border=True)
-
         # add the bias term. Since the bias is a vector (1D array), we first
         # reshape it to a tensor of shape (1,n_filters,1,1). Each bias will
         # thus be broadcasted across mini-batches and feature map
         # width & height
         if activation == 'tanh':
-            self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+            activate_out = T.tanh(conv_out + self.b.dimshuffle('x', 0, 'x', 'x'))
         elif activation == 'relu':
-            self.output = T.maximum(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'), 0.0)
+            activate_out = T.maximum(conv_out + self.b.dimshuffle('x', 0, 'x', 'x'), 0.0)
         else:
             assert False, 'unknown activation, must be either tanh or relu'
+
+        # downsample each feature map individually, using maxpooling
+        pooled_out = downsample.max_pool_2d(input=activate_out,
+                                            ds=poolsize, ignore_border=True)
+
+        output_img_size = (image_shape[0], filter_shape[0],
+                           (image_shape[2] - filter_shape[2] + 1) / 2,
+                           (image_shape[3] - filter_shape[3] + 1) / 2)
+
+        # mean substraction normalization, with representation size fixed
+        filter_size = 3
+        filter_shape = (1, 1, filter_size, filter_size)
+        filters = mean_filter(filter_size).reshape(filter_shape)
+        filters = theano.shared(numpy.asarray(filters,
+                                              dtype=theano.config.floatX),
+                                borrow=True)
+        pooled_out = pooled_out.reshape((output_img_size[0] * output_img_size[1],
+                                         1,
+                                         output_img_size[2], output_img_size[3]))
+        mean = conv.conv2d(pooled_out, filters=filters,
+                           filter_shape=filter_shape, border_mode='full')
+        mid = int(numpy.floor(filter_size / 2.))
+
+        output = pooled_out - mean[:, :, mid : -mid, mid : -mid]
+        self.output = output.reshape(output_img_size)
+
 
         # store parameters of this layer
         self.params = [self.W, self.b]

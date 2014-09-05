@@ -422,13 +422,14 @@ if __name__ == '__main__':
     print "Load All Data: ", load_all
 
     # config the nn
-    nn = NNTrainer(250, img_size, multi_output=multi_output)
+    nn = NNTrainer(500, img_size, multi_output=multi_output)
 
     # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((48, 3), 2)
-    nn.add_convpoollayer((96, 3), 2)
-    nn.add_convpoollayer((128, 3), 2)
-    #nn.add_convpoollayer((90, 3), 2)
+    #nn.add_convpoollayer((48, 3), 2)
+    #nn.add_convpoollayer((96, 3), 2)
+    #nn.add_convpoollayer((128, 3), 2)
+    nn.add_convpoollayer((20, 5), 2)
+    nn.add_convpoollayer((50, 5), 2)
 
     #nn.add_hidden_layer(n_out=500, activation=T.tanh)
     nn.add_hidden_layers([500], 0.5)
@@ -438,7 +439,7 @@ if __name__ == '__main__':
     else:
         nn.add_LR_layer()
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.007, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.0625, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz
