@@ -74,6 +74,11 @@ class NetworkRunner(object):
         last_layer.W.set_value(W.astype('float32'))
         last_layer.b.set_value(b.flatten().astype('float32'))
 
+    def add_mlp_layer(self, Ws, bs, dropout_rate, layer_sizes):
+        self.nn.add_hidden_layers(layer_sizes, dropout_rate)
+        self.nn.layers[-1].set_params(Ws, bs)
+
+
     def add_LR_layer(self, W, b):
         self.LR_W = W
         # LR layer can only be used output
@@ -216,6 +221,11 @@ def build_nn_with_params(params, batch_size=1):
         elif layertype == 'hidden':
             runner.add_hidden_layer(layerdata['W'],
                                     layerdata['b'])
+        elif layertype == 'mlp':
+            runner.add_mlp_layer(layerdata['Ws'],
+                                layerdata['bs'],
+                                layerdata['dropout_rate'],
+                                layerdata['layer_sizes'])
         elif layertype == 'lr':
             runner.add_LR_layer(layerdata['W'],
                                 layerdata['b'])

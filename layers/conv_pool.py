@@ -34,14 +34,14 @@ from theano.tensor.nnet import conv
 import theano.printing as PP
 import scipy.io as sio
 
-class LeNetConvPoolLayer(object):
+class ConvPoolLayer(object):
     """Pool Layer of a convolutional network """
 
     def __init__(self, rng, input,
                  filter_shape, image_shape,
                  poolsize=(2, 2), activation='relu'):
         """
-        Allocate a LeNetConvPoolLayer with shared variable internal parameters.
+        Allocate a ConvPoolLayer with shared variable internal parameters.
 
         :type rng: numpy.random.RandomState
         :param rng: a random number generator used to initialize weights
@@ -99,9 +99,9 @@ class LeNetConvPoolLayer(object):
         # reshape it to a tensor of shape (1,n_filters,1,1). Each bias will
         # thus be broadcasted across mini-batches and feature map
         # width & height
-        if activation = 'tanh':
+        if activation == 'tanh':
             self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
-        elif activation = 'relu':
+        elif activation == 'relu':
             self.output = T.maximum(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'), 0.0)
         else:
             assert False, 'unknown activation, must be either tanh or relu'

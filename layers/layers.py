@@ -1,19 +1,19 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: layers.py
-# Date: Thu Sep 04 21:33:45 2014 -0700
+# Date: Fri Sep 05 14:23:19 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
 from logistic_sgd import LogisticRegression
 from mlp import HiddenLayer, DropoutMLP
-from convolutional_mlp import LeNetConvPoolLayer
+from conv_pool import ConvPoolLayer
 from fixed_length_softmax import FixedLengthSoftmax
 from sequence_softmax import SequenceSoftmax
 
-name_dict = {LeNetConvPoolLayer: 'convpool',
+name_dict = {ConvPoolLayer: 'convpool',
              HiddenLayer: 'hidden',
-             DropoutMLP: 'mlp'
+             DropoutMLP: 'mlp',
              LogisticRegression: 'lr',
              FixedLengthSoftmax: 'fl-sm',
              SequenceSoftmax: 'ssm'}

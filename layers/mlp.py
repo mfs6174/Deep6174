@@ -138,7 +138,7 @@ class DropoutHiddenLayer(HiddenLayer):
 class DropoutMLP(object):
     """ A Multilayer Perceptron with dropout support """
     def __init__(self, rng, input,
-                 layer_sizes,
+                 n_in, layer_sizes,
                  dropout_rate,
                  activation=T.tanh):
         """ layer_sizes: list of int
@@ -148,9 +148,13 @@ class DropoutMLP(object):
         # with mlp, training and testing will use different params!
         self.dropout_layers = []        # layers for train
         self.layers = []                # layers for test
+        self.layer_sizes = layer_sizes
+        self.n_in = n_in
+        self.dropout_rate = dropout_rate
 
         next_input = input
         next_dropout_input = _dropout_from_tensor(rng, input, p=dropout_rate)
+        layer_sizes.insert(0, n_in)
 
         for n_in, n_out in izip(layer_sizes, layer_sizes[1:]):
             next_dropout_layer = DropoutHiddenLayer(rng,
@@ -178,10 +182,18 @@ class DropoutMLP(object):
             [x.params for x in self.dropout_layers]))
 
     def get_params(self):
-        pass
+        ret = {'Ws': [x.W.get_value(borrow=True) for x in self.dropout_layers],
+               'bs': [x.b.get_value(borrow=True) for x in self.dropout_layers],
+               'dropout_rate': self.dropout_rate,
+               'layer_sizes': self.layer_sizes
+              }
+        return ret
 
-    def set_params(self, params):
-        pass
+    def set_params(self, Ws, bs):
+        assert len(Ws) == len(self.dropout_layers)
+        for k, W, b in izip(count(), Ws, bs):
+            self.dropout_layers[k].W.set_value(W.astype(theano.config.floatX))
+            self.dropout_layers[k].b.set_value(b.astype(theano.config.floatX))
 
     def save_params_mat(self, basename):
         """ save params in .mat format
