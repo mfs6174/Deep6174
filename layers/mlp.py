@@ -26,7 +26,7 @@ import gzip
 import os
 import sys
 import time
-
+from itertools import izip, count, chain
 import numpy
 
 import theano
@@ -97,8 +97,7 @@ class HiddenLayer(object):
         self.b = b
 
         lin_output = T.dot(input, self.W) + self.b
-        self.output = (lin_output if activation is None
-                       else activation(lin_output))
+        self.output = (lin_output if activation is None else activation(lin_output))
         # parameters of the model
         self.params = [self.W, self.b]
 
@@ -113,3 +112,81 @@ class HiddenLayer(object):
         params = self.get_params()
         sio.savemat(basename + '.mat', params)
 
+
+def _dropout_from_tensor(rng, input, p):
+    """ p is the dropout probability
+    """
+    srng = T.shared_randomstreams.RandomStreams(rng.randint(999999))
+    mask = srng.binomial(n=1, p=1-p, size=input.shape)
+
+    # The cast is important because int * float32 = float64 which pulls things off the gpu
+    output = input * T.cast(mask, theano.config.floatX)
+    return output
+
+class DropoutHiddenLayer(HiddenLayer):
+    def __init__(self, rng, input,
+                 n_in, n_out,
+                 activation,
+                 dropout_rate,
+                 W=None, b=None):
+        super(DropoutHiddenLayer, self).__init__(
+                rng=rng, input=input, n_in=n_in, n_out=n_out, W=W, b=b,
+                activation=activation)
+
+        self.output = _dropout_from_tensor(rng, self.output, p=dropout_rate)
+
+class DropoutMLP(object):
+    """ A Multilayer Perceptron with dropout support """
+    def __init__(self, rng, input,
+                 layer_sizes,
+                 dropout_rate,
+                 activation=T.tanh):
+        """ layer_sizes: list of int
+            dropout_rate: float
+            activation is default to tanh
+        """
+        # with mlp, training and testing will use different params!
+        self.dropout_layers = []        # layers for train
+        self.layers = []                # layers for test
+
+        next_input = input
+        next_dropout_input = _dropout_from_tensor(rng, input, p=dropout_rate)
+
+        for n_in, n_out in izip(layer_sizes, layer_sizes[1:]):
+            next_dropout_layer = DropoutHiddenLayer(rng,
+                                                    next_dropout_input,
+                                                    n_in, n_out,
+                                                    activation,
+                                                    dropout_rate)
+            self.dropout_layers.append(next_dropout_layer)
+            next_dropout_input = next_dropout_layer.output
+
+            # for test, layer needs to reuse params in the dropout with a scaling
+            next_layer = HiddenLayer(rng, next_input,
+                                     n_in, n_out,
+                                     W=next_dropout_layer.W * (1 - dropout_rate),
+                                     b=next_dropout_layer.b,
+                                     activation=activation)
+            self.layers.append(next_layer)
+            next_input = next_layer.output
+
+        # provide two kinds of output for next layer to use
+        self.dropout_output = next_dropout_input
+        self.output = next_input
+
+        self.params = list(chain.from_iterable(
+            [x.params for x in self.dropout_layers]))
+
+    def get_params(self):
+        pass
+
+    def set_params(self, params):
+        pass
+
+    def save_params_mat(self, basename):
+        """ save params in .mat format
+            file name will be built by adding suffix to 'basename'
+        """
+        return
+        params = self.get_params()
+        sio.savemat(basename + '-hidden1.mat', params)

@@ -116,7 +116,6 @@ class NNTrainer(object):
 
     def add_hidden_layer(self, n_out, activation):
         if not len(self.layer_config):
-            # XXX do something
             assert len(self.layer_config), "hidden layer must be added after ConvPool layer"
             return
 
@@ -131,14 +130,37 @@ class NNTrainer(object):
         else:
             assert "currently hidden layers must follow a conv layer"
 
+    def add_hidden_layers(self, layer_sizes, dropout_rate, activation=T.tanh):
+        if not len(self.layer_config):
+            assert len(self.layer_config), "hidden layer must be added after ConvPool layer"
+            return
+
+        last_config = self.layer_config[-1]
+        if type(self.layers[-1]) == LeNetConvPoolLayer:
+            input = self.layers[-1].output.flatten(2)
+            layer = DropoutMLP(self.rng, input,
+                               layer_sizes,
+                               dropout_rate,
+                               activation)
+            self.layers.append(layer)
+            self.layer_config.append({'layer_sizes': layer_sizes, 'activation': activation})
+        else:
+            assert "currently hidden layers must follow a conv layer"
+
     def add_LR_layer(self):
         """ Can only be used as output layer"""
-        if type(self.layers[-1]) == HiddenLayer:
-            layer = LogisticRegression(input=self.layers[-1].output,
+        last_layer = self.layers[-1]
+        if type(last_layer) == HiddenLayer:
+            layer = LogisticRegression(input=last_layer.output,
                                        n_in=self.layer_config[-1]['n_out'],
                                        n_out=N_OUT)
-        elif type(self.layers[-1]) == LeNetConvPoolLayer:
-            input = self.layers[-1].output.flatten(2)
+        elif type(last_layer) == DropoutMLP:
+            layer = LogisticRegression(input=last_layer.output,
+                                       n_in=self.layer_config[-1]['n_out'],
+                                       n_out=N_OUT,
+                                       dropout_input=last_layer.dropout_output)
+        elif type(last_layer) == LeNetConvPoolLayer:
+            input = last_layer.output.flatten(2)
             layer = LogisticRegression(input=input,
                                       n_in=self._get_nin_after_convlayer(),
                                       n_out=N_OUT)
@@ -160,17 +182,27 @@ class NNTrainer(object):
                                       n_in=self._get_nin_after_convlayer(),
                                       n_out=N_OUT,
                                       num_out=n)
+        else:
+            assert False
         self.layers.append(layer)
         self.layer_config.append(None)
 
     def add_sequence_softmax(self, max_len):
         """ SequenceSoftmax layer
         Can only be used as output layer"""
-        assert type(self.layers[-1]) == HiddenLayer
-        layer = SequenceSoftmax(input=self.layers[-1].output,
-                                   n_in=self.layer_config[-1]['n_out'],
-                                   seq_max_len = max_len,
-                                   n_out=N_OUT)
+        last_layer = self.layers[-1]
+        assert type(last_layer) == HiddenLayer
+        if type(last_layer) == HiddenLayer:
+            layer = SequenceSoftmax(input=last_layer.output,
+                                       n_in=self.layer_config[-1]['n_out'],
+                                       seq_max_len = max_len,
+                                       n_out=N_OUT)
+        elif type(last_layer) == DropoutMLP:
+            layer = SequenceSoftmax(input=last_layer.output,
+                               n_in=self.layer_config[-1]['n_out'],
+                               seq_max_len = max_len,
+                               n_out=N_OUT,
+                               dropout_input=last_layer.dropout_output)
         self.layers.append(layer)
         self.layer_config.append({'max_len': max_len})
 
@@ -396,7 +428,8 @@ if __name__ == '__main__':
     nn.add_convpoollayer((128, 3), 2)
     #nn.add_convpoollayer((90, 3), 2)
 
-    nn.add_hidden_layer(n_out=3182, activation=T.tanh)
+    #nn.add_hidden_layer(n_out=500, activation=T.tanh)
+    nn.add_hidden_layers([500], 0.5)
     if multi_output:
         nn.add_sequence_softmax(5)
         #nn.add_nLR_layer(2)

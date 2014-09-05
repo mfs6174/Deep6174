@@ -102,8 +102,7 @@ class LeNetConvPoolLayer(object):
         if activation = 'tanh':
             self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
         elif activation = 'relu':
-            self.output = T.ge(pooled_out +
-                    self.b.dimshuffle('x', 0, 'x', 'x'), 0) * (pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+            self.output = T.maximum(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'), 0.0)
         else:
             assert False, 'unknown activation, must be either tanh or relu'
 

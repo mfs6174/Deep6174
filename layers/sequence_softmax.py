@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Fri Aug 29 22:36:53 2014 -0700
+# Date: Thu Sep 04 21:30:03 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -21,11 +21,14 @@ import theano.printing as PP
 import scipy.io as sio
 
 class SequenceSoftmax(object):
-    def __init__(self, input, n_in, seq_max_len, n_out):
+    def __init__(self, input, n_in, seq_max_len, n_out, dropout_input=None):
         """
         :type input: theano.tensor.TensorType
         :param input: symbolic variable that describes the input of the
                       architecture (one minibatch)
+
+        :param dropout_input: symbolic variable describing the input with dropout
+               if provided, this should be used for train
 
         possible length is 1 ... seq_max_len
 
@@ -55,15 +58,22 @@ class SequenceSoftmax(object):
         assert len(self.Ws) == self.n_softmax
         assert len(self.bs) == self.n_softmax
 
+        # p_y_given_x[k]: kth output for all y, each of size (batch_size * n_out)
         self.p_y_given_x = [T.nnet.softmax(T.dot(input, self.Ws[k]) +
                                             self.bs[k]) for k in
                              xrange(self.n_softmax)]
-        # p_y_given_x[k]: kth output for all y, each of size (batch_size * n_out)
 
+        # self.pred[idx]: output labels of the 'idx' input
         self.pred = [T.argmax(self.p_y_given_x[k], axis=1) for k in
                      xrange(self.n_softmax)]
         self.pred = T.stacklists(self.pred).dimshuffle(1, 0)
-        # self.pred[idx]: output labels of the 'idx' input
+
+        # when using dropout, log_likelihood should be calculated
+        # using dropout input for training
+        if dropout_input is not None:
+            self.p_y_given_x = [T.nnet.softmax(T.dot(dropout_input, self.Ws[k]) +
+                                                self.bs[k]) for k in
+                                 xrange(self.n_softmax)]
 
         self.params = copy(self.Ws)
         self.params.extend(self.bs)
