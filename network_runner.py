@@ -44,7 +44,7 @@ class NetworkRunner(object):
         for lu in last_updates:
             self.nn.last_updates.append(theano.shared(lu))
 
-    def add_convpool_layer(self, W, b, pool_size):
+    def add_convpool_layer(self, W, b, pool_size, norm=None):
         self.n_conv_layer += 1
         if len(self.nn.layers) == 0:
             # this is the first layer
@@ -61,7 +61,7 @@ class NetworkRunner(object):
         assert b.shape[0] == nfilter
 
         # add a conv layer in network
-        self.nn.add_convpoollayer((nfilter, filter_size), pool_size)
+        self.nn.add_convpoollayer((nfilter, filter_size), pool_size, norm)
         last_layer = self.nn.layers[-1]
         last_layer.W.set_value(W.astype('float32'))
         last_layer.b.set_value(b.flatten().astype('float32'))
@@ -217,7 +217,8 @@ def build_nn_with_params(params, batch_size=1):
         if layertype == 'convpool':
             runner.add_convpool_layer(layerdata['W'],
                                       layerdata['b'],
-                                      layerdata['pool_size'])
+                                      layerdata['pool_size'],
+                                      layerdata.get('norm', None))
         elif layertype == 'hidden':
             runner.add_hidden_layer(layerdata['W'],
                                     layerdata['b'])

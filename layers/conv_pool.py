@@ -44,7 +44,7 @@ class ConvPoolLayer(object):
 
     def __init__(self, rng, input,
                  filter_shape, image_shape,
-                 poolsize=(2, 2), activation='relu'):
+                 poolsize=(2, 2), activation='relu', norm='mean'):
         """
         Allocate a ConvPoolLayer with shared variable internal parameters.
 
@@ -72,6 +72,7 @@ class ConvPoolLayer(object):
         if type(poolsize) == int:
             poolsize = (poolsize, poolsize)
         self.pool_size = poolsize
+        self.norm = norm
 
         # there are "num input feature maps * filter height * filter width"
         # inputs to each hidden unit
@@ -111,27 +112,29 @@ class ConvPoolLayer(object):
         pooled_out = downsample.max_pool_2d(input=activate_out,
                                             ds=poolsize, ignore_border=True)
 
-        output_img_size = (image_shape[0], filter_shape[0],
-                           (image_shape[2] - filter_shape[2] + 1) / 2,
-                           (image_shape[3] - filter_shape[3] + 1) / 2)
+        if norm == 'mean':
+            output_img_size = (image_shape[0], filter_shape[0],
+                               (image_shape[2] - filter_shape[2] + 1) / 2,
+                               (image_shape[3] - filter_shape[3] + 1) / 2)
 
-        # mean substraction normalization, with representation size fixed
-        filter_size = 3
-        filter_shape = (1, 1, filter_size, filter_size)
-        filters = mean_filter(filter_size).reshape(filter_shape)
-        filters = theano.shared(numpy.asarray(filters,
-                                              dtype=theano.config.floatX),
-                                borrow=True)
-        pooled_out = pooled_out.reshape((output_img_size[0] * output_img_size[1],
-                                         1,
-                                         output_img_size[2], output_img_size[3]))
-        mean = conv.conv2d(pooled_out, filters=filters,
-                           filter_shape=filter_shape, border_mode='full')
-        mid = int(numpy.floor(filter_size / 2.))
+            # mean substraction normalization, with representation size fixed
+            filter_size = 3
+            filter_shape = (1, 1, filter_size, filter_size)
+            filters = mean_filter(filter_size).reshape(filter_shape)
+            filters = theano.shared(numpy.asarray(filters,
+                                                  dtype=theano.config.floatX),
+                                    borrow=True)
+            pooled_out = pooled_out.reshape((output_img_size[0] * output_img_size[1],
+                                             1,
+                                             output_img_size[2], output_img_size[3]))
+            mean = conv.conv2d(pooled_out, filters=filters,
+                               filter_shape=filter_shape, border_mode='full')
+            mid = int(numpy.floor(filter_size / 2.))
 
-        output = pooled_out - mean[:, :, mid : -mid, mid : -mid]
-        self.output = output.reshape(output_img_size)
-
+            output = pooled_out - mean[:, :, mid : -mid, mid : -mid]
+            self.output = output.reshape(output_img_size)
+        else:
+            self.output = pooled_out
 
         # store parameters of this layer
         self.params = [self.W, self.b]
@@ -139,7 +142,8 @@ class ConvPoolLayer(object):
     def get_params(self):
         return {'W': self.W.get_value(borrow=True),
                 'b': self.b.get_value(borrow=True),
-                'pool_size': self.pool_size}
+                'pool_size': self.pool_size,
+                'norm': self.norm}
 
     def save_params_mat(self, basename):
         """ save params in .mat format

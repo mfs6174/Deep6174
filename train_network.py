@@ -61,7 +61,7 @@ class NNTrainer(object):
 
         self.last_updates = []
 
-    def add_convpoollayer(self, filter_config, pool_size):
+    def add_convpoollayer(self, filter_config, pool_size, norm='mean'):
         """ filter_config: tuple(nfilters, filter_size)
             pool_size: tuple or int
         """
@@ -80,7 +80,7 @@ class NNTrainer(object):
 
             layer = ConvPoolLayer(self.rng, input=self.orig_input,
                         image_shape=image_shape, filter_shape=filter_shape,
-                        poolsize=pool_size)
+                        poolsize=pool_size, norm=norm)
             self.layers.append(layer)
         else:
             # this is a layer following previous convolutional layer
@@ -95,7 +95,7 @@ class NNTrainer(object):
 
             layer = ConvPoolLayer(self.rng, input=self.layers[-1].output,
                         image_shape=image_shape, filter_shape=filter_shape,
-                        poolsize=pool_size)
+                        poolsize=pool_size, norm=norm)
             self.layers.append(layer)
 
         # save the config for next layer to use
@@ -363,7 +363,7 @@ class NNTrainer(object):
                 cost_ij = train_model(minibatch_index, learning_rate)
 
 
-                if (iter + 1) % validation_frequency == 0 or iter < 5:
+                if (iter + 1) % validation_frequency == 0 or iter in [10, 20, 30, 60, 100, 200]:
                     # do a validation:
 
                     # compute zero-one loss on validation set
@@ -384,9 +384,10 @@ class NNTrainer(object):
                         # save best validation score and iteration number
                         best_validation_loss = this_validation_loss
                         best_iter = iter
-                        # save best params
-                        print 'Yay! Saving best model ...'
-                        logger.save_params('best', self)
+                        if best_validation_loss < 0.85:
+                            # save best params
+                            print 'Yay! Saving best model ...'
+                            logger.save_params('best', self)
 
                 #if patience <= iter:
                     #done_looping = True
