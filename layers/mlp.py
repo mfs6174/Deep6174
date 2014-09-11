@@ -185,7 +185,8 @@ class DropoutMLP(object):
         ret = {'Ws': [x.W.get_value(borrow=True) for x in self.dropout_layers],
                'bs': [x.b.get_value(borrow=True) for x in self.dropout_layers],
                'dropout_rate': self.dropout_rate,
-               'layer_sizes': self.layer_sizes
+               # layer_sizes[0] is the input size of the previous layer
+               'layer_sizes': self.layer_sizes[1:]
               }
         return ret
 
