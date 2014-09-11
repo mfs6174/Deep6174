@@ -95,7 +95,10 @@ class ConvPoolLayer(object):
 
         # convolve input feature maps with filters
         conv_out = conv.conv2d(input=self.input, filters=self.W,
-                filter_shape=filter_shape, image_shape=image_shape)
+                filter_shape=filter_shape, image_shape=image_shape,
+                               border_mode='full')
+        mid = numpy.floor(filter_shape[2:] / 2).astype(int)
+        conv_out = conv_out[:, :, mid[0]:-mid[0], mid[1]:-mid[1]]
 
         # add the bias term. Since the bias is a vector (1D array), we first
         # reshape it to a tensor of shape (1,n_filters,1,1). Each bias will
