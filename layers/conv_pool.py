@@ -122,13 +122,16 @@ class ConvPoolLayer(object):
             maxout_out = activate_out[:, ::maxout]
             for i in range(1, maxout):
                 maxout_out = T.maximum(maxout_out, activate_out[:, i::maxout])
-            activate_out = maxout_out
+            pooled_out = downsample.max_pool_2d(input=maxout_out,
+                                                ds=poolsize, ignore_border=True)
+        else:
 
-        # downsample each feature map individually, using maxpooling
-        pooled_out = downsample.max_pool_2d(input=activate_out,
-                                            ds=poolsize, ignore_border=True)
+            # downsample each feature map individually, using maxpooling
+            pooled_out = downsample.max_pool_2d(input=activate_out,
+                                                ds=poolsize, ignore_border=True)
 
         if norm == 'mean':
+            assert maxout == 0
             output_img_size = (image_shape[0], n_filter_out,
                                image_shape[2] / poolsize[0],
                                image_shape[3] / poolsize[1])

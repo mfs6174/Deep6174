@@ -80,20 +80,22 @@ class NNTrainer(object):
 
             layer = ConvPoolLayer(self.rng, input=self.orig_input,
                         image_shape=image_shape, filter_shape=filter_shape,
-                        poolsize=pool_size, norm=norm)
+                        poolsize=pool_size, norm=norm, maxout=maxout)
+            # maxout is only supported in first layer
             self.layers.append(layer)
         else:
+            assert maxout == 0
             # this is a layer following previous convolutional layer
             # calculate new config based on config of previous layer
             last_config = self.layer_config[-1]
             last_filt_shape = last_config['filter_shape']
             last_img_shape = last_config['image_shape']
             now_img_size = [last_img_shape[k] / last_config['pool_size'][k - 2] for k in [2, 3]]
-            image_shape = (self.batch_size, last_filt_shape[0]) + tuple(now_img_size)
             if last_config['maxout']:
-                last_n_filter = last_filt_shape[0] / maxout
+                last_n_filter = last_filt_shape[0] / last_config['maxout']
             else:
                 last_n_filter = last_filt_shape[0]
+            image_shape = (self.batch_size, last_n_filter) + tuple(now_img_size)
             filter_shape = (filter_config[0], last_n_filter,
                             filter_config[1], filter_config[1])
 
@@ -431,7 +433,7 @@ if __name__ == '__main__':
     nn = NNTrainer(64, img_size, multi_output=multi_output)
 
     # params are: (n_filters, filter_size), pooling_size
-    nn.add_convpoollayer((48, 5), 2)
+    nn.add_convpoollayer((48, 5), 2, norm='', maxout=3)
     nn.add_convpoollayer((96, 5), 2)
     nn.add_convpoollayer((128, 5), 2)
     nn.add_convpoollayer((192, 5), 2)
