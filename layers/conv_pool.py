@@ -97,7 +97,8 @@ class ConvPoolLayer(object):
         conv_out = conv.conv2d(input=self.input, filters=self.W,
                 filter_shape=filter_shape, image_shape=image_shape,
                                border_mode='full')
-        mid = numpy.floor(filter_shape[2:] / 2).astype(int)
+        mid = (int(numpy.floor(filter_shape[2] / 2.)),
+               int(numpy.floor(filter_shape[3] / 2.)))
         conv_out = conv_out[:, :, mid[0]:-mid[0], mid[1]:-mid[1]]
 
         # add the bias term. Since the bias is a vector (1D array), we first
@@ -117,8 +118,8 @@ class ConvPoolLayer(object):
 
         if norm == 'mean':
             output_img_size = (image_shape[0], filter_shape[0],
-                               (image_shape[2] - filter_shape[2] + 1) / 2,
-                               (image_shape[3] - filter_shape[3] + 1) / 2)
+                               (image_shape[2]) / poolsize[0],
+                               (image_shape[3]) / poolsize[1])
 
             # mean substraction normalization, with representation size fixed
             filter_size = 3
