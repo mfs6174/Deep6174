@@ -44,7 +44,7 @@ class ConvPoolLayer(object):
 
     def __init__(self, rng, input,
                  filter_shape, image_shape,
-                 poolsize=(2, 2), activation='relu', norm='mean'):
+                 poolsize=(2, 2), activation='relu', norm='mean', maxout=0):
         """
         Allocate a ConvPoolLayer with shared variable internal parameters.
 
@@ -73,6 +73,7 @@ class ConvPoolLayer(object):
             poolsize = (poolsize, poolsize)
         self.pool_size = poolsize
         self.norm = norm
+        self.maxout = maxout
 
         # there are "num input feature maps * filter height * filter width"
         # inputs to each hidden unit
@@ -110,16 +111,27 @@ class ConvPoolLayer(object):
         elif activation == 'relu':
             activate_out = T.maximum(conv_out + self.b.dimshuffle('x', 0, 'x', 'x'), 0.0)
         else:
-            assert False, 'unknown activation, must be either tanh or relu'
+            assert NotImplementedError("unown activation")
+
+        # in the current implementation,
+        # another normal conv layer must follow a maxout-conv layer
+        n_filter_out = filter_shape[0]
+        if maxout != 0:
+            n_filter_out = n_filter_out / maxout
+            assert filter_shape[0] % maxout == 0
+            maxout_out = activate_out[:, ::maxout]
+            for i in range(1, maxout):
+                maxout_out = T.maximum(maxout_out, activate_out[:, i::maxout])
+            activate_out = maxout_out
 
         # downsample each feature map individually, using maxpooling
         pooled_out = downsample.max_pool_2d(input=activate_out,
                                             ds=poolsize, ignore_border=True)
 
         if norm == 'mean':
-            output_img_size = (image_shape[0], filter_shape[0],
-                               (image_shape[2]) / poolsize[0],
-                               (image_shape[3]) / poolsize[1])
+            output_img_size = (image_shape[0], n_filter_out,
+                               image_shape[2] / poolsize[0],
+                               image_shape[3] / poolsize[1])
 
             # mean substraction normalization, with representation size fixed
             filter_size = 3
@@ -147,7 +159,8 @@ class ConvPoolLayer(object):
         return {'W': self.W.get_value(borrow=True),
                 'b': self.b.get_value(borrow=True),
                 'pool_size': self.pool_size,
-                'norm': self.norm}
+                'norm': self.norm,
+                'maxout': self.maxout}
 
     def save_params_mat(self, basename):
         """ save params in .mat format

@@ -61,7 +61,7 @@ class NNTrainer(object):
 
         self.last_updates = []
 
-    def add_convpoollayer(self, filter_config, pool_size, norm='mean'):
+    def add_convpoollayer(self, filter_config, pool_size, norm='mean', maxout=0):
         """ filter_config: tuple(nfilters, filter_size)
             pool_size: tuple or int
         """
@@ -90,7 +90,11 @@ class NNTrainer(object):
             last_img_shape = last_config['image_shape']
             now_img_size = [last_img_shape[k] / last_config['pool_size'][k - 2] for k in [2, 3]]
             image_shape = (self.batch_size, last_filt_shape[0]) + tuple(now_img_size)
-            filter_shape = (filter_config[0], last_filt_shape[0],
+            if last_config['maxout']:
+                last_n_filter = last_filt_shape[0] / maxout
+            else:
+                last_n_filter = last_filt_shape[0]
+            filter_shape = (filter_config[0], last_n_filter,
                             filter_config[1], filter_config[1])
 
             layer = ConvPoolLayer(self.rng, input=self.layers[-1].output,
@@ -101,7 +105,8 @@ class NNTrainer(object):
         # save the config for next layer to use
         self.layer_config.append({'image_shape': image_shape,
                                   'filter_shape': filter_shape,
-                                  'pool_size': pool_size })
+                                  'pool_size': pool_size,
+                                  'maxout': maxout})
 
     def _get_nin_after_convlayer(self):
         """ get n_in of next layer after a convpool layer"""
