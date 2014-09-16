@@ -97,7 +97,10 @@ class HiddenLayer(object):
         self.b = b
 
         lin_output = T.dot(input, self.W) + self.b
-        self.output = (lin_output if activation is None else activation(lin_output))
+        if activation == 'relu':
+            self.output = T.maximum(self.output, 0.0)
+        else:
+            self.output = (lin_output if activation is None else activation(lin_output))
         # parameters of the model
         self.params = [self.W, self.b]
 

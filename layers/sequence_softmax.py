@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Thu Sep 04 21:30:03 2014 -0700
+# Date: Tue Sep 16 13:43:23 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -79,21 +79,26 @@ class SequenceSoftmax(object):
         self.params.extend(self.bs)
 
     def negative_log_likelihood(self, y):
-        """ y: a batch_size x n_softmax 2d matrix. each row: (len, l1, l2, l3, ...)
+        """ y: a batch_size x n_softmax 2d matrix. each row: (len, s1, s2, s3, ...)
         """
         batch_size = y.shape[0]
         rg = T.arange(batch_size)       # range of the matrix indices
 
         loglikelihood = T.log(self.p_y_given_x[1:])
-        # correct label is the index used in the loglikelihood matrix
+
         idxs = y.dimshuffle(1, 0)[1:]
+        # correct label is the index used in the loglikelihood matrix
+        # size of idxs: (n_softmax - 1) * batch_size
+
         # select the loglikelihood of the specific label from the matrix
+        # size of l: (batch_size * 10)
+        # size of idx: (n_softmax - 1)
         sr, _ = theano.map(fn=lambda l, idx: l[rg, idx],
                            sequences=[loglikelihood, idxs])
         M = sr.dimshuffle(1, 0)
         length_probs = T.log(self.p_y_given_x[0])[rg, y[:,0]]
 
-        # sum of log_likelihood for digits & length, on each example
+        # sum of log_likelihood for digits & length, on each example in a batch
         def f(probs, label, length_prob):
             return T.sum(probs[:label[0] + 1]) + length_prob
         sr, _ = theano.map(fn=f, sequences=[M, y, length_probs])
