@@ -1,54 +1,39 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Tue Sep 16 13:43:23 2014 -0700
+# Date: Tue Sep 16 23:30:51 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import cPickle
-from itertools import chain, izip
-import gzip
-import os
-import sys
-import time
+from itertools import izip
 from copy import copy
-
-import numpy
 import numpy as np
-
 import theano
 import theano.tensor as T
 import theano.printing as PP
 import scipy.io as sio
 
-class SequenceSoftmax(object):
-    def __init__(self, input, n_in, seq_max_len, n_out, dropout_input=None):
-        """
-        :type input: theano.tensor.TensorType
-        :param input: symbolic variable that describes the input of the
-                      architecture (one minibatch)
+from common import Layer
 
-        :param dropout_input: symbolic variable describing the input with dropout
-               if provided, this should be used for train
-
-        possible length is 1 ... seq_max_len
-
-        it is actually a layer with (seq_max_len + seq_max_len * n_out) output.
-        """
+class SequenceSoftmax(Layer):
+    def __init__(self, input_train, input_test,
+                 input_shape, seq_max_len,
+                 n_out=10):
+        super(SequenceSoftmax, self).__init__(None, input_train, input_test)
         self.n_softmax = seq_max_len + 1
+        self.n_in = np.prod(input_shape)
         self.n_out = n_out
 
         # generate n_softmax W matrices
         def gen_W(out, k):
-            # TODO init with other values
-            return theano.shared(value=numpy.zeros((n_in, out),
+            return theano.shared(value=np.zeros((self.n_in, out),
                                              dtype=theano.config.floatX),
                             name='W' + str(k), borrow=True)
         self.Ws = [gen_W(seq_max_len, 0)]
-        self.Ws.extend([gen_W(n_out, _ + 1) for _ in range(seq_max_len)])
+        self.Ws.extend([gen_W(self.n_out, _ + 1) for _ in range(seq_max_len)])
 
         # generate n_softmax b vectors
         def gen_b(out, k):
-            return theano.shared(value=numpy.zeros((out,),
+            return theano.shared(value=np.zeros((out,),
                                                    dtype=theano.config.floatX),
                                  name='b' + str(k), borrow=True)
 
@@ -59,7 +44,7 @@ class SequenceSoftmax(object):
         assert len(self.bs) == self.n_softmax
 
         # p_y_given_x[k]: kth output for all y, each of size (batch_size * n_out)
-        self.p_y_given_x = [T.nnet.softmax(T.dot(input, self.Ws[k]) +
+        self.p_y_given_x = [T.nnet.softmax(T.dot(self.input_test, self.Ws[k]) +
                                             self.bs[k]) for k in
                              xrange(self.n_softmax)]
 
@@ -68,10 +53,8 @@ class SequenceSoftmax(object):
                      xrange(self.n_softmax)]
         self.pred = T.stacklists(self.pred).dimshuffle(1, 0)
 
-        # when using dropout, log_likelihood should be calculated
-        # using dropout input for training
-        if dropout_input is not None:
-            self.p_y_given_x = [T.nnet.softmax(T.dot(dropout_input, self.Ws[k]) +
+        if self.has_dropout_input:
+            self.p_y_given_x = [T.nnet.softmax(T.dot(self.input_train, self.Ws[k]) +
                                                 self.bs[k]) for k in
                                  xrange(self.n_softmax)]
 
@@ -139,7 +122,20 @@ class SequenceSoftmax(object):
     def get_params(self):
         Ws = [k.get_value(borrow=True) for k in self.Ws]
         bs = [k.get_value(borrow=True) for k in self.bs]
-        return {"Ws": Ws, "bs": bs}
+        return {"Ws": Ws, "bs": bs,
+                'input_shape': self.n_in,
+                'n_out': self.n_out,
+                'seq_max_len': self.n_softmax - 1}
+
+    @staticmethod
+    def build_layer_from_params(params, rng, input_train, input_test=None):
+        layer = SequenceSoftmax(input_train, input_test,
+                                params['input_shape'],
+                                params['seq_max_len'],
+                                params['n_out'])
+        if 'Ws' in params:
+            layer.set_params(params['Ws'], params['bs'])
+        return layer
 
     def save_params_mat(self, basename):
         """ save params in .mat format

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Wed Sep 03 17:19:16 2014 -0700
+# Date: Tue Sep 16 23:21:02 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -18,9 +18,8 @@ from layers.layers import name_dict
 class ParamsLogger(object):
     """ class to save network params in each epoch"""
 
-    def __init__(self, rgb_input_shape, logdir='logs'):
+    def __init__(self, logdir='logs'):
         """ logdir: a directory to save params to """
-        self.rgb_input_shape = rgb_input_shape
         self.logdir = logdir
         try:
             os.mkdir(self.logdir)
@@ -45,9 +44,7 @@ class ParamsLogger(object):
                 # save other layer parameters
                 dic.update(layer.get_params())
                 res['layer' + str(cnt)] = dic
-
         update_layers()
-        res['input_shape'] = self.rgb_input_shape
 
         # save last_updates
         last_updates = []
