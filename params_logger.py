@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Tue Sep 16 23:21:02 2014 -0700
+# Date: Wed Sep 17 16:05:03 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -13,7 +13,7 @@ import scipy.io as sio
 import os
 from itertools import count, izip
 
-from layers.layers import name_dict
+from layers.layers import cls_name_dict
 
 class ParamsLogger(object):
     """ class to save network params in each epoch"""
@@ -40,7 +40,7 @@ class ParamsLogger(object):
 
             for layer, cnt in izip(layers, count()):
                 # save layer type
-                dic = {'type': name_dict[type(layer)] }
+                dic = {'type': cls_name_dict[type(layer)] }
                 # save other layer parameters
                 dic.update(layer.get_params())
                 res['layer' + str(cnt)] = dic

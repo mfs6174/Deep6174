@@ -1,13 +1,15 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: maxout.py
-# Date: Tue Sep 16 23:26:57 2014 -0700
+# Date: Wed Sep 17 16:00:18 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import theano.tensor as T
 from common import Layer
 
 class MaxoutLayer(Layer):
+    NAME = 'maxout'
+
     def __init__(self, input_train, input_test,
                  input_shape, maxout_unit):
         super(MaxoutLayer, self).__init__(None, input_train, input_test)

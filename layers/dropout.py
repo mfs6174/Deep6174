@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dropout.py
-# Date: Wed Sep 17 14:31:48 2014 -0700
+# Date: Wed Sep 17 16:16:25 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
 from common import Layer
 
 class DropoutLayer(Layer):
+    NAME = 'dropout'
     def __init__(self, rng, input_train, input_test,
                  input_shape, dropout):
         super(DropoutLayer, self).__init__(rng, input_train, input_test)

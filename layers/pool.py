@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: pool.py
-# Date: Wed Sep 17 16:06:37 2014 +0000
+# Date: Wed Sep 17 16:00:05 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from theano.tensor.signal import downsample
@@ -10,6 +10,8 @@ import theano.printing as PP
 from common import Layer
 
 class PoolLayer(Layer):
+    NAME = 'pool'
+
     def __init__(self, input_train, input_test,
                  image_shape, pool_size):
         super(PoolLayer, self).__init__(None, input_train, input_test)

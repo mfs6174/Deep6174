@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: layers.py
-# Date: Wed Sep 17 14:33:38 2014 -0700
+# Date: Wed Sep 17 16:16:41 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -20,13 +20,9 @@ from dropout import DropoutLayer
 
 from sequence_softmax import SequenceSoftmax
 
-name_dict = {ConvLayer: 'convpool',
-             FullyConnectedLayer: 'fc',
-             SequenceSoftmax: 'ssm',
-             PoolLayer: 'pool',
-             MeanSubtractLayer: 'sub',
-             MaxoutLayer: 'maxout',
-             LogisticRegression: 'lr',
-             DropoutLayer: 'dropout'
-            }
+layer_types = [ConvLayer, FullyConnectedLayer, SequenceSoftmax, PoolLayer,
+               MeanSubtractLayer, MaxoutLayer, LogisticRegression,
+               DropoutLayer]
 
+cls_name_dict = dict([(k, k.get_class_name()) for k in layer_types])
+name_cls_dict = dict([(v, k) for k, v in cls_name_dict.iteritems()])

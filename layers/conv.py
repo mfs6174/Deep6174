@@ -13,6 +13,7 @@ import theano.printing as PP
 from common import ReLu, Layer
 
 class ConvLayer(Layer):
+    NAME = 'conv'
 
     def __init__(self, rng, input_train, input_test,
                  filter_shape, image_shape,

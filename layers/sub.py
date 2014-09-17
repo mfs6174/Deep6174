@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sub.py
-# Date: Wed Sep 17 01:54:14 2014 -0700
+# Date: Wed Sep 17 16:00:26 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -17,6 +17,8 @@ def mean_filter(kernel_size):
     return x
 
 class MeanSubtractLayer(Layer):
+    NAME = 'sub'
+
     def __init__(self, input_train, input_test,
                  input_shape, filter_size):
         super(MeanSubtractLayer, self).__init__(None, input_train, input_test)

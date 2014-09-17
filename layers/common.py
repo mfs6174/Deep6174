@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: common.py
-# Date: Wed Sep 17 01:52:43 2014 -0700
+# Date: Wed Sep 17 16:16:07 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -61,3 +61,7 @@ class Layer(object):
 
     def get_output_shape(self):
         pass
+
+    @classmethod
+    def get_class_name(cls):
+        return cls.NAME

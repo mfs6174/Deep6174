@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: fc.py
-# Date: Wed Sep 17 14:33:14 2014 -0700
+# Date: Wed Sep 17 16:23:23 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -13,6 +13,8 @@ import scipy.io as sio
 from common import ReLu, Layer
 
 class FullyConnectedLayer(Layer):
+    NAME = 'fc'
+
     def __init__(self, rng, input_train, input_test,
                  input_shape, n_out,
                  activation):
@@ -73,5 +75,5 @@ class FullyConnectedLayer(Layer):
                                    )
         if 'W' in params:
             layer.W.set_value(params['W'].astype('float32'))
-            layer.b.set_value(b.flatten().astype('float32'))
+            layer.b.set_value(params['b'].astype('float32'))
         return layer

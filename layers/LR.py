@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: LR.py
-# Date: Wed Sep 17 16:06:59 2014 +0000
+# Date: Wed Sep 17 16:00:49 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import numpy
 import theano
@@ -18,6 +18,8 @@ class LogisticRegression(Layer):
     points onto a set of hyperplanes, the distance to which is used to
     determine a class membership probability.
     """
+
+    NAME = 'lr'
 
     def __init__(self, input_train, input_test,
                  input_shape, n_out):

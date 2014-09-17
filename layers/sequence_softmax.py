@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Wed Sep 17 15:05:44 2014 +0000
+# Date: Wed Sep 17 16:00:57 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from itertools import izip
@@ -15,6 +15,8 @@ import scipy.io as sio
 from common import Layer
 
 class SequenceSoftmax(Layer):
+    NAME = 'ssm'
+
     def __init__(self, input_train, input_test,
                  input_shape, seq_max_len,
                  n_out=10):
