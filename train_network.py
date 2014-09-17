@@ -15,6 +15,7 @@ from numpy import random
 
 import theano
 import theano.tensor as T
+import theano.printing as PP
 
 from params_logger import ParamsLogger
 from learningrate import LearningRateProvider
@@ -230,7 +231,8 @@ class NNTrainer(object):
         def get_layer_nparam(layer):
             prms = layer.params
             ret = sum([reduce(operator.mul, k.get_value().shape) for k in prms])
-            print "Layer {0} has {1} params".format(type(layer), ret)
+            if ret > 0:
+                print "Layer {0} has {1} params".format(type(layer), ret)
             return ret
         return sum([get_layer_nparam(l) for l in self.layers])
 
@@ -239,7 +241,7 @@ class NNTrainer(object):
         """ read data and train"""
         print self.layers
         print self.layer_config
-        assert type(self.layers[-1]) in [SequenceSoftmax]
+        assert type(self.layers[-1]) in [SequenceSoftmax, LogisticRegression]
 
         dataset = read_data(dataset_file)
         if type(self.layers[-1]) == SequenceSoftmax:
@@ -378,7 +380,7 @@ class NNTrainer(object):
                 cost_ij = train_model(minibatch_index, learning_rate)
 
 
-                if (iter + 1) % validation_frequency == 0 or iter in [10, 20, 30, 60, 100, 200]:
+                if (iter + 1) % validation_frequency == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
                     # do a validation:
 
                     # compute zero-one loss on validation set
@@ -438,7 +440,12 @@ if __name__ == '__main__':
     print "Load All Data: ", load_all
 
     # config the nn
-    nn = NNTrainer((250, 1, 50, 100), multi_output=multi_output)
+    batch = 500
+    if len(img_size) == 3:
+        shape = (batch, ) + img_size
+    else:
+        shape = (batch, 1) + img_size
+    nn = NNTrainer(shape, multi_output=multi_output)
 
     nn.add_layer(ConvLayer, {'filter_shape': (20, 5, 5), 'keep_size': False})
     nn.add_layer(PoolLayer, {'pool_size': 2})
@@ -446,15 +453,15 @@ if __name__ == '__main__':
     nn.add_layer(PoolLayer, {'pool_size': 2})
     nn.add_layer(ConvLayer, {'filter_shape': (50, 5, 5), 'keep_size': False})
     nn.add_layer(PoolLayer, {'pool_size': 2})
-    nn.add_layer(FullyConnectedLayer, {'n_out': 500})
+    nn.add_layer(FullyConnectedLayer, {'n_out': 500, 'activation': T.tanh})
 
     if multi_output:
-        nn.add_layer(SequenceSoftmax, {'seq_max_len': 5, 'n_out': 10})
+        nn.add_layer(SequenceSoftmax, {'seq_max_len': 4, 'n_out': 10})
         #nn.add_nLR_layer(2)
     else:
-        nn.add_LR_layer()
+        nn.add_layer(LogisticRegression, {'n_out': 10})
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.04, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz

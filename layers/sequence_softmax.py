@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sequence_softmax.py
-# Date: Tue Sep 16 23:30:51 2014 -0700
+# Date: Wed Sep 17 15:05:44 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from itertools import izip
@@ -20,12 +20,13 @@ class SequenceSoftmax(Layer):
                  n_out=10):
         super(SequenceSoftmax, self).__init__(None, input_train, input_test)
         self.n_softmax = seq_max_len + 1
-        self.n_in = np.prod(input_shape)
+        self.input_shape = input_shape
+        n_in = np.prod(input_shape[1:])
         self.n_out = n_out
 
         # generate n_softmax W matrices
         def gen_W(out, k):
-            return theano.shared(value=np.zeros((self.n_in, out),
+            return theano.shared(value=np.zeros((n_in, out),
                                              dtype=theano.config.floatX),
                             name='W' + str(k), borrow=True)
         self.Ws = [gen_W(seq_max_len, 0)]
@@ -123,7 +124,7 @@ class SequenceSoftmax(Layer):
         Ws = [k.get_value(borrow=True) for k in self.Ws]
         bs = [k.get_value(borrow=True) for k in self.bs]
         return {"Ws": Ws, "bs": bs,
-                'input_shape': self.n_in,
+                'input_shape': self.input_shape,
                 'n_out': self.n_out,
                 'seq_max_len': self.n_softmax - 1}
 

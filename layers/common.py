@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: common.py
-# Date: Tue Sep 16 23:46:33 2014 -0700
+# Date: Wed Sep 17 15:00:54 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -45,8 +45,18 @@ class Layer(object):
         else:
             return dropout_from_tensor(self.rng, output, self.dropout)
 
+    def _get_output_test_before_dropout(self):
+        if self.has_dropout_input:
+            return self.output_test
+        else:
+            return self.output_train
+
     def get_output_test(self):
-        return self.output_test * (1 - self.dropout)
+        output_test = self._get_output_test_before_dropout()
+        if self.dropout == 0.0:
+            return output_test
+        else:
+            return output_test * (1 - self.dropout)
 
     def get_output_shape(self):
         pass

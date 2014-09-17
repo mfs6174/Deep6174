@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: conv.py
-# Date: Tue Sep 16 23:45:37 2014 -0700
+# Date: Wed Sep 17 16:06:28 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -9,6 +9,7 @@ import scipy.io as sio
 import theano
 import numpy
 from theano.tensor.nnet import conv
+import theano.printing as PP
 
 from common import ReLu, dropout_from_tensor, Layer
 
@@ -31,12 +32,13 @@ class ConvLayer(Layer):
         # there are
         # "num input feature maps * filter height * filter width"
         # inputs to each hidden unit
-        fan_in = numpy.prod(filter_shape[1:] * image_shape[1])
+        fan_in = numpy.prod(filter_shape[1:]) * image_shape[1]
         # each unit in the lower layer receives a gradient from:
         # "num output feature maps * filter height * filter width" / pooling size
         fan_out = filter_shape[0] * numpy.prod(filter_shape[1:]) / 4
         # initialize weights with random weights
         W_bound = numpy.sqrt(6. / (fan_in + fan_out))
+        print fan_in, fan_out, W_bound
         self.W = theano.shared(numpy.asarray(
             rng.uniform(low=-W_bound, high=W_bound, size=conv_filter_shape),
             dtype=theano.config.floatX),
@@ -62,12 +64,12 @@ class ConvLayer(Layer):
             activate_out = activation(conv_out + self.b.dimshuffle('x', 0, 'x', 'x'))
             return activate_out
 
-        self.output_train = do_conv(input_train)
+        self.output_train = do_conv(self.input_train)
         if not self.has_dropout_input:
             self.output_test = self.output_train
         else:
             print "In Convlayer: not detecting last layer dropout"
-            self.output_test = do_conv(input_test)
+            self.output_test = do_conv(self.input_test)
 
         self.params = [self.W, self.b]
 

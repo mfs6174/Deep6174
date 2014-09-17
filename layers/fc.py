@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: fc.py
-# Date: Tue Sep 16 23:50:03 2014 -0700
+# Date: Wed Sep 17 15:40:51 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 import theano
 import theano.tensor as T
+import theano.printing as PP
 import scipy.io as sio
 
 from common import ReLu, dropout_from_tensor, Layer
@@ -16,8 +17,8 @@ class FullyConnectedLayer(Layer):
                  input_shape, n_out,
                  activation, dropout):
         super(FullyConnectedLayer, self).__init__(rng, input_train, input_test)
+        self.input_shape = input_shape
         n_in = np.prod(input_shape[1:])
-        self.n_in = n_in
         self.n_out = n_out
         self.activation = activation
         self.dropout = dropout
@@ -40,18 +41,18 @@ class FullyConnectedLayer(Layer):
             output = (linear_output if activation is None else activation(linear_output))
             return output
 
-        self.output_train = do_cal(input_train)
+        self.output_train = do_cal(self.input_train)
         if self.has_dropout_input:
-            self.output_test = do_cal(input_test)
+            self.output_test = do_cal(self.input_test)
         else:
             self.output_test = self.output_train
         self.params = [self.W, self.b]
 
     def get_output_shape(self):
-        return (self.n_out,)
+        return (self.input_shape[0], self.n_out)
 
     def get_params(self):
-        return {'input_shape': self.n_in,
+        return {'input_shape': self.input_shape,
                 'n_out': self.n_out,
                 'dropout': self.dropout,
                 'activation': self.activation,

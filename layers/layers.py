@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: layers.py
-# Date: Tue Sep 16 23:31:37 2014 -0700
+# Date: Wed Sep 17 15:22:10 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -15,6 +15,7 @@ from pool import PoolLayer
 from sub import MeanSubtractLayer
 from maxout import MaxoutLayer
 from fc import FullyConnectedLayer
+from LR import LogisticRegression
 
 from sequence_softmax import SequenceSoftmax
 
@@ -23,6 +24,7 @@ name_dict = {ConvLayer: 'convpool',
              SequenceSoftmax: 'ssm',
              PoolLayer: 'pool',
              MeanSubtractLayer: 'sub',
-             MaxoutLayer: 'maxout'
+             MaxoutLayer: 'maxout',
+             LogisticRegression: 'lr'
             }
 
