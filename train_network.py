@@ -440,28 +440,38 @@ if __name__ == '__main__':
     print "Load All Data: ", load_all
 
     # config the nn
-    batch = 500
+    batch = 64
     if len(img_size) == 3:
         shape = (batch, ) + img_size
     else:
         shape = (batch, 1) + img_size
     nn = NNTrainer(shape, multi_output=multi_output)
 
-    nn.add_layer(ConvLayer, {'filter_shape': (20, 5, 5), 'keep_size': False})
+    nn.add_layer(ConvLayer, {'filter_shape': (48, 5, 5), 'keep_size': True,
+                             'activation': None, 'dropout': 0.5})
+    nn.add_layer(MaxoutLayer, {'maxout_unit': 3})
     nn.add_layer(PoolLayer, {'pool_size': 2})
-    nn.add_layer(ConvLayer, {'filter_shape': (50, 5, 5), 'keep_size': False})
+    nn.add_layer(ConvLayer, {'filter_shape': (96, 5, 5), 'keep_size': True,
+                             'dropout': 0.5})
     nn.add_layer(PoolLayer, {'pool_size': 2})
-    nn.add_layer(ConvLayer, {'filter_shape': (50, 5, 5), 'keep_size': False})
+    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
+    nn.add_layer(ConvLayer, {'filter_shape': (128, 5, 5), 'keep_size': False,
+                             'dropout': 0.5})
     nn.add_layer(PoolLayer, {'pool_size': 2})
-    nn.add_layer(FullyConnectedLayer, {'n_out': 500, 'activation': T.tanh})
+    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
+    nn.add_layer(ConvLayer, {'filter_shape': (160, 5, 5), 'keep_size': False,
+                             'dropout': 0.5})
+    nn.add_layer(PoolLayer, {'pool_size': 2})
+    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
+    nn.add_layer(FullyConnectedLayer, {'n_out': 3072, 'dropout': 0.5})
 
     if multi_output:
-        nn.add_layer(SequenceSoftmax, {'seq_max_len': 4, 'n_out': 10})
+        nn.add_layer(SequenceSoftmax, {'seq_max_len': 5, 'n_out': 10})
         #nn.add_nLR_layer(2)
     else:
         nn.add_layer(LogisticRegression, {'n_out': 10})
     print "Network has {0} params in total.".format(nn.n_params())
-    nn.work(init_learning_rate=0.1, dataset_file=dataset, n_epochs=1000,
+    nn.work(init_learning_rate=0.04, dataset_file=dataset, n_epochs=1000,
             load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz

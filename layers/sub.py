@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sub.py
-# Date: Tue Sep 16 23:27:19 2014 -0700
+# Date: Wed Sep 17 01:54:14 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -41,7 +41,7 @@ class MeanSubtractLayer(Layer):
             return output
 
         self.output_train = do_sub(input_train)
-        if not self.has_dropout_input:
+        if self.has_dropout_input:
             self.output_test = do_sub(input_test)
 
     def get_output_shape(self):

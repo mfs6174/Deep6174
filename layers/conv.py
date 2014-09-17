@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: conv.py
-# Date: Wed Sep 17 16:06:28 2014 +0000
+# Date: Wed Sep 17 01:54:55 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -38,7 +38,6 @@ class ConvLayer(Layer):
         fan_out = filter_shape[0] * numpy.prod(filter_shape[1:]) / 4
         # initialize weights with random weights
         W_bound = numpy.sqrt(6. / (fan_in + fan_out))
-        print fan_in, fan_out, W_bound
         self.W = theano.shared(numpy.asarray(
             rng.uniform(low=-W_bound, high=W_bound, size=conv_filter_shape),
             dtype=theano.config.floatX),
@@ -61,7 +60,11 @@ class ConvLayer(Layer):
             else:
                 conv_out = conv.conv2d(input=input, filters=self.W,
                         filter_shape=conv_filter_shape, image_shape=image_shape)
-            activate_out = activation(conv_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+            lin_output = conv_out + self.b.dimshuffle('x', 0, 'x', 'x')
+            if activation is None:
+                activate_out = lin_output
+            else:
+                activate_out = activation(lin_output)
             return activate_out
 
         self.output_train = do_conv(self.input_train)

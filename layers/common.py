@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: common.py
-# Date: Wed Sep 17 15:00:54 2014 +0000
+# Date: Wed Sep 17 01:52:43 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
 import theano.tensor as T
+import theano
 
 def ReLu(x):
     return T.maximum(x, 0.0)
