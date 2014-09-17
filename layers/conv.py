@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: conv.py
-# Date: Wed Sep 17 01:54:55 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -11,17 +10,16 @@ import numpy
 from theano.tensor.nnet import conv
 import theano.printing as PP
 
-from common import ReLu, dropout_from_tensor, Layer
+from common import ReLu, Layer
 
 class ConvLayer(Layer):
 
     def __init__(self, rng, input_train, input_test,
                  filter_shape, image_shape,
                  keep_size,
-                 activation, dropout):
+                 activation):
         """ filter_shape: 3D tuple of (n_channel, size_w, size_h)"""
         super(ConvLayer, self).__init__(rng, input_train, input_test)
-        self.dropout = dropout
         self.keep_size = keep_size
         self.activation = activation
         self.filter_shape = filter_shape
@@ -71,7 +69,6 @@ class ConvLayer(Layer):
         if not self.has_dropout_input:
             self.output_test = self.output_train
         else:
-            print "In Convlayer: not detecting last layer dropout"
             self.output_test = do_conv(self.input_test)
 
         self.params = [self.W, self.b]
@@ -91,8 +88,7 @@ class ConvLayer(Layer):
                 'b': self.b.get_value(borrow=True),
                 'activation': self.activation,
                 'filter_shape': self.filter_shape,
-                'input_shape': self.image_shape,
-                'dropout': self.dropout}
+                'input_shape': self.image_shape }
 
     def save_params_mat(self, basename):
         """ save params in .mat format
@@ -107,8 +103,7 @@ class ConvLayer(Layer):
                           params['filter_shape'],
                           params['input_shape'],
                           params.get('keep_size', True),
-                          params.get('activation', ReLu),
-                          params.get('dropout', 0.0))
+                          params.get('activation', ReLu))
 
         if 'W' in params:
             layer.W.set_value(params['W'].astype(theano.config.floatX))

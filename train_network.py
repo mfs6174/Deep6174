@@ -447,23 +447,28 @@ if __name__ == '__main__':
         shape = (batch, 1) + img_size
     nn = NNTrainer(shape, multi_output=multi_output)
 
-    nn.add_layer(ConvLayer, {'filter_shape': (48, 5, 5), 'keep_size': True,
-                             'activation': None, 'dropout': 0.5})
+    nn.add_layer(ConvLayer, {'filter_shape': (48, 5, 5), 'activation': None})
     nn.add_layer(MaxoutLayer, {'maxout_unit': 3})
     nn.add_layer(PoolLayer, {'pool_size': 2})
-    nn.add_layer(ConvLayer, {'filter_shape': (96, 5, 5), 'keep_size': True,
-                             'dropout': 0.5})
+    nn.add_layer(DropoutLayer, {})
+
+    nn.add_layer(ConvLayer, {'filter_shape': (64, 5, 5)})
     nn.add_layer(PoolLayer, {'pool_size': 2})
     nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(ConvLayer, {'filter_shape': (128, 5, 5), 'keep_size': False,
-                             'dropout': 0.5})
+    nn.add_layer(DropoutLayer, {})
+
+    nn.add_layer(ConvLayer, {'filter_shape': (128, 5, 5)})
     nn.add_layer(PoolLayer, {'pool_size': 2})
     nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(ConvLayer, {'filter_shape': (160, 5, 5), 'keep_size': False,
-                             'dropout': 0.5})
+    nn.add_layer(DropoutLayer, {})
+
+    nn.add_layer(ConvLayer, {'filter_shape': (160, 5, 5)})
     nn.add_layer(PoolLayer, {'pool_size': 2})
     nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(FullyConnectedLayer, {'n_out': 3072, 'dropout': 0.5})
+    nn.add_layer(DropoutLayer, {})
+
+    nn.add_layer(FullyConnectedLayer, {'n_out': 3072})
+    nn.add_layer(DropoutLayer, {})
 
     if multi_output:
         nn.add_layer(SequenceSoftmax, {'seq_max_len': 5, 'n_out': 10})

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: fc.py
-# Date: Wed Sep 17 15:40:51 2014 +0000
+# Date: Wed Sep 17 14:33:14 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -10,18 +10,17 @@ import theano.tensor as T
 import theano.printing as PP
 import scipy.io as sio
 
-from common import ReLu, dropout_from_tensor, Layer
+from common import ReLu, Layer
 
 class FullyConnectedLayer(Layer):
     def __init__(self, rng, input_train, input_test,
                  input_shape, n_out,
-                 activation, dropout):
+                 activation):
         super(FullyConnectedLayer, self).__init__(rng, input_train, input_test)
         self.input_shape = input_shape
         n_in = np.prod(input_shape[1:])
         self.n_out = n_out
         self.activation = activation
-        self.dropout = dropout
 
         W_values = np.asarray(rng.uniform(
                 low=-np.sqrt(6. / (n_in + n_out)),
@@ -54,7 +53,6 @@ class FullyConnectedLayer(Layer):
     def get_params(self):
         return {'input_shape': self.input_shape,
                 'n_out': self.n_out,
-                'dropout': self.dropout,
                 'activation': self.activation,
                 'W': self.W.get_value(borrow=True),
                 'b': self.b.get_value(borrow=True)}
@@ -71,8 +69,8 @@ class FullyConnectedLayer(Layer):
         layer = FullyConnectedLayer(rng, input_train, input_test,
                                     params['input_shape'],
                                     params['n_out'],
-                                    params.get('activation', ReLu),
-                                    params.get('dropout', 0.0))
+                                    params.get('activation', ReLu)
+                                   )
         if 'W' in params:
             layer.W.set_value(params['W'].astype('float32'))
             layer.b.set_value(b.flatten().astype('float32'))
