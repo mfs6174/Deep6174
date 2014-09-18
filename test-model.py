@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-model.py
-# Date: Thu Sep 18 10:24:17 2014 -0700
+# Date: Thu Sep 18 15:31:17 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -33,7 +33,7 @@ def label_match(l1, l2):
 
 # get the network
 params_file = sys.argv[1]
-nn = get_nn(params_file)
+nn = get_nn(params_file, 1)
 
 train, valid, test = read_data(sys.argv[2])
 digit_accu = AccuracyRecorder('digit')

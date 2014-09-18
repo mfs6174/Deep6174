@@ -1,13 +1,15 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: gen_noise_data.py
-# Date: Tue Jul 22 17:27:12 2014 -0700
+# File: gen-noise-data.py
+# Date: Thu Sep 18 15:44:27 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle, gzip, numpy
 from numpy import random
-from dataio import read_data, save_data
 import sys
+
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
+from dataio import read_data, save_data
 
 # prepare params
 input = sys.argv[1]

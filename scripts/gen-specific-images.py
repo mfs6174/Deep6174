@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen-specific-images.py
-# Date: Thu Sep 18 10:23:11 2014 -0700
+# Date: Thu Sep 18 15:44:34 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy.misc import imsave, imresize
@@ -10,7 +10,7 @@ from copy import copy
 import numpy as np
 import os, sys
 
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 from dataio import read_data
 from lib.imageutil import get_image_matrix, show_img_sync, get_label_from_dataset
 

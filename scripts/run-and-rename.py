@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-rename.py
-# Date: Thu Sep 18 10:22:57 2014 -0700
+# Date: Thu Sep 18 15:43:36 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -17,7 +17,7 @@ if len(sys.argv) != 3:
     sys.exit(0)
 
 
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 from network_runner import NetworkRunner, get_nn
 from lib.imageutil import get_image_matrix
 from dataio import read_data

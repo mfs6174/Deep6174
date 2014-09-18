@@ -15,7 +15,7 @@ from itertools import count, izip
 import time
 
 from network_trainer import NNTrainer
-from imageutil import tile_raster_images, get_image_matrix
+from lib.imageutil import tile_raster_images, get_image_matrix
 from layers.layers import *
 
 N_OUT = 10
@@ -159,7 +159,7 @@ def build_nn_with_params(params, batch_size):
     print "Model Loaded."
     return runner
 
-def get_nn(filename, batch_size):
+def get_nn(filename, batch_size=1):
     """ get a network from a saved model file
         batch_size is None: will use same batch_size in the model
     """
@@ -168,7 +168,8 @@ def get_nn(filename, batch_size):
 
     nn = build_nn_with_params(data, batch_size)
     # compile all the functions
-    runner.finish()
+    nn.finish()
+    nn.nn.print_config()
     return nn
 
 #def save_LR_W_img(W, n_filter):

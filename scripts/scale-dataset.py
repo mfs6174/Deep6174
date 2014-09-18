@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: scale-dataset.py
-# Date: Mon Aug 11 11:47:03 2014 -0700
+# Date: Thu Sep 18 15:44:12 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import sys
 from scipy.misc import imresize
 import numpy as np
 
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 from dataio import read_data, save_data
 
 dataset = sys.argv[1]

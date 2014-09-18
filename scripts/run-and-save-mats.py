@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-save-mats.py
-# Date: Sat Aug 30 00:06:07 2014 -0700
+# Date: Thu Sep 18 15:44:07 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy.misc import imread
@@ -12,6 +12,7 @@ import glob
 import os.path
 import scipy.io as sio
 
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 from network_runner import get_nn
 from layers.layers import name_dict
 

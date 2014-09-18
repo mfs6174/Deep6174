@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sample-dataset.py
-# Date: Thu Sep 18 10:21:19 2014 -0700
+# Date: Thu Sep 18 15:44:42 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import shutil
@@ -11,8 +11,8 @@ import sys, os
 from itertools import izip
 import numpy as np
 from scipy.misc import imsave
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
 
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 from dataio import read_data
 from lib.imageutil import get_image_matrix
 

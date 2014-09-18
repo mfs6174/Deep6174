@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen-seq-data.py
-# Date: Thu Sep 18 10:22:33 2014 -0700
+# Date: Thu Sep 18 15:43:28 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -16,7 +16,7 @@ import sys, os
 from itertools import izip
 from copy import copy
 
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 from lib.imageutil import show_img_sync, get_image_matrix
 from lib.utils import timeit
 from lib.progress import Progressor
