@@ -3,7 +3,6 @@
 # File: train_network.py
 import os
 import sys
-import time
 from itertools import chain, izip
 import cPickle
 import gzip
@@ -25,6 +24,8 @@ from dataio import read_data, save_data, get_dataset_imgsize
 from layers.layers import *
 from progress import Progressor
 from shared_dataio import SharedDataIO
+
+from training_policy import TrainForever
 
 N_OUT = 10
 MOMENT = 0.6
@@ -133,7 +134,7 @@ class NNTrainer(object):
                     ))
         assert len(self.last_updates) == len(params), 'last updates don\'t match params'
 
-    def work(self, init_learning_rate=0.1, n_epochs=60, dataset_file='mnist.pkl.gz',
+    def work(self, init_learning_rate=0.1, dataset_file='mnist.pkl.gz',
              load_all_data=True):
         """ read data and train"""
         self.finish()
@@ -207,84 +208,15 @@ class NNTrainer(object):
                 return do_test_model()
 
         print '... training'
-        # early-stopping parameters
-        patience = 10000  # look as this many examples regardless
-        patience_increase = 2  # wait this much longer when a new best is
-                               # found
-        improvement_threshold = 0.995  # a relative improvement of this much is
-                                       # considered significant
-        validation_frequency = min(n_batches[0], patience / 2)
-        validation_frequency /= 2
-                                      # go through this many
-                                      # minibatche before checking the network
-                                      # on the validation set; in this case we
-                                      # check every epoch
-
-        best_validation_loss = numpy.inf
-        best_iter = 0
-        test_score = 0.
-        start_time = time.clock()
-
-        epoch = 0
-        done_looping = False
-
-        logger = ParamsLogger(dataset_file + '-models')
-        progressor = Progressor(n_epochs)
+        test_freq = n_batches[0] / 2
+        logger = ParamsLogger(logdir=dataset_file + '-models', trainer=self)
         rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
 
-        while (epoch < n_epochs) and (not done_looping):
-            epoch = epoch + 1
-            if epoch > 1: progressor.report(1, True)
-            # save params at the beginning of each epoch
-            logger.save_params(epoch, self)
-            learning_rate = rate_provider.get_rate(epoch)
-            print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
-            for minibatch_index in xrange(n_batches[0]):
-                iter = (epoch - 1) * n_batches[0] + minibatch_index
+        training = TrainForever(train_model, test_model,
+                                n_batches[0], test_freq,
+                                logger, rate_provider)
+        training.work()
 
-                if iter % 200 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
-                    print 'training @ iter = ', iter
-                cost_ij = train_model(minibatch_index, learning_rate)
-
-
-                if (iter + 1) % validation_frequency == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
-                    # do a validation:
-
-                    # compute zero-one loss on validation set
-                    validation_losses = [test_model(i) for i
-                                         in xrange(n_batches[1])]
-                    this_validation_loss = numpy.mean(validation_losses)
-                    print('After epoch %i, minibatch %i/%i, test error %f %%' % \
-                          (epoch, minibatch_index + 1, n_batches[0], \
-                           this_validation_loss * 100.))
-
-                    # if we got the best validation score until now
-                    if this_validation_loss < best_validation_loss:
-                        #improve patience if loss improvement is good enough
-                        if this_validation_loss < best_validation_loss *  \
-                           improvement_threshold:
-                            patience = max(patience, iter * patience_increase)
-
-                        # save best validation score and iteration number
-                        best_validation_loss = this_validation_loss
-                        best_iter = iter
-                        if best_validation_loss < 0.85:
-                            # save best params
-                            print 'Yay! Saving best model ...'
-                            logger.save_params('best', self)
-
-                #if patience <= iter:
-                    #done_looping = True
-                    #break
-
-        end_time = time.clock()
-        print('Optimization complete.')
-        print('Best validation score of %f %% obtained at iteration %i,'\
-              'with test performance %f %%' %
-              (best_validation_loss * 100., best_iter + 1, test_score * 100.))
-        print >> sys.stderr, ('The code for file ' +
-                              os.path.split(__file__)[1] +
-                              ' ran for %.2fm' % ((end_time - start_time) / 60.))
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         dataset = sys.argv[1]
@@ -342,7 +274,6 @@ if __name__ == '__main__':
         #nn.add_nLR_layer(2)
     else:
         nn.add_layer(LogisticRegression, {'n_out': 10})
-    nn.work(init_learning_rate=0.04, dataset_file=dataset, n_epochs=1000,
-            load_all_data=load_all)
+    nn.work(init_learning_rate=0.04, dataset_file=dataset, load_all_data=load_all)
 
 # Usage: ./train_network.py dataset.pkl.gz

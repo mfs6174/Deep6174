@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: params_logger.py
-# Date: Wed Sep 17 16:05:03 2014 -0700
+# Date: Wed Sep 17 17:07:57 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -18,15 +18,18 @@ from layers.layers import cls_name_dict
 class ParamsLogger(object):
     """ class to save network params in each epoch"""
 
-    def __init__(self, logdir='logs'):
-        """ logdir: a directory to save params to """
+    def __init__(self, logdir='logs', trainer):
+        """ logdir: a directory to save params to
+            trainer: a NetworkTrainer instance to log
+        """
         self.logdir = logdir
+        self.trainer = trainer
         try:
             os.mkdir(self.logdir)
         except:
             pass
 
-    def save_params(self, epoch, trainer):
+    def save_params(self, epoch):
         """ epoch: can be a int, or a string, will be used in the filename
             trainer: a 'NNTrainer' instance
         """
@@ -36,7 +39,7 @@ class ParamsLogger(object):
         fname = os.path.join(self.logdir, "param{0}.pkl.gz".format(epoch))
 
         def update_layers():
-            layers = trainer.layers
+            layers = self.trainer.layers
 
             for layer, cnt in izip(layers, count()):
                 # save layer type
@@ -48,7 +51,7 @@ class ParamsLogger(object):
 
         # save last_updates
         last_updates = []
-        for upd_shared in trainer.last_updates:
+        for upd_shared in self.trainer.last_updates:
             last_updates.append(upd_shared.get_value())
         res['last_updates'] = last_updates
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: progress.py
-# Date: Fri Aug 22 23:01:09 2014 -0700
+# Date: Wed Sep 17 17:00:42 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import time
@@ -18,11 +18,17 @@ class Progressor(object):
         if incremental:
             self.last += cnt
             cnt = self.last
-        prgs = float(cnt) / self.total
         elapsed = time.time() - self.start_time
-        if prgs == 0:
-            eta = float('inf')
+
+        if self.total:
+            prgs = float(cnt) / self.total
+            if prgs == 0:
+                eta = float('inf')
+            else:
+                eta = elapsed / prgs - elapsed
+                print "{} {} of {} done. elapsed: {:.2f}s ETA: {:.2f}s".format(
+                    self.prompt,cnt, self.total, elapsed, eta)
         else:
-            eta = elapsed / prgs - elapsed
-            print "{} {} of {} done. elapsed: {:.2f}s ETA: {:.2f}s".format(
-                self.prompt,cnt, self.total, elapsed, eta)
+            # no total. run forever. only report current time
+            print "{} {} done. elapsed : {:.2f}s".format(
+                self.prompt, cnt, elapsed)
