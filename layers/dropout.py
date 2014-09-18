@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dropout.py
-# Date: Wed Sep 17 16:16:25 2014 -0700
+# Date: Thu Sep 18 04:07:32 2014 +0000
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -15,9 +15,9 @@ class DropoutLayer(Layer):
         self.input_shape = input_shape
         self.dropout = dropout
 
-        self.output_train = input_train
+        self.output_train = self.input_train
         if self.has_dropout_input:
-            self.output_test = self.output_test
+            self.output_test = self.input_test
 
     def get_output_shape(self):
         return self.input_shape

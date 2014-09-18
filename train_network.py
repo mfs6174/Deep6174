@@ -42,7 +42,7 @@ class NNTrainer(object):
         self.input_shape = input_image_shape
         self.rng = numpy.random.RandomState(23455)
 
-        self.x = T.dmatrix('x')
+        self.x = T.fmatrix('x')
         #self.x.tag.test_value = np.random.rand(self.batch_size,
                                                #reduce(operator.mul,
                                                       #self.input_shape)).astype('float32')
@@ -95,7 +95,7 @@ class NNTrainer(object):
         print self.layers
         pprint(self.layer_config)
 
-    def _prepare_sharedio(self, filename):
+    def _prepare_sharedio(self, filename, load_all_data):
         """ read dataset from filename and create theano shared variables"""
         dataset = read_data(filename)
         if type(self.layers[-1]) == SequenceSoftmax:
@@ -121,25 +121,25 @@ class NNTrainer(object):
         #params = self.layers[-1].params     # only train last layer
 
         # take derivatives on those params
-        self.grads = T.grad(cost, params)
+        self.grads = T.grad(self.cost, self.params)
 
         # save last updates for momentum
         if not self.last_updates:
             self.last_updates = []
-            for param in params:
+            for param in self.params:
                 self.last_updates.append(
                     theano.shared(
                         np.zeros(param.get_value(borrow=True).shape,
                                  dtype=theano.config.floatX)
                     ))
-        assert len(self.last_updates) == len(params), 'last updates don\'t match params'
+        assert len(self.last_updates) == len(self.params), 'last updates don\'t match params'
 
     def work(self, init_learning_rate=0.1, dataset_file='mnist.pkl.gz',
              load_all_data=True):
         """ read data and train"""
         self.finish()
 
-        shared_io = self._prepare_sharedio(datast_file)
+        shared_io = self._prepare_sharedio(dataset_file, load_all_data)
         layer = self.layers[-1]
 
         def gen_updates_with_learning_rate(rate):
@@ -181,7 +181,7 @@ class NNTrainer(object):
                         self.y: test_set_y[index * self.batch_size: (index + 1) * self.batch_size]})
         else:
             # only load necessary data as shared variable in each batch
-            do_train_model = theano.function([lr_rate], cost,
+            do_train_model = theano.function([lr_rate], self.cost,
                 updates=gen_updates_with_learning_rate(lr_rate),
                 givens={
                     self.x: shared_io.shared_Xs[0],
@@ -249,6 +249,7 @@ if __name__ == '__main__':
     nn.add_layer(ConvLayer, {'filter_shape': (48, 5, 5), 'activation': None})
     nn.add_layer(MaxoutLayer, {'maxout_unit': 3})
     nn.add_layer(PoolLayer, {'pool_size': 2})
+    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
     nn.add_layer(DropoutLayer, {})
 
     nn.add_layer(ConvLayer, {'filter_shape': (64, 5, 5)})
