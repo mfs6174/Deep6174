@@ -39,6 +39,7 @@ class NNTrainer(object):
         self.multi_output = multi_output
 
         self.x = T.fmatrix('x')
+        Layer.x = self.x        # only for debug purpose
         #self.x.tag.test_value = np.random.rand(self.batch_size,
                                                #reduce(operator.mul,
                                                       #self.input_shape)).astype('float32')
@@ -208,7 +209,6 @@ class NNTrainer(object):
         # train forever and test on test set, ignore validation set.
         training = TrainForever(train_model, test_model,
                                 n_batches, logger, rate_provider)
-        print 'Start training...'
         training.work()
 
 if __name__ == '__main__':
@@ -218,10 +218,12 @@ if __name__ == '__main__':
         print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-    ds = read_data(dataset)[0]
-    img_size = ds[0][0].shape
-    multi_output = hasattr(ds[1][0], '__iter__')
-    print "Input img size is {0}, multioutput={1}".format(shape, multi_output)
+    #ds = read_data(dataset)[0]
+    #img_size = ds[0][0].shape
+    #multi_output = hasattr(ds[1][0], '__iter__')
+    img_size = (3, 64, 64)
+    multi_output = True
+    print "Input img size is {0}, multioutput={1}".format(img_size, multi_output)
 
     if len(img_size) == 1:
         assert int(np.sqrt(shape[0])) == np.sqrt(shape[0])
@@ -246,7 +248,7 @@ if __name__ == '__main__':
     nn.add_layer(DropoutLayer, {})
 
     nn.add_layer(ConvLayer, {'filter_shape': (64, 5, 5)})
-    nn.add_layer(PoolLayer, {'pool_size': 2})
+    nn.add_layer(PoolLayer, {'pool_size': 2, 'stride': 1})
     nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
     nn.add_layer(DropoutLayer, {})
 
@@ -256,7 +258,7 @@ if __name__ == '__main__':
     nn.add_layer(DropoutLayer, {})
 
     nn.add_layer(ConvLayer, {'filter_shape': (160, 5, 5)})
-    nn.add_layer(PoolLayer, {'pool_size': 2})
+    nn.add_layer(PoolLayer, {'pool_size': 2, 'stride': 1})
     nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
     nn.add_layer(DropoutLayer, {})
 

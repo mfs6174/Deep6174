@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: training_policy.py
-# Date: Wed Sep 17 23:11:06 2014 -0700
+# Date: Thu Sep 18 01:55:58 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import numpy as np
 from progress import Progressor
@@ -25,10 +25,10 @@ class TrainForever(object):
 
         while True:
             epoch = epoch + 1
-            if epoch > 1: progressor.report(1, True)
-
-            # save params at the beginning of each epoch
-            self.logger.save_params(epoch)
+            if epoch > 1:
+                progressor.report(1, True)
+                # save params at the beginning of each epoch
+                self.logger.save_params(epoch)
 
             learning_rate = self.learning_rate_provider.get_rate(epoch)
             print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
