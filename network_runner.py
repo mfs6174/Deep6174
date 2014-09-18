@@ -128,6 +128,8 @@ def build_nn_with_params(params, batch_size):
         params: the object load from param{epoch}.pkl.gz file
     """
     input_size = params['layer0']['input_shape']
+    if batch_size is None:
+        batch_size = input_size[0]
     input_size = (batch_size,) + input_size[1:]
     print "Size={0}".format(input_size)
 

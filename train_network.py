@@ -75,6 +75,9 @@ class NNTrainer(object):
                 last_layer.get_output_test())
         self.layers.append(layer)
         params['type'] = layer_class.get_class_name()
+
+        # filter out W & b in params to show
+        params = dict([k, v] for k, v in params.iteritems() if type(v) != np.ndarray)
         self.layer_config.append(params)
 
     def n_params(self):
@@ -88,7 +91,7 @@ class NNTrainer(object):
         return sum([get_layer_nparam(l) for l in self.layers])
 
     def print_config(self):
-        print "Network has {0} params in total.".format(nn.n_params())
+        print "Network has {0} params in total.".format(self.n_params())
         print "Layers:"
         print self.layers
         pprint(self.layer_config)

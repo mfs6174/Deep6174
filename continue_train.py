@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: continue_train.py
-# Date: Wed Sep 17 23:02:26 2014 -0700
+# Date: Thu Sep 18 10:09:22 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from network_runner import build_nn_with_params
@@ -22,7 +22,7 @@ with gzip.open(model, 'r') as f:
 nn_runner = build_nn_with_params(data, None)
 nn = nn_runner.nn
 
-input_size = nn_runner.input_shape
+input_size = nn.input_shape
 load_all = reduce(operator.mul, input_size[1:]) < 100 ** 2
 
 dataset = sys.argv[2]
