@@ -21,11 +21,12 @@ N_OUT = 10
 MOMENT = 0.6
 
 class NNTrainer(object):
-    """ Configurable Neural Network Trainer,
-        Currently support several convolution-pooling layer followed by hidden layers.
+    """ Neural Network Trainer
     """
     def __init__(self, input_image_shape, multi_output=True):
-        """ input_image_shape: 4D tuple"""
+        """ input_image_shape: 4D tuple
+            multi_output: whether a image has more than 1 labels
+        """
         self.layer_config = []
         self.layers = []
         self.batch_size = input_image_shape[0]
@@ -35,14 +36,8 @@ class NNTrainer(object):
 
         self.x = T.fmatrix('x')
         Layer.x = self.x        # only for debug purpose
-        #self.x.tag.test_value = np.random.rand(self.batch_size,
-                                               #reduce(operator.mul,
-                                                      #self.input_shape)).astype('float32')
         if multi_output:
             self.y = T.imatrix('y')
-            #t = np.zeros((self.batch_size, 4), dtype='int32')
-            #t[:2] = np.asarray([[2, 1, 2, 3], [1, 1, 2, -1]])
-            #self.y.tag.test_value = t
         else:
             self.y = T.ivector('y')
 
@@ -71,7 +66,7 @@ class NNTrainer(object):
         self.layers.append(layer)
         params['type'] = layer_class.get_class_name()
 
-        # filter out W & b in params to show
+        # remove W & b in params, for better printing
         params = dict([k, v] for k, v in params.iteritems() if type(v) != np.ndarray)
         self.layer_config.append(params)
 
@@ -87,8 +82,6 @@ class NNTrainer(object):
 
     def print_config(self):
         print "Network has {0} params in total.".format(self.n_params())
-        print "Layers:"
-        print self.layers
         pprint(self.layer_config)
 
     def finish(self):
@@ -108,7 +101,6 @@ class NNTrainer(object):
 
         # all the params to optimize on
         self.params = list(chain.from_iterable([x.params for x in self.layers]))
-        #params = self.layers[-1].params     # only train last layer
 
         # take derivatives on those params
         self.grads = T.grad(self.cost, self.params)
@@ -179,23 +171,23 @@ class NNTrainer(object):
                 shared_io.get_train(index)
                 return do_train_model(learning_rate)
 
-            do_valid_model = theano.function([], layer.errors(self.y),
-                givens={
-                    self.x: shared_io.shared_Xs[1],
-                    self.y: shared_io.shared_ys[1]})
+            def err_func_with_dataset_index(i)
+                return theano.function([], layer.errors(self.y),
+                        givens={
+                            self.x: shared_io.shared_Xs[i],
+                            self.y: shared_io.shared_ys[i]})
+
+            do_valid_model = err_func_with_dataset_index(1)
             def validate_model(index):
                 shared_io.get_valid(index)
                 return do_valid_model()
 
-            do_test_model = theano.function([], layer.errors(self.y),
-                givens={
-                    self.x: shared_io.shared_Xs[2],
-                    self.y: shared_io.shared_ys[2]})
+            do_test_model = err_func_with_dataset_index(2)
             def test_model(index):
                 shared_io.get_test(index)
                 return do_test_model()
-            # read data into memory only after compilation, to save memory
             print "Compiled."
+            # read data into memory only after compilation, to save memory
             shared_io.read_delay()
 
         n_batches = list(shared_io.get_dataset_size())
@@ -204,7 +196,7 @@ class NNTrainer(object):
         logger = ParamsLogger(logdir=dataset_file + '-models', trainer=self)
         rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
 
-        # train forever and test on test set, ignore validation set.
+        # train forever and test on test set (index 2), ignore validation set.
         training = TrainForever(train_model, test_model,
                                 n_batches, logger, rate_provider)
         training.work()
