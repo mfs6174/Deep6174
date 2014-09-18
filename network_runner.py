@@ -123,7 +123,7 @@ def get_nlayer_from_params(params):
         if layername not in params:
             return nlayer
 
-def build_nn_with_params(params, batch_size=1):
+def build_nn_with_params(params, batch_size):
     """ build a network and return it
         params: the object load from param{epoch}.pkl.gz file
     """
@@ -154,17 +154,19 @@ def build_nn_with_params(params, batch_size=1):
         print "Layer ", idx, ' is ', layer_cls
         runner.nn.add_layer(layer_cls, layerdata)
 
-    # compile all the functions
-    runner.finish()
     print "Model Loaded."
     return runner
 
-def get_nn(filename):
-    """ get a network from a saved model file"""
+def get_nn(filename, batch_size):
+    """ get a network from a saved model file
+        batch_size is None: will use same batch_size in the model
+    """
     with gzip.open(filename, 'r') as f:
         data = pickle.load(f)
 
-    nn = build_nn_with_params(data)
+    nn = build_nn_with_params(data, batch_size)
+    # compile all the functions
+    runner.finish()
     return nn
 
 #def save_LR_W_img(W, n_filter):

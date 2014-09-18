@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Thu Aug 14 12:21:23 2014 -0700
+# Date: Wed Sep 17 22:23:53 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
@@ -37,7 +37,7 @@ def _read_data_fallback(dataset):
 @memorized
 def read_data(dataset):
     """ return (train, valid, test)"""
-    print ' ... loading data from {0}'.format(dataset)
+    print 'Loading data from {0} ...'.format(dataset)
     if os.path.isfile(dataset):
         f = gzip.open(dataset, 'rb')
         train, valid, test = pickle.load(f)
@@ -46,6 +46,7 @@ def read_data(dataset):
 
     if os.path.isdir(dataset):
         return _read_data_fallback(dataset)
+    print 'Data loaded.'
     assert False, "Invalid Dataset Filename"
 
 def _save_data_fallback(data, basename):

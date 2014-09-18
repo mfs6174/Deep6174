@@ -1,8 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: training_policy.py
-# Date: Wed Sep 17 17:08:32 2014 -0700
+# Date: Wed Sep 17 22:39:34 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+import numpy as np
+from progress import Progressor
 
 class TrainForever(object):
 
@@ -17,7 +19,8 @@ class TrainForever(object):
         self.learning_rate_provider = learning_rate_provider
 
     def work(self):
-        best_loss = numpy.inf
+        print 'Start training...'
+        best_loss = np.inf
         epoch = 0
         progressor = Progressor(None)
 
@@ -26,25 +29,25 @@ class TrainForever(object):
             if epoch > 1: progressor.report(1, True)
 
             # save params at the beginning of each epoch
-            logger.save_params(epoch)
+            self.logger.save_params(epoch)
 
-            learning_rate = rate_provider.get_rate(epoch)
+            learning_rate = self.learning_rate_provider.get_rate(epoch)
             print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
             for minibatch_index in xrange(self.n_batch):
                 iter = (epoch - 1) * self.n_batch + minibatch_index
 
                 if iter % 200 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
                     print 'training @ iter = ', iter
-                cost_ij = train_model(minibatch_index, learning_rate)
+                cost_ij = self.train_model(minibatch_index, learning_rate)
 
 
                 if (iter + 1) % self.test_freq == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
                     # do a validation:
 
                     # compute zero-one loss on validation set
-                    test_loss = [test_model(i) for i
+                    test_loss = [self.test_model(i) for i
                                          in xrange(self.n_batch)]
-                    now_loss = numpy.mean(test_loss)
+                    now_loss = np.mean(test_loss)
                     print('After epoch %i, minibatch %i/%i, test error %f %%' % \
                           (epoch, minibatch_index + 1, self.n_batch, \
                            now_loss * 100.))
@@ -55,4 +58,4 @@ class TrainForever(object):
                         if best_loss < 0.85:
                             # save best params
                             print 'Yay! Saving best model ...'
-                            logger.save_params('best')
+                            self.logger.save_params('best')

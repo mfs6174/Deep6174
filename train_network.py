@@ -10,21 +10,16 @@ import operator
 import pprint
 pprint = pprint.PrettyPrinter(indent=4).pprint
 
-import numpy
 import numpy as np
-from numpy import random
 import theano
 import theano.tensor as T
 import theano.printing as PP
 
+from layers.layers import *
 from params_logger import ParamsLogger
 from learningrate import LearningRateProvider
-from dataio import read_data, save_data, get_dataset_imgsize
-
-from layers.layers import *
-from progress import Progressor
+from dataio import read_data
 from shared_dataio import SharedDataIO
-
 from training_policy import TrainForever
 
 N_OUT = 10
@@ -40,7 +35,7 @@ class NNTrainer(object):
         self.layers = []
         self.batch_size = input_image_shape[0]
         self.input_shape = input_image_shape
-        self.rng = numpy.random.RandomState(23455)
+        self.rng = np.random.RandomState(23455)
         self.multi_output = multi_output
 
         self.x = T.fmatrix('x')
@@ -130,11 +125,10 @@ class NNTrainer(object):
                     ))
         assert len(self.last_updates) == len(self.params), 'last updates don\'t match params'
 
-    def work(self, init_learning_rate=0.1, dataset_file='mnist.pkl.gz',
+    def work(self, init_learning_rate, dataset_file,
              load_all_data=True):
-        """ read data and train"""
+        """ Compile, read data, and train"""
         self.finish()
-
         shared_io = SharedDataIO(dataset_file, load_all_data, self)
 
         layer = self.layers[-1]
@@ -202,9 +196,9 @@ class NNTrainer(object):
                 shared_io.get_test(index)
                 return do_test_model()
             # read data into memory only after compilation, to save memory
+            print "Compiled."
             shared_io.dataset = read_data(dataset_file)
 
-        print '... training'
         n_batches = list(shared_io.get_dataset_size())
         n_batches = [x / self.batch_size for x in n_batches]
 
@@ -212,9 +206,11 @@ class NNTrainer(object):
         logger = ParamsLogger(logdir=dataset_file + '-models', trainer=self)
         rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
 
+        # train forever and test on test set, ignore validation set.
         training = TrainForever(train_model, test_model,
-                                n_batches[0], test_freq,
+                                n_batches[2], test_freq,
                                 logger, rate_provider)
+        print 'Start training...'
         training.work()
 
 if __name__ == '__main__':
@@ -225,16 +221,14 @@ if __name__ == '__main__':
         sys.exit(0)
     print "Dataset: ", dataset
     ds = read_data(dataset)[0]
-    shape = ds[0][0].shape
+    img_size = ds[0][0].shape
     multi_output = hasattr(ds[1][0], '__iter__')
     print "Input img size is {0}, multioutput={1}".format(shape, multi_output)
 
-    if len(shape) == 1:
+    if len(img_size) == 1:
         assert int(np.sqrt(shape[0])) == np.sqrt(shape[0])
         s = int(np.sqrt(shape[0]))
         img_size = (s, s)
-    else:
-        img_size = shape
     load_all = reduce(operator.mul, img_size) < 100 ** 2
     print "Load All Data: ", load_all
 
@@ -243,6 +237,7 @@ if __name__ == '__main__':
     if len(img_size) == 3:
         shape = (batch, ) + img_size
     else:
+        assert len(img_size) == 2
         shape = (batch, 1) + img_size
     nn = NNTrainer(shape, multi_output=multi_output)
 

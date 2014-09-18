@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: shared_dataio.py
-# Date: Wed Sep 17 22:11:44 2014 -0700
+# Date: Wed Sep 17 22:42:12 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -29,10 +29,11 @@ class SharedDataIO(object):
             self.shared_dataset = [self.share_dataset(k) for k in
                                    self.dataset]
         else:
-            self.shared_Xs = [theano.shared(np.zeros(trainer.input_shape,
+            n_in = np.prod(trainer.input_shape[1:])
+            self.shared_Xs = [theano.shared(np.zeros((self.batch_size, n_in),
                                                     dtype=theano.config.floatX),
                                            borrow=True) for _ in range(3)]
-            if not multi_output:
+            if not self.multi_output:
                 # numpy.int label
                 self.shared_ys = [theano.shared(np.zeros((self.batch_size, ),
                                                         dtype='int32')) for _ in range(3)]
@@ -71,13 +72,13 @@ class SharedDataIO(object):
             X = np.asarray(X, dtype='float32')
         if len(X[0].shape) != 1:
             X = X.reshape(X.shape[0], -1)       # flatten each image
-        if self.with_length > 0:
+        if self.max_len > 0:
             y = [list(chain.from_iterable((
                 [len(k) - 1],
                 k,
-                [-1] * (self.with_length - len(k))))) for k in y]
+                [-1] * (self.max_len - len(k))))) for k in y]
             for k in y:
-                assert len(k) == self.with_length + 1
+                assert len(k) == self.max_len + 1
                 assert k[0] + 2 <= len(k)
         return (X, np.asarray(y, dtype='int32'))
 
