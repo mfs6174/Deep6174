@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: common.py
-# Date: Thu Sep 18 11:19:41 2014 -0700
+# Date: Thu Sep 18 11:47:55 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
@@ -16,7 +16,7 @@ def dropout_from_tensor(rng, input, p):
         input[0] should be a batch
     """
     srng = T.shared_randomstreams.RandomStreams(rng.randint(999999))
-    mask = srng.binomial(n=1, p=1-p, size=input[0].shape)
+    mask = srng.binomial(n=1, p=1-p, size=input.shape)
 
     # The cast is important because int * float32 = float64 which pulls things off the gpu
     output = input * T.cast(mask, theano.config.floatX)

@@ -30,7 +30,7 @@ class NNTrainer(object):
         self.layers = []
         self.batch_size = input_image_shape[0]
         self.input_shape = input_image_shape
-        self.rng = np.random.RandomState(23455)
+        self.rng = np.random.RandomState()
         self.multi_output = multi_output
 
         self.x = T.fmatrix('x')
