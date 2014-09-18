@@ -1,11 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: train_network.py
-import os
-import sys
+# File: network_trainer.py
 from itertools import chain, izip
-import cPickle
-import gzip
 import operator
 import pprint
 pprint = pprint.PrettyPrinter(indent=4).pprint
@@ -18,7 +14,6 @@ import theano.printing as PP
 from layers.layers import *
 from params_logger import ParamsLogger
 from learningrate import LearningRateProvider
-from dataio import read_data
 from shared_dataio import SharedDataIO
 from training_policy import TrainForever
 
@@ -201,7 +196,7 @@ class NNTrainer(object):
                 return do_test_model()
             # read data into memory only after compilation, to save memory
             print "Compiled."
-            shared_io.dataset = read_data(dataset_file)
+            shared_io.read_delay()
 
         n_batches = list(shared_io.get_dataset_size())
         n_batches = [x / self.batch_size for x in n_batches]
@@ -213,66 +208,3 @@ class NNTrainer(object):
         training = TrainForever(train_model, test_model,
                                 n_batches, logger, rate_provider)
         training.work()
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        dataset = sys.argv[1]
-    else:
-        print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
-        sys.exit(0)
-    print "Dataset: ", dataset
-    #ds = read_data(dataset)[0]
-    #img_size = ds[0][0].shape
-    #multi_output = hasattr(ds[1][0], '__iter__')
-    img_size = (3, 64, 64)
-    multi_output = True
-    print "Input img size is {0}, multioutput={1}".format(img_size, multi_output)
-
-    if len(img_size) == 1:
-        assert int(np.sqrt(shape[0])) == np.sqrt(shape[0])
-        s = int(np.sqrt(shape[0]))
-        img_size = (s, s)
-    load_all = reduce(operator.mul, img_size) < 100 ** 2
-    print "Load All Data: ", load_all
-
-    # config the nn
-    batch = 64
-    if len(img_size) == 3:
-        shape = (batch, ) + img_size
-    else:
-        assert len(img_size) == 2
-        shape = (batch, 1) + img_size
-    nn = NNTrainer(shape, multi_output=multi_output)
-
-    nn.add_layer(ConvLayer, {'filter_shape': (48, 5, 5), 'activation': None})
-    nn.add_layer(MaxoutLayer, {'maxout_unit': 3})
-    nn.add_layer(PoolLayer, {'pool_size': 2})
-    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(DropoutLayer, {})
-
-    nn.add_layer(ConvLayer, {'filter_shape': (64, 5, 5)})
-    nn.add_layer(PoolLayer, {'pool_size': 2, 'stride': 1})
-    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(DropoutLayer, {})
-
-    nn.add_layer(ConvLayer, {'filter_shape': (128, 5, 5)})
-    nn.add_layer(PoolLayer, {'pool_size': 2})
-    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(DropoutLayer, {})
-
-    nn.add_layer(ConvLayer, {'filter_shape': (160, 5, 5)})
-    nn.add_layer(PoolLayer, {'pool_size': 2, 'stride': 1})
-    nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(DropoutLayer, {})
-
-    nn.add_layer(FullyConnectedLayer, {'n_out': 3072})
-    nn.add_layer(DropoutLayer, {})
-
-    if multi_output:
-        nn.add_layer(SequenceSoftmax, {'seq_max_len': 5, 'n_out': 10})
-        #nn.add_nLR_layer(2)
-    else:
-        nn.add_layer(LogisticRegression, {'n_out': 10})
-    nn.work(init_learning_rate=0.04, dataset_file=dataset, load_all_data=load_all)
-
-# Usage: ./train_network.py dataset.pkl.gz

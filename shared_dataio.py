@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: shared_dataio.py
-# Date: Wed Sep 17 22:42:12 2014 -0700
+# Date: Thu Sep 18 10:32:40 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -23,6 +23,7 @@ class SharedDataIO(object):
         self.batch_size = trainer.batch_size
         self.max_len = trainer.max_len
         self.multi_output = trainer.multi_output
+        self.filename = dataset_filename
 
         if self.share_all:
             self.dataset = read_data(dataset_filename)
@@ -109,6 +110,12 @@ class SharedDataIO(object):
         return self._get_with_batch_index(1, index)
     def get_test(self, index):
         return self._get_with_batch_index(2, index)
+
+    def read_delay(self):
+        """ Read after initialization.
+        Will save memory for trainer to compile"""
+        assert self.share_all == False
+        self.dataset = read_data(self.filename)
 
 if __name__ == '__main__':
     dataset = read_data('./mnist.pkl.gz')

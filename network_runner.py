@@ -14,7 +14,7 @@ import itertools
 from itertools import count, izip
 import time
 
-from train_network import NNTrainer
+from network_trainer import NNTrainer
 from imageutil import tile_raster_images, get_image_matrix
 from layers.layers import *
 
