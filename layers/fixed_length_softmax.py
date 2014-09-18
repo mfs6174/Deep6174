@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: fixed_length_softmax.py
-# Date: Mon Aug 04 00:10:54 2014 -0700
+# Date: Wed Sep 17 17:18:19 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cPickle
@@ -16,20 +16,24 @@ import numpy
 import theano
 import theano.tensor as T
 
-from logistic_sgd import LogisticRegression
+from LR import LogisticRegression
 
 class FixedLengthSoftmax(object):
     """ Combination of multiple LogisticRegression output layer"""
+    NAME = 'fl-sm'
 
-    def __init__(self, input, n_in, n_out, num_out):
-        """ n_in: number of input units
-            n_out: number of output units for each LR output layer
-            num_out: number of output layer
+    def __init__(self, input_train, input_test, input_shape,
+                 n_out, num_out):
+        """ n_out: number of output units for each softmax output layer
+            num_out: number of output softmax layer
         """
-
-        print "FixedLengthSoftmax with n_in={0}, n_out={1}, num_out={2}".format(n_in, n_out, num_out)
         self.num_out = num_out
-        self.LRs = [LogisticRegression(input, n_in, n_out) for _ in range(self.num_out)]
+        self.n_out = n_out
+        self.input_shape = input_shape
+
+        self.LRs = [LogisticRegression(input_train, input_test,
+                                       input_shape, n_out)
+                    for _ in range(self.num_out)]
 
         self.params = list(itertools.chain.from_iterable([lr.params for lr in
                                                           self.LRs]))
@@ -57,9 +61,23 @@ class FixedLengthSoftmax(object):
         assert self.num_out == len(Ws) and len(Ws) == len(bs)
         for k in range(self.num_out):
             self.params[2 * k].set_value(Ws[k].astype('float32'))
-            self.params[2 * k + 1].set_value(bs[k].flatten().astype('float32'))
+            self.params[2 * k + 1].set_value(bs[k].astype('float32'))
 
     def get_params(self):
         Ws = [k.get_value() for k in self.params[::2]]
         bs = [k.get_value() for k in self.params[1::2]]
-        return {"Ws": Ws, "bs": bs}
+        return {"Ws": Ws, "bs": bs
+                'n_out': self.n_out,
+                'input_shape': self.input_shape,
+                'num_out': self.num_out
+               }
+
+    @staticmethod
+    def build_layer_from_params(params, rng, input_train, input_test=None):
+        layer = FixedLengthSoftmax(input_train, input_test,
+                                   params['input_shape'],
+                                   params['n_out'],
+                                   params['num_out'])
+        if 'Ws' in params:
+            layer.set_params(params['Ws'], params['bs'])
+        return layer

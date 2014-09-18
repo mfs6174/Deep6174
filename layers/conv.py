@@ -13,13 +13,19 @@ import theano.printing as PP
 from common import ReLu, Layer
 
 class ConvLayer(Layer):
+    """ A convolutional layer"""
+
     NAME = 'conv'
 
     def __init__(self, rng, input_train, input_test,
                  filter_shape, image_shape,
                  keep_size,
                  activation):
-        """ filter_shape: 3D tuple of (n_channel, size_w, size_h)"""
+        """ filter_shape: 3D tuple of (n_channel, size_w, size_h)
+            image_shape: 4D tuple of (batch_size, n_input_channel, size_w, size_h)
+            keep_size: if True, will use zero padding in convlution to keep
+                    image size unchanged, otherwise no padding will be used
+        """
         super(ConvLayer, self).__init__(rng, input_train, input_test)
         self.keep_size = keep_size
         self.activation = activation
