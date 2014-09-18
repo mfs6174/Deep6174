@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-model.py
-# Date: Mon Sep 01 14:58:05 2014 -0700
+# Date: Thu Sep 18 10:24:17 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -10,8 +10,8 @@ from itertools import izip
 
 from network_runner import get_nn
 from dataio import read_data, save_data
-from imageutil import get_image_matrix
-from accuracy import AccuracyRecorder
+from lib.imageutil import get_image_matrix
+from lib.accuracy import AccuracyRecorder
 
 if len(sys.argv) != 3:
     print "Usage: {0} <model file> <dataset.pkl.gz>".format(sys.argv[0])

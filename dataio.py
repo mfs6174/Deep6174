@@ -1,20 +1,20 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: dataio.py
-# Date: Wed Sep 17 22:23:53 2014 -0700
+# Date: Thu Sep 18 10:23:38 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import gzip
 import cPickle as pickle
 import operator
 #from IPython.core.debugger import Tracer
-import sys
 from itertools import izip, count
 import glob
 import numpy as np
-import os
+import os, sys
 import scipy.io as sio
-from utils import memorized
+
+from lib.utils import memorized
 
 def _read_data_fallback(dataset):
     def read(name):

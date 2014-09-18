@@ -1,14 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-rename.py
-# Date: Fri Aug 22 23:00:49 2014 -0700
+# Date: Thu Sep 18 10:22:57 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 from scipy.misc import imread, imsave
 from itertools import izip
-import sys
-import os
+import sys, os
 import shutil
 import os.path
 import glob
@@ -18,10 +17,11 @@ if len(sys.argv) != 3:
     sys.exit(0)
 
 
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
 from network_runner import NetworkRunner, get_nn
-from imageutil import get_image_matrix
+from lib.imageutil import get_image_matrix
 from dataio import read_data
-from progress import Progressor
+from lib.progress import Progressor
 
 input_dir = sys.argv[1]
 output_dir = os.path.join(input_dir, 'predicted')

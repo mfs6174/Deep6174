@@ -1,17 +1,17 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: bfs-shape.py
-# Date: Thu Aug 14 12:21:32 2014 -0700
+# Date: Thu Sep 18 10:22:11 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-
-from dataio import read_data, save_data
-from imageutil import get_image_matrix
 
 import numpy as np
 from scipy.misc import imread, toimage
 from collections import deque, Counter
+import os, sys
 
-
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
+from dataio import read_data, save_data
+from lib.imageutil import get_image_matrix
 
 def find_shape(img):
     ZERO_THRES = 0.1

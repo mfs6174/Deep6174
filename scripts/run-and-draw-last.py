@@ -1,18 +1,17 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: run-and-draw-last.py
-# Date: Fri Aug 29 21:35:40 2014 -0700
+# Date: Thu Sep 18 10:21:45 2014 -0700
 
 import matplotlib.pyplot as plt
 from scipy.misc import imread, imsave
 import numpy as np
-import os
-import sys
+import os, sys
 import glob
-import os.path
 from copy import copy
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
 
-from imageutil import stack_vectors
+from lib.imageutil import stack_vectors
 from network_runner import get_nn
 
 if len(sys.argv) < 3:

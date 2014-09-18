@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: gen-seq-data.py
-# Date: Sat Aug 23 14:21:08 2014 -0700
+# Date: Thu Sep 18 10:22:33 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from scipy import stats
@@ -12,13 +12,14 @@ import dataio
 from IPython.core.debugger import Tracer
 import cPickle as pickle
 import gzip
-import sys
+import sys, os
 from itertools import izip
 from copy import copy
 
-from imageutil import show_img_sync, get_image_matrix
-from utils import timeit
-from progress import Progressor
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__),
+from lib.imageutil import show_img_sync, get_image_matrix
+from lib.utils import timeit
+from lib.progress import Progressor
 
 def random_slice(k, N):
     """ randomly return k integers which sum to N"""

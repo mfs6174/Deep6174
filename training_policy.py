@@ -1,10 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: training_policy.py
-# Date: Thu Sep 18 01:55:58 2014 -0700
+# Date: Thu Sep 18 10:23:59 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import numpy as np
-from progress import Progressor
+from lib.progress import Progressor
 
 class TrainForever(object):
 
