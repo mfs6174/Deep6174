@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: shared_dataio.py
-# Date: Sat Aug 30 22:20:39 2014 -0700
+# Date: Wed Sep 17 22:11:44 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from dataio import read_data
@@ -15,36 +15,31 @@ class SharedDataIO(object):
     """ provide api to generate theano shared variable of datasets
     """
 
-    def __init__(self, dataset, batch_size, share_all=True, with_length=0):
-        """ dataset: a (train, valid, test) tuple in memory
-            share_all: if True, will build shared variable for the whole
+    def __init__(self, dataset_filename, share_all, trainer):
+        """ share_all: if True, will build shared variable for the whole
             dataset, this is likely to fail when running a large dataset on gpu.
         """
-
         self.share_all = share_all
-        self.dataset = dataset
-        self.batch_size = batch_size
-        self.with_length = with_length
+        self.batch_size = trainer.batch_size
+        self.max_len = trainer.max_len
+        self.multi_output = trainer.multi_output
 
         if self.share_all:
+            self.dataset = read_data(dataset_filename)
             self.shared_dataset = [self.share_dataset(k) for k in
                                    self.dataset]
         else:
-            n_in = dataset[0][0][0].flatten().shape[0]
-            self.shared_Xs = [theano.shared(np.zeros((self.batch_size, ) +
-                                                     (n_in, ),
+            self.shared_Xs = [theano.shared(np.zeros(trainer.input_shape,
                                                     dtype=theano.config.floatX),
                                            borrow=True) for _ in range(3)]
-            label = dataset[0][1][0]
-            label = np.asarray(label, dtype='int32')
-            if len(label.shape) == 0:
+            if not multi_output:
                 # numpy.int label
                 self.shared_ys = [theano.shared(np.zeros((self.batch_size, ),
                                                         dtype='int32')) for _ in range(3)]
             else:
-                seq_len = label.shape[0]
-                if with_length:
-                    seq_len = with_length + 1
+                assert self.max_len != 0
+                # TODO currently FixedLengthLayer is not supported
+                seq_len = self.max_len + 1
                 self.shared_ys = [theano.shared(np.zeros((self.batch_size,
                                                           seq_len),
                                                          dtype='int32')) for _ in range(3)]

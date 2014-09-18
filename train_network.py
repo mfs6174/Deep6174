@@ -41,6 +41,7 @@ class NNTrainer(object):
         self.batch_size = input_image_shape[0]
         self.input_shape = input_image_shape
         self.rng = numpy.random.RandomState(23455)
+        self.multi_output = multi_output
 
         self.x = T.fmatrix('x')
         #self.x.tag.test_value = np.random.rand(self.batch_size,
@@ -77,6 +78,7 @@ class NNTrainer(object):
                 last_layer.get_output_train(),
                 last_layer.get_output_test())
         self.layers.append(layer)
+        params['type'] = layer_class.get_class_name()
         self.layer_config.append(params)
 
     def n_params(self):
@@ -95,22 +97,16 @@ class NNTrainer(object):
         print self.layers
         pprint(self.layer_config)
 
-    def _prepare_sharedio(self, filename, load_all_data):
-        """ read dataset from filename and create theano shared variables"""
-        dataset = read_data(filename)
-        if type(self.layers[-1]) == SequenceSoftmax:
-            max_len = self.layer_config[-1]['seq_max_len']
-            print "Using Sequence Softmax Output with max_len = {0}".format(max_len)
-            shared_io = SharedDataIO(dataset, self.batch_size, load_all_data, max_len)
-        else:
-            shared_io = SharedDataIO(dataset, self.batch_size, load_all_data)
-        return shared_io
-
     def finish(self):
         """ call me before training"""
         self.print_config()
 
-        print "... compiling"
+        if type(self.layers[-1]) == SequenceSoftmax:
+            self.max_len = self.layer_config[-1]['seq_max_len']
+            print "Using Sequence Softmax Output with max_len = {0}".format(self.max_len)
+        else:
+            self.max_len = 0
+
         layer = self.layers[-1]
         assert type(layer) in [SequenceSoftmax, LogisticRegression]
         # cost to minimize
@@ -139,7 +135,8 @@ class NNTrainer(object):
         """ read data and train"""
         self.finish()
 
-        shared_io = self._prepare_sharedio(dataset_file, load_all_data)
+        shared_io = SharedDataIO(dataset_file, load_all_data, self)
+
         layer = self.layers[-1]
 
         def gen_updates_with_learning_rate(rate):
@@ -150,11 +147,9 @@ class NNTrainer(object):
                 updates.append((param_i, param_i + upd))
                 updates.append((last_update, upd))
             return updates
-
-        n_batches = list(shared_io.get_dataset_size())
-        n_batches = [x / self.batch_size for x in n_batches]
         lr_rate = T.fscalar()
 
+        print "Compiling ..."
         if load_all_data:
             # load all data into GPU
             datasets = shared_io.shared_dataset
@@ -206,8 +201,13 @@ class NNTrainer(object):
             def test_model(index):
                 shared_io.get_test(index)
                 return do_test_model()
+            # read data into memory only after compilation, to save memory
+            shared_io.dataset = read_data(dataset_file)
 
         print '... training'
+        n_batches = list(shared_io.get_dataset_size())
+        n_batches = [x / self.batch_size for x in n_batches]
+
         test_freq = n_batches[0] / 2
         logger = ParamsLogger(logdir=dataset_file + '-models', trainer=self)
         rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
