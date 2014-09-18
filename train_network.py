@@ -202,14 +202,12 @@ class NNTrainer(object):
         n_batches = list(shared_io.get_dataset_size())
         n_batches = [x / self.batch_size for x in n_batches]
 
-        test_freq = n_batches[0] / 2
         logger = ParamsLogger(logdir=dataset_file + '-models', trainer=self)
         rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
 
         # train forever and test on test set, ignore validation set.
         training = TrainForever(train_model, test_model,
-                                n_batches[2], test_freq,
-                                logger, rate_provider)
+                                n_batches, logger, rate_provider)
         print 'Start training...'
         training.work()
 
