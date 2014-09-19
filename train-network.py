@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: train-network.py
-# Date: Thu Sep 18 10:31:16 2014 -0700
+# Date: Fri Sep 19 15:42:17 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import sys
@@ -15,14 +15,15 @@ from dataio import read_data
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         dataset = sys.argv[1]
+        output_directory = sys.argv[2] if len(sys.argv) == 3 else None
     else:
-        print "Usage: {0} dataset.pkl.gz".format(sys.argv[0])
+        print "Usage: {0} dataset.pkl.gz [output directory]".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-    #ds = read_data(dataset)[0]
-    #img_size = ds[0][0].shape
-    #multi_output = hasattr(ds[1][0], '__iter__')
-    img_size = (3, 64, 64)
+    ds = read_data(dataset)[0]
+    img_size = ds[0][0].shape
+    multi_output = hasattr(ds[1][0], '__iter__')
+    #img_size = (3, 64, 64)
     multi_output = True
     print "Input img size is {0}, multioutput={1}".format(img_size, multi_output)
 
@@ -66,11 +67,8 @@ if __name__ == '__main__':
     nn.add_layer(FullyConnectedLayer, {'n_out': 3072})
     nn.add_layer(DropoutLayer, {})
 
-    if multi_output:
-        nn.add_layer(SequenceSoftmax, {'seq_max_len': 5, 'n_out': 10})
-        #nn.add_nLR_layer(2)
-    else:
-        nn.add_layer(LogisticRegression, {'n_out': 10})
-    nn.work(init_learning_rate=0.04, dataset_file=dataset, load_all_data=load_all)
+    nn.add_layer(SequenceSoftmax, {'seq_max_len': 5, 'n_out': 10})
+    #nn.add_layer(LogisticRegression, {'n_out': 10})
+    nn.work(0.04, dataset, load_all, output_directory)
 
 # Usage: ./train-network.py dataset.pkl.gz

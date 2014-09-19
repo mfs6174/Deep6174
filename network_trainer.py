@@ -4,6 +4,7 @@
 from itertools import chain, izip
 import operator
 import pprint
+import os
 pprint = pprint.PrettyPrinter(indent=4).pprint
 
 import numpy as np
@@ -67,7 +68,7 @@ class NNTrainer(object):
         params['type'] = layer_class.get_class_name()
 
         # remove W & b in params, for better printing
-        params = dict([k, v] for k, v in params.iteritems() if type(v) != np.ndarray)
+        params = dict([k, v] for k, v in params.iteritems() if type(v) not in [np.ndarray, list])
         self.layer_config.append(params)
 
     def n_params(self):
@@ -117,8 +118,22 @@ class NNTrainer(object):
         assert len(self.last_updates) == len(self.params), 'last updates don\'t match params'
 
     def work(self, init_learning_rate, dataset_file,
-             load_all_data=True):
-        """ Compile, read data, and train"""
+             load_all_data=True, output_directory=None):
+        """ Compile, read data, and train
+            dataset_file: dataset in .pkl.gz, of (train, valid, test)
+            load_all_data: whether to try to load all training data into gpu,
+                or only load necessary ones in every batch.
+            output_directory:
+                directory to save logs and outputs
+        """
+        if output_directory is None:
+            output_directory = dataset_file + '-output'
+        try:
+            os.mkdir(output_directory)
+        except:
+            pass
+        assert os.path.isdir(output_directory), "cannot create directory " + output_directory
+
         self.finish()
         shared_io = SharedDataIO(dataset_file, load_all_data, self)
 
@@ -193,8 +208,9 @@ class NNTrainer(object):
         n_batches = list(shared_io.get_dataset_size())
         n_batches = [x / self.batch_size for x in n_batches]
 
-        logger = ParamsLogger(logdir=dataset_file + '-models', trainer=self)
-        rate_provider = LearningRateProvider(dataset_file + '-learnrate', init_learning_rate)
+        logger = ParamsLogger(logdir=output_directory, trainer=self)
+        rate_provider = LearningRateProvider(
+            os.path.join(output_directory, 'learnrate.txt', init_learning_rate)
 
         # train forever and test on test set (index 2), ignore validation set.
         training = TrainForever(train_model, test_model,
