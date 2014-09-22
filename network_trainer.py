@@ -186,7 +186,7 @@ class NNTrainer(object):
                 shared_io.get_train(index)
                 return do_train_model(learning_rate)
 
-            def err_func_with_dataset_index(i)
+            def err_func_with_dataset_index(i):
                 return theano.function([], layer.errors(self.y),
                         givens={
                             self.x: shared_io.shared_Xs[i],
@@ -210,7 +210,7 @@ class NNTrainer(object):
 
         logger = ParamsLogger(logdir=output_directory, trainer=self)
         rate_provider = LearningRateProvider(
-            os.path.join(output_directory, 'learnrate.txt', init_learning_rate)
+            os.path.join(output_directory, 'learnrate.txt'), init_learning_rate)
 
         # train forever and test on test set (index 2), ignore validation set.
         training = TrainForever(train_model, test_model,
