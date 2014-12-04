@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: LR.py
-# Date: Wed Sep 17 16:00:49 2014 -0700
+# Date: Sun Nov 30 22:43:30 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import numpy
 import theano
@@ -120,6 +120,6 @@ class LogisticRegression(Layer):
                                   params['input_shape'],
                                   params['n_out'])
         if 'W' in params:
-            self.W.set_value(params['W'].astype(theano.config.floatX))
-            self.b.set_value(params['b'].astype(theano.config.floatX))
+            layer.W.set_value(params['W'].astype(theano.config.floatX))
+            layer.b.set_value(params['b'].astype(theano.config.floatX))
         return layer

@@ -104,14 +104,12 @@ class NetworkRunner(object):
         """
         if not multi_output:
             # the predicted results for single digit output
-            label = max(enumerate(results[-1]), key=operator.itemgetter(1))
-            return label[0]
+            return results[-1].argmax()
         else:
             # predicted results for multiple digit output
             ret = []
             for r in results[-1]:
-                label = max(enumerate(r[0]), key=operator.itemgetter(1))
-                ret.append(label[0])
+                ret.append(r[0].argmax())
             if var_len_output:
                 # the first element is 'length - 1', make it 'length'
                 ret[0] += 1
