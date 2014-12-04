@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: imageutil.py
-# Date: Mon Sep 01 11:41:52 2014 -0700
+# Date: Thu Dec 04 20:45:54 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 """ This file contains different utility functions that are not connected
@@ -13,6 +13,7 @@ image from a set of samples or weights.
 """
 
 
+import cv2
 import numpy
 import numpy as np
 from itertools import izip
@@ -193,3 +194,32 @@ def stack_vectors(vecs):
     for k in range(1, len(vecs)):
         ret = np.vstack((ret, [np.zeros(shape)] * 5, [vecs[k]] * image_thickness))
     return ret
+
+def padding(img, shape, fill):
+    h, w = img.shape[:2]
+    assert w <= shape[0] and h <= shape[1]
+    pad_width = shape[0] - w
+    pad_height = shape[1] - h
+
+    pad_w0 = pad_width / 2
+    pad_w1 = shape[0] - (pad_width - pad_w0)
+    pad_h0 = pad_height / 2
+    pad_h1 = shape[1] - (pad_height - pad_h0)
+
+    ret = np.ones((shape[1], shape[0]), dtype='uint8') * fill
+    ret[pad_h0:pad_h1,pad_w0:pad_w1] = img
+    return ret
+
+def resize_preserve(img, shape, fill_empty=0):
+    h, w = img.shape[:2]
+    tw, th = shape[:2]
+
+    w_ratio = tw / float(w)
+    h_ratio = th / float(h)
+
+    ratio = min(w_ratio, h_ratio)
+
+    cw = int(max(1, w * ratio))
+    ch = int(max(1, h * ratio))
+    img = cv2.resize(img, (cw, ch))
+    return padding(img, shape, fill_empty)
