@@ -1,18 +1,18 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: test-char.py
-# Date: Thu Dec 04 20:46:30 2014 +0800
+# Date: Thu Dec 11 00:19:50 2014 +0800
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 import sys
 from itertools import izip
 import cv2
+if len(sys.argv) != 4:
+    sys.exit("Usage: {} <model> <charlist> <picture>".format(sys.argv[0]))
 
 from network_runner import get_nn
-from dataio import read_data, save_data
 from lib.imageutil import get_image_matrix, resize_preserve
-from lib.accuracy import AccuracyRecorder
 
 params_file = sys.argv[1]
 chars_file = sys.argv[2]
