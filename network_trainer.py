@@ -16,7 +16,7 @@ from layers.layers import *
 from params_logger import ParamsLogger
 from learningrate import LearningRateProvider
 from shared_dataio import SharedDataIO
-from training_policy import TrainForever
+from training_policy import TrainEarlyStopping as POLICY
 
 N_OUT = 10
 MOMENT = 0.6
@@ -213,6 +213,6 @@ class NNTrainer(object):
             os.path.join(output_directory, 'learnrate.txt'), init_learning_rate)
 
         # train forever and test on test set (index 2), ignore validation set.
-        training = TrainForever(train_model, test_model,
+        training = POLICY(train_model, test_model,
                                 n_batches, logger, rate_provider)
         training.work()
