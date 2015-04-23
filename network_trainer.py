@@ -21,6 +21,8 @@ from training_policy import TrainEarlyStopping as POLICY
 N_OUT = 10
 MOMENT = 0.6
 
+OUTPUT_ENABLE_LIST=[SequenceSoftmax, LogisticRegression, SoftmaxLoss]
+
 class NNTrainer(object):
     """ Neural Network Trainer
     """
@@ -96,7 +98,7 @@ class NNTrainer(object):
             self.max_len = 0
 
         layer = self.layers[-1]
-        assert type(layer) in [SequenceSoftmax, LogisticRegression]
+        assert type(layer) in OUTPUT_ENABLE_LIST
         # cost to minimize
         self.cost = layer.negative_log_likelihood(self.y)
 
