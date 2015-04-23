@@ -70,11 +70,15 @@ class TrainForever(TrainPolicy):
                             # save best params
                             print 'Yay! Saving best model ...'
                             self.logger.save_params('best')
+                    else:
+                        print('Fuck, now loss>best loss, best loss is %f %%, ' % \
+                              (best_loss*100.) )
+
 
 class TrainEarlyStopping(TrainPolicy):
 
     def __init__(self, train_model, test_model,
-                 n_batches, logger, learning_rate_provider,patience = 10000,patience_increase = 2,improvement_threshold = 0.995):
+                 n_batches, logger, learning_rate_provider,patience = 5000,patience_increase = 2,improvement_threshold = 0.995):
         super(TrainEarlyStopping, self).__init__(train_model, test_model,
                  n_batches, logger, learning_rate_provider)
         self.patience = patience
@@ -137,6 +141,9 @@ class TrainEarlyStopping(TrainPolicy):
                             # save best params
                             print 'Yay! Saving best model ...'
                             self.logger.save_params('best')
+                    else:
+                        print('Fuck, now loss>best loss, best loss is %f %%, patience now is %i' %\
+                              (best_loss*100. ,self.patience) )
 
                 if self.patience <= iter:
                     done_looping = True
