@@ -21,12 +21,13 @@ from layers.layers import *
 N_OUT = 10
 
 class NetworkRunner(object):
-    def __init__(self, input_shape, multi_output):
+    def __init__(self, input_shape, multi_output, patch_output):
         """ input size in (height, width)"""
         # nn is the underlying neural network object to run with
-        self.nn = NNTrainer(input_shape, multi_output)
+        self.nn = NNTrainer(input_shape, multi_output,patch_output)
         self.multi_output = multi_output
-
+        self.patch_output = patch_output
+        
     def get_layer_by_index(self, idx):
         """ return the instance of certain layer.
             idx can be negative to get layers from the end
@@ -133,13 +134,17 @@ def build_nn_with_params(params, batch_size):
 
     nlayer = get_nlayer_from_params(params)
     last_layer = params['layer{0}'.format(nlayer - 1)]
+    patch_output = False
     if last_layer['type'] in ['ssm']:
         multi_output = True
     elif last_layer['type'] in ['lr']:
         multi_output = False
+    elif last_layer['type'] in ['sl']:
+        multi_output = False
+        patch_output = True
     else:
         assert False
-    runner = NetworkRunner(input_size, multi_output)
+    runner = NetworkRunner(input_size, multi_output,patch_output)
 
     if 'last_updates' in params:
         runner.set_last_updates(params['last_updates'])

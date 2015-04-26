@@ -26,7 +26,7 @@ OUTPUT_ENABLE_LIST=[SequenceSoftmax, LogisticRegression, SoftmaxLoss]
 class NNTrainer(object):
     """ Neural Network Trainer
     """
-    def __init__(self, input_image_shape, multi_output=True):
+    def __init__(self, input_image_shape, multi_output=True, patch_output=False):
         """ input_image_shape: 4D tuple
             multi_output: whether a image has more than 1 labels
         """
@@ -39,7 +39,9 @@ class NNTrainer(object):
 
         self.x = T.fmatrix('x')
         Layer.x = self.x        # only for debug purpose
-        if multi_output:
+        if multi_output and patch_output:
+            raise NotImplementedError()
+        if multi_output or patch_output:
             self.y = T.imatrix('y')
         else:
             self.y = T.ivector('y')

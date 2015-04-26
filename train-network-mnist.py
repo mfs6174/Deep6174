@@ -43,7 +43,7 @@ if __name__ == '__main__':
     else:
         assert len(img_size) == 2
         shape = (batch, 1) + img_size
-    nn = NNTrainer(shape, multi_output=multi_output)
+    nn = NNTrainer(shape, multi_output=multi_output,patch_output=False)
 
     nn.add_layer(ConvLayer, {'filter_shape': (20, 5, 5), 'activation': T.tanh})
     #nn.add_layer(MaxoutLayer, {'maxout_unit': 3})
