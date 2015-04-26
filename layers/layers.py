@@ -21,10 +21,11 @@ from dropout import DropoutLayer
 from sequence_softmax import SequenceSoftmax
 
 from softmax_loss import SoftmaxLoss
+from input_layer import InputLayer
 
 layer_types = [ConvLayer, FullyConnectedLayer, SequenceSoftmax, PoolLayer,
                MeanSubtractLayer, MaxoutLayer, LogisticRegression,
-               DropoutLayer,SoftmaxLoss]
+               DropoutLayer,SoftmaxLoss,InputLayer]
 
 cls_name_dict = dict([(k, k.get_class_name()) for k in layer_types])
 name_cls_dict = dict([(v, k) for k, v in cls_name_dict.iteritems()])
