@@ -14,6 +14,9 @@ import numpy as np
 import os, sys
 import scipy.io as sio
 
+import cv2
+import theano as tn
+
 from lib.utils import memorized
 
 def _read_data_fallback(dataset):
@@ -111,6 +114,49 @@ def sample_dataset(imgs, labels, cnt):
     labels = labels[idxs]
     return (imgs, labels)
 
+@memorized
+def read_raw_image_label(image,label,multi = 0):
+    """ return (image, label) (not flattened)"""
+    #print 'Loading image and label from {0} ...'.format(image)
+    if os.path.isfile(image) and os.path.isfile(label):
+        im = cv2.imread(image).astype(tn.config.floatX)/255.0
+        assert im is not None, "invalid image"
+        lb = cv2.imread(label,multi)
+        assert lb is not None, "invalid label"
+        if (len(im.shape)==2):
+            newim = im
+        elif len(im.shape)==3:
+            newim = np.ndarray((im.shape[2],im.shape[0],im.shape[1]))
+            for i in range(0,im.shape[2]):newim[i,:,:]=im[:,:,i]
+        else:
+            assert False, "invalid image shape"
+        if (len(lb.shape)==2):
+            newlb = lb
+        elif len(lb.shape)==3:
+            newlb = np.ndarray((lb.shape[2],lb.shape[0],lb.shape[1]))
+            for i in range(0,lb.shape[2]):newlb[i,:,:]=lb[:,:,i]
+        else:
+            assert False, "invalid label shape"
+        #print 'Data loaded.'
+        return (newim,newlb)
+    assert False, "Invalid Dataset Filename"
+
+@memorized
+def read_image_label(dataset):
+    """ return (image, label) (not flattened)"""
+    #print 'Loading data from {0} ...'.format(dataset)
+    if os.path.isfile(dataset):
+        f = gzip.open(dataset, 'rb')
+        im,lb = pickle.load(f)
+        f.close()
+        return (im,lb)
+
+    #if os.path.isdir(dataset):
+    #    return _read_data_fallback(dataset)
+    #print 'Data loaded.'
+    assert False, "Invalid Dataset Filename"
+
+
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         dataset = sys.argv[1]
@@ -124,3 +170,4 @@ if __name__ == '__main__':
 
     #tt, vv, ttss = _read_data_fallback('testdir')
     #print tt[1] == t[1]
+
