@@ -115,16 +115,18 @@ def sample_dataset(imgs, labels, cnt):
     return (imgs, labels)
 
 @memorized
-def read_raw_image_label(image,label,multi = 0):
+def read_raw_image_label(image,label = None,multi = 0):
     """ return (image, label) (not flattened)"""
     #print 'Loading image and label from {0} ...'.format(image)
+    if label is None:
+        label="label/"+image
     if os.path.isfile(image) and os.path.isfile(label):
         im = cv2.imread(image).astype(tn.config.floatX)/255.0
         assert im is not None, "invalid image"
         lb = cv2.imread(label,multi)
         assert lb is not None, "invalid label"
         if (len(im.shape)==2):
-            newim = im
+            newim = im.reshape((1,im.shape[0],im.shape[1]))
         elif len(im.shape)==3:
             newim = np.ndarray((im.shape[2],im.shape[0],im.shape[1]))
             for i in range(0,im.shape[2]):newim[i,:,:]=im[:,:,i]

@@ -16,6 +16,7 @@ from layers.layers import *
 from params_logger import ParamsLogger
 from learningrate import LearningRateProvider
 from shared_dataio import SharedDataIO
+from shared_dataio import SharedImagesIO
 from training_policy import TrainEarlyStopping as POLICY
 
 N_OUT = 10
@@ -26,7 +27,7 @@ OUTPUT_ENABLE_LIST=[SequenceSoftmax, LogisticRegression, SoftmaxLoss]
 class NNTrainer(object):
     """ Neural Network Trainer
     """
-    def __init__(self, input_image_shape, multi_output=True, patch_output=False):
+    def __init__(self, input_image_shape, multi_output=True, patch_output=False, stride = 0):
         """ input_image_shape: 4D tuple
             multi_output: whether a image has more than 1 labels
         """
@@ -36,7 +37,10 @@ class NNTrainer(object):
         self.input_shape = input_image_shape
         self.rng = np.random.RandomState()
         self.multi_output = multi_output
-
+        self.patch_output = patch_output
+        self.stride = stride
+        if self.patch_output:
+            assert (not self.stride==0)
         self.x = T.fmatrix('x')
         Layer.x = self.x        # only for debug purpose
         if multi_output and patch_output:
@@ -122,7 +126,7 @@ class NNTrainer(object):
         assert len(self.last_updates) == len(self.params), 'last updates don\'t match params'
 
     def work(self, init_learning_rate, dataset_file,
-             load_all_data=True, output_directory=None):
+             load_all_data=True, output_directory=None, pre_proc=None):
         """ Compile, read data, and train
             dataset_file: dataset in .pkl.gz, of (train, valid, test)
             load_all_data: whether to try to load all training data into gpu,
@@ -139,7 +143,11 @@ class NNTrainer(object):
         assert os.path.isdir(output_directory), "cannot create directory " + output_directory
 
         self.finish()
-        shared_io = SharedDataIO(dataset_file, load_all_data, self)
+        if self.stride ==0:
+            shared_io = SharedDataIO(dataset_file, load_all_data, self)
+        else:
+            shared_io = SharedImagesIO(dataset_file,load_all_data,self,self.stride,pre_proc)
+            load_all_data = False
 
         layer = self.layers[-1]
 
