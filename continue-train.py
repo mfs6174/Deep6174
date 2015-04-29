@@ -23,8 +23,8 @@ nn_runner = build_nn_with_params(data, None)
 nn = nn_runner.nn
 
 input_size = nn.input_shape
-load_all = reduce(operator.mul, input_size[1:]) < 100 ** 2
-
+#load_all = reduce(operator.mul, input_size[1:]) < 100 ** 2
+load_all=False
 dataset = sys.argv[2]
 
 if len(sys.argv) == 4:

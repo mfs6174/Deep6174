@@ -175,6 +175,10 @@ class SharedImagesIO(SharedDataIO):
         self.patch_num = np.prod(self.patch_num_2d)
         print 'patch per image'
         print self.patch_num
+        if self.patch_num % self.batch_size != 0:
+            self.patch_num = self.patch_num/self.batch_size*self.batch_size
+            print 'drop some data to fit batch_size'
+            print self.patch_num
         assert self.patch_num%self.batch_size == 0
         self.batch_per_image = self.patch_num / self.batch_size
         self.data_size = tuple( (self.image_num[i]*self.patch_num for i in range(3) ) )

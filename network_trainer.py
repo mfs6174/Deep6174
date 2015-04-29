@@ -17,7 +17,7 @@ from params_logger import ParamsLogger
 from learningrate import LearningRateProvider
 from shared_dataio import SharedDataIO
 from shared_dataio import SharedImagesIO
-from training_policy import TrainEarlyStopping as POLICY
+from training_policy import TrainForever as POLICY
 
 N_OUT = 10
 MOMENT = 0.6

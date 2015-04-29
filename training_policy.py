@@ -57,7 +57,7 @@ class TrainForever(TrainPolicy):
 
                     # compute zero-one loss on validation set
                     test_loss = [self.test_model(i) for i
-                                         in xrange(self.n_batches[2])]
+                                         in xrange(self.n_batches[1])]
                     now_loss = np.mean(test_loss)
                     print('After epoch %i, minibatch %i/%i, test error %f %%' % \
                           (epoch, minibatch_index + 1, self.n_batches[0], \
@@ -123,7 +123,7 @@ class TrainEarlyStopping(TrainPolicy):
 
                     # compute zero-one loss on validation set
                     test_loss = [self.test_model(i) for i
-                                         in xrange(self.n_batches[2])]
+                                         in xrange(self.n_batches[1])]
                     now_loss = np.mean(test_loss)
                     print('After epoch %i, minibatch %i/%i, test error %f %%' % \
                           (epoch, minibatch_index + 1, self.n_batches[0], \
