@@ -7,6 +7,7 @@
 
 import numpy as np
 from lib.progress import Progressor
+import sys
 
 class TrainPolicy(object):
 
@@ -21,6 +22,8 @@ class TrainPolicy(object):
 
     def work(self):
         pass
+    def flush(self):
+        sys.stdout.flush()
 
 class TrainForever(TrainPolicy):
 
@@ -44,11 +47,13 @@ class TrainForever(TrainPolicy):
 
             learning_rate = self.learning_rate_provider.get_rate(epoch)
             print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
+            self.flush()
             for minibatch_index in xrange(self.n_batches[0]):
                 iter = (epoch - 1) * self.n_batches[0] + minibatch_index
 
                 if iter % 200 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
                     print 'training @ iter = ', iter
+                    self.flush()
                 cost_ij = self.train_model(minibatch_index, learning_rate)
 
 
@@ -73,7 +78,7 @@ class TrainForever(TrainPolicy):
                     else:
                         print('Fuck, now loss>best loss, best loss is %f %%, ' % \
                               (best_loss*100.) )
-
+                    self.flush()
 
 class TrainEarlyStopping(TrainPolicy):
 
@@ -110,17 +115,19 @@ class TrainEarlyStopping(TrainPolicy):
 
             learning_rate = self.learning_rate_provider.get_rate(epoch)
             print "In epoch {0}: learning rate is {1}".format(epoch, learning_rate)
+            self.flush()
             for minibatch_index in xrange(self.n_batches[0]):
                 iter = (epoch - 1) * self.n_batches[0] + minibatch_index
 
                 if iter % 200 == 0 or (iter % 10 == 0 and iter < 30) or (iter < 5):
                     print 'training @ iter = ', iter
+                    self.flush()
                 cost_ij = self.train_model(minibatch_index, learning_rate)
 
 
                 if (iter + 1) % self.test_freq == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
                     # do a validation:
-
+                    
                     # compute zero-one loss on validation set
                     test_loss = [self.test_model(i) for i
                                          in xrange(self.n_batches[1])]
@@ -144,7 +151,7 @@ class TrainEarlyStopping(TrainPolicy):
                     else:
                         print('Fuck, now loss>best loss, best loss is %f %%, patience now is %i' %\
                               (best_loss*100. ,self.patience) )
-
+                    self.flush()
                 if self.patience <= iter:
                     done_looping = True
                     break
