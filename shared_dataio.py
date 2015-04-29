@@ -147,7 +147,7 @@ class SharedImagesIO(SharedDataIO):
         self.patch_size = trainer.input_shape[1:]
         assert (self.patch_output if self.proc_y  else True)
         n_in = np.prod(self.patch_size)
-        if len(stride)==1:
+        if type(stride)==int:
             self.stride = (stride,stride)
         else:
             self.stride = stride
@@ -161,7 +161,7 @@ class SharedImagesIO(SharedDataIO):
                                                      dtype='int32')) for _ in range(3)]
             """
         else:
-            assert stride[0]<=self.patch_size[1] and stride[1]<=self.patch_size[2]
+            assert self.stride[0]<=self.patch_size[1] and self.stride[1]<=self.patch_size[2]
             self.shared_ys = [theano.shared(np.zeros((self.batch_size,
                                                       np.prod(stride)),
                                                      dtype='int32')) for _ in range(3)]
@@ -171,8 +171,10 @@ class SharedImagesIO(SharedDataIO):
         self.img_idx_now = [0,0,0]
         self.dataset = [self._read_with_index(i,0) for i in range(3)]
         self.image_size= self.dataset[0][0].shape
-        self.patch_num_2d = tuple( ( (self.image_size[1+i]-self.patch_size[1+i])/stride[i]+1 for i in range(2) ) )
+        self.patch_num_2d = tuple( ( (self.image_size[1+i]-self.patch_size[1+i])/self.stride[i]+1 for i in range(2) ) )
         self.patch_num = np.prod(self.patch_num_2d)
+        print 'patch per image'
+        print self.patch_num
         assert self.patch_num%self.batch_size == 0
         self.batch_per_image = self.patch_num / self.batch_size
         self.data_size = tuple( (self.image_num[i]*self.patch_num for i in range(3) ) )
@@ -182,7 +184,7 @@ class SharedImagesIO(SharedDataIO):
         return self.data_size
 
     def _read_with_index(self,dataset,imidx):
-        return dataio.read_raw_image_label(self.data_path[dataset]+self.image_list[dataset][imidx])
+        return dataio.read_raw_image_label(self.data_path[dataset],self.image_list[dataset][imidx])
 
     def _get_with_batch_index(self, dataset, index):
         """ dataset is 0, 1 or 2 indicating train, valid, test
@@ -198,9 +200,9 @@ class SharedImagesIO(SharedDataIO):
                 self.img_idx_now[dataset] = imgidx
                 self.dataset[dataset] = self._read_with_index(dataset,imgidx)
             datasetNow = self.dataset[dataset]
-        data_x=np.ndarray((self.batch_size,self.patch_size[0],self.patch_size[1],self.patch_size[2]))
+        data_x=np.ndarray((self.batch_size,self.patch_size[0],self.patch_size[1],self.patch_size[2]),dtype=theano.config.floatX)
         if self.patch_output:
-            data_y=np.ndarray(self.batch_size,self.stride[0],self.stride[1])
+            data_y=np.ndarray((self.batch_size,self.stride[0],self.stride[1]),dtype=theano.config.floatX)
         else:
             raise NotImplementedError()
 
@@ -209,9 +211,10 @@ class SharedImagesIO(SharedDataIO):
 
         insideIdx = index-imgidx*self.batch_per_image
         if (not self.need_proc) or (dataset != 0):
-            for i in range(insideIdx,insideIdx+self.batch_size):
-                data_x[i,:,:,:] = datasetNow[0][:,i/self.patch_num_2d[1]*self.stride[0]:i/self.patch_num_2d[1]*self.stride[0]+self.patch_size[1],
-                                                i%self.patch_num_2d[1]*self.stride[1]:i%self.patch_num_2d[1]*self.stride[1]+self.patch_size[2]]
+            for i in range(self.batch_size):
+                j=i+insideIdx
+                data_x[i,:,:,:] = datasetNow[0][:,j/self.patch_num_2d[1]*self.stride[0]:j/self.patch_num_2d[1]*self.stride[0]+self.patch_size[1],
+                                                j%self.patch_num_2d[1]*self.stride[1]:j%self.patch_num_2d[1]*self.stride[1]+self.patch_size[2]]
         else:
             if self.full_proc:
                 pass
@@ -221,9 +224,10 @@ class SharedImagesIO(SharedDataIO):
         offset = ((self.patch_size[1]-self.stride[0])/2,(self.patch_size[2]-self.stride[1])/2)
         if (not self.proc_y) or (dataset !=0):
             if self.patch_output:
-                for i in range(insideIdx,insideIdx+self.batch_size):
-                    data_x[i,:,:] = datasetNow[1][i/self.patch_num_2d[1]*self.stride[0]+offset[0]:i/self.patch_num_2d[1]*self.stride[0]+self.patch_size[1]-offset[0],
-                                                i%self.patch_num_2d[1]*self.stride[1]+offset[1]:i%self.patch_num_2d[1]*self.stride[1]+self.patch_size[2]-offset[1]]
+                for i in range(self.batch_size):
+                    j=i+insideIdx
+                    data_y[i,:,:] = datasetNow[1][j/self.patch_num_2d[1]*self.stride[0]+offset[0]:j/self.patch_num_2d[1]*self.stride[0]+self.patch_size[1]-offset[0],
+                                                j%self.patch_num_2d[1]*self.stride[1]+offset[1]:j%self.patch_num_2d[1]*self.stride[1]+self.patch_size[2]-offset[1]]
             else:
                 pass
         else:

@@ -21,7 +21,7 @@ if __name__ == '__main__':
         print "Usage: {0} [input directory] [output directory]".format(sys.argv[0])
         sys.exit(0)
     print "Dataset: ", dataset
-    ds = read_data(dataset)[0]
+    #ds = read_data(dataset)[0]
     img_size = (3, 80, 80)
     multi_output = False
     print "Input img size is {0}, multioutput={1}".format(img_size, multi_output)
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     print "Load All Data: ", load_all
 
     # config the nn
-    batch = 100
+    batch = 101
     if len(img_size) == 3:
         shape = (batch, ) + img_size
     else:
@@ -51,13 +51,13 @@ if __name__ == '__main__':
 
     nn.add_layer(ConvLayer, {'filter_shape': (128, 7, 7)})
     nn.add_layer(MaxoutLayer, {'maxout_unit': 4})
-    #nn.add_layer(PoolLayer, {'pool_size': 2})
+    nn.add_layer(PoolLayer, {'pool_size': 2})
     #nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
     #nn.add_layer(DropoutLayer, {})
 
     nn.add_layer(ConvLayer, {'filter_shape': (128, 5, 5)})
     nn.add_layer(MaxoutLayer, {'maxout_unit': 4})
-    #nn.add_layer(PoolLayer, {'pool_size': 2})
+    nn.add_layer(PoolLayer, {'pool_size': 2})
     #nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
     nn.add_layer(DropoutLayer, {})
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     #nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
     #nn.add_layer(DropoutLayer, {})
 
-    nn.add_layer(FullyConnectedLayer, {'n_out': 6400})
+    nn.add_layer(FullyConnectedLayer, {'n_out': 1600})
     nn.add_layer(DropoutLayer, {})
     nn.add_layer(FullyConnectedLayer, {'n_out': 1200})
     

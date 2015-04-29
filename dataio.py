@@ -116,11 +116,12 @@ def sample_dataset(imgs, labels, cnt):
     return (imgs, labels)
 
 @memorized
-def read_raw_image_label(image,label = None,multi = 0):
+def read_raw_image_label(ipath,image,label = None,multi = 0):
     """ return (image, label) (not flattened)"""
     #print 'Loading image and label from {0} ...'.format(image)
     if label is None:
-        label="label/"+image
+        label=ipath+"label/"+image
+    image = ipath+image
     if os.path.isfile(image) and os.path.isfile(label):
         im = cv2.imread(image).astype(tn.config.floatX)/255.0
         assert im is not None, "invalid image"

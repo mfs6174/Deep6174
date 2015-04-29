@@ -32,7 +32,8 @@ class SoftmaxLoss(Layer):
         super(SoftmaxLoss, self).__init__(None, input_train, input_test)
         self.input_shape = input_shape
         n_in = numpy.prod(self.input_shape[1:])
-        assert n_in==n_out, 'n_in != n_out, softmax can not be apply directly'
+        self.total_out = n_out*s_out*s_out
+        assert n_in==self.total_out, 'n_in != n_out, softmax can not be apply directly'
         self.n_out = n_out
         self.s_out = s_out
         #we do not use W and b for direct softmax
@@ -100,7 +101,7 @@ class SoftmaxLoss(Layer):
         # i.e., the mean log-likelihood across the minibatch.
 
         ty = y.flatten()
-        return -T.mean(T.log(self.p_y_given_x)[T.arange(ty.shape[0]), y])
+        return -T.mean(T.log(self.p_y_given_x)[T.arange(ty.shape[0]), ty])
 
     def errors(self, y):
         """Return a float representing the number of errors in the minibatch

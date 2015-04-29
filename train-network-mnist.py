@@ -37,7 +37,7 @@ if __name__ == '__main__':
     print "Load All Data: ", load_all
 
     # config the nn
-    batch = 500
+    batch = 200
     if len(img_size) == 3:
         shape = (batch, ) + img_size
     else:
