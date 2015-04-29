@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: dataio.py
 # Date: Thu Sep 18 10:23:38 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Xi-Jin Zhang <zhangxijin91@gmail.com>
 
 import gzip
 import cPickle as pickle
@@ -142,6 +143,23 @@ def read_raw_image_label(image,label = None,multi = 0):
         #print 'Data loaded.'
         return (newim,newlb)
     assert False, "Invalid Dataset Filename"
+
+
+
+image_type = [".tif",".jpg",".png",".bmp",".pgm"]
+
+def list_images(dir):
+    files = os.listdir(dir)
+    images = []
+    for f in files:
+        name,ext=os.path.splitext(f)
+        if ext in image_type:
+            images.append(f)
+    return images
+
+def get_image_list(dir):
+    ilist = [list_images(dir[i]) for i in range(3)]
+    return ilist
 
 @memorized
 def read_image_label(dataset):

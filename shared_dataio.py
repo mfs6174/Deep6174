@@ -3,6 +3,7 @@
 # File: shared_dataio.py
 # Date: Thu Sep 18 10:32:40 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Xi-Jin Zhang <zhangxijin91@gmail.com>
 
 from dataio import read_data
 import dataio
