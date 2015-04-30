@@ -224,7 +224,12 @@ class NNTrainer(object):
         rate_provider = LearningRateProvider(
             os.path.join(output_directory, 'learnrate.txt'), init_learning_rate)
 
-        # train forever and test on test set (index 2), ignore validation set.
-        training = POLICY(train_model, validate_model,
+        '''# train forever and test on test set (index 2), ignore validation set.
+        training = POLICY(train_model, test_model,
                                 n_batches, logger, rate_provider)
+        '''
+        # train policy see the top of file and test on test set (index 2), validate on validation set(index1).
+        training = POLICY(train_model, validate_model,
+                                n_batches, logger, rate_provider,test_model)
+        
         training.work()

@@ -11,12 +11,14 @@ import sys
 
 class TrainPolicy(object):
 
-    def __init__(self, train_model, test_model,
-                 n_batches, logger, learning_rate_provider):
+    def __init__(self, train_model, valid_model, 
+                 n_batches, logger, learning_rate_provider, test_model = None):
         self.train_model = train_model
         self.test_model = test_model
+        self.valid_model = valid_model
         self.n_batches = n_batches
-        self.test_freq = n_batches[0] / 2
+        self.valid_freq = n_batches[0] / 2
+        self.test_freq = n_batches[0] * 2
         self.logger = logger
         self.learning_rate_provider = learning_rate_provider
 
@@ -25,12 +27,25 @@ class TrainPolicy(object):
     def flush(self):
         sys.stdout.flush()
 
+    def do_valid(self):
+        valid_loss = [self.valid_model(i) for i
+                     in xrange(self.n_batches[1])]
+        return np.mean(valid_loss)
+
+    def do_test(self):
+        assert (self.test_model is not None)
+        test_loss = [self.test_model(i) for i
+                     in xrange(self.n_batches[2])]
+        return np.mean(test_loss)
+
+
+
 class TrainForever(TrainPolicy):
 
-    def __init__(self, train_model, test_model,
-                 n_batches, logger, learning_rate_provider):
-        super(TrainForever, self).__init__(train_model, test_model,
-                 n_batches, logger, learning_rate_provider)
+    def __init__(self, train_model, valid_model,
+                 n_batches, logger, learning_rate_provider, test_model = None):
+        super(TrainForever, self).__init__(train_model, valid_model,
+                                           n_batches, logger, learning_rate_provider,test_model)
 
     def work(self):
         print 'Start training...'
@@ -57,14 +72,12 @@ class TrainForever(TrainPolicy):
                 cost_ij = self.train_model(minibatch_index, learning_rate)
 
 
-                if (iter + 1) % self.test_freq == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
+                if (iter + 1) % self.valid_freq == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
                     # do a validation:
 
                     # compute zero-one loss on validation set
-                    test_loss = [self.test_model(i) for i
-                                         in xrange(self.n_batches[1])]
-                    now_loss = np.mean(test_loss)
-                    print('After epoch %i, minibatch %i/%i, test error %f %%' % \
+                    now_loss = self.do_valid()
+                    print('After epoch %i, minibatch %i/%i, valid error %f %%' % \
                           (epoch, minibatch_index + 1, self.n_batches[0], \
                            now_loss * 100.))
 
@@ -75,6 +88,12 @@ class TrainForever(TrainPolicy):
                             # save best params
                             print 'Yay! Saving best model ...'
                             self.logger.save_params('best')
+                            if ( (iter+1) % self.test_freq ==0) and (self.test_model is not None):
+                                test_score = self.do_test()
+                                print('After epoch %i, minibatch %i/%i, with the best model, test error %f %%' % \
+                                      (epoch, minibatch_index + 1, self.n_batches[0], \
+                                       test_score * 100.))
+
                     else:
                         print('Fuck, now loss>best loss, best loss is %f %%, ' % \
                               (best_loss*100.) )
@@ -82,10 +101,11 @@ class TrainForever(TrainPolicy):
 
 class TrainEarlyStopping(TrainPolicy):
 
-    def __init__(self, train_model, test_model,
-                 n_batches, logger, learning_rate_provider,patience = 5000,patience_increase = 2,improvement_threshold = 0.995):
-        super(TrainEarlyStopping, self).__init__(train_model, test_model,
-                 n_batches, logger, learning_rate_provider)
+    def __init__(self, train_model, valid_model,
+                 n_batches, logger, learning_rate_provider,patience = 100000,patience_increase = 2,improvement_threshold = 0.995,
+                 test_model = None):
+        super(TrainEarlyStopping, self).__init__(train_model, valid_model,
+                                                 n_batches, logger, learning_rate_provider,test_model)
         self.patience = patience
         self.patience_increase = patience_increase
         self.improvement_threshold = improvement_threshold
@@ -97,7 +117,7 @@ class TrainEarlyStopping(TrainPolicy):
         epoch = 0
         progressor = Progressor(None)
 
-        self.test_freq = min(self.n_batches[0]/2, self.patience / 2)
+        self.valid_freq = min(self.n_batches[0]/2, self.patience / 2)
                                   # go through this many
                                   # minibatche before checking the network
                                   # on the validation set; in this case we
@@ -125,14 +145,12 @@ class TrainEarlyStopping(TrainPolicy):
                 cost_ij = self.train_model(minibatch_index, learning_rate)
 
 
-                if (iter + 1) % self.test_freq == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
+                if (iter + 1) % self.valid_freq == 0 or iter in [5, 10, 20, 30, 60, 100, 200]:
                     # do a validation:
                     
                     # compute zero-one loss on validation set
-                    test_loss = [self.test_model(i) for i
-                                         in xrange(self.n_batches[1])]
-                    now_loss = np.mean(test_loss)
-                    print('After epoch %i, minibatch %i/%i, test error %f %%' % \
+                    now_loss = self.do_valid()
+                    print('After epoch %i, minibatch %i/%i, valid error %f %%' % \
                           (epoch, minibatch_index + 1, self.n_batches[0], \
                            now_loss * 100.))
 
@@ -148,6 +166,12 @@ class TrainEarlyStopping(TrainPolicy):
                             # save best params
                             print 'Yay! Saving best model ...'
                             self.logger.save_params('best')
+                            if ( (iter+1) % self.test_freq ==0) and (self.test_model is not None):
+                                test_score = self.do_test()
+                                print('After epoch %i, minibatch %i/%i, with the best model, test error %f %%' % \
+                                      (epoch, minibatch_index + 1, self.n_batches[0], \
+                                       test_score * 100.))
+
                     else:
                         print('Fuck, now loss>best loss, best loss is %f %%, patience now is %i' %\
                               (best_loss*100. ,self.patience) )
