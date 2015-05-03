@@ -31,4 +31,4 @@ if len(sys.argv) == 4:
     output_directory = sys.argv[3]
 else:
     output_directory = dataset + '-output-continue'
-nn.work(0.01, dataset, load_all, output_directory)
+nn.work(0.001, dataset, load_all, output_directory)

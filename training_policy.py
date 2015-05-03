@@ -88,11 +88,11 @@ class TrainForever(TrainPolicy):
                             # save best params
                             print 'Yay! Saving best model ...'
                             self.logger.save_params('best')
-                            if (  ( (iter+1) % self.test_freq ==0) or (iter == 5) ) and (self.test_model is not None):
-                                test_score = self.do_test()
-                                print('After epoch %i, minibatch %i/%i, with the best model, test error %f %%' % \
-                                      (epoch, minibatch_index + 1, self.n_batches[0], \
-                                       test_score * 100.))
+                    if (  ( (iter+1) % self.test_freq ==0) or (iter == 5) ) and (self.test_model is not None):
+                        test_score = self.do_test()
+                        print('After epoch %i, minibatch %i/%i, with the best model, test error %f %%' % \
+                              (epoch, minibatch_index + 1, self.n_batches[0], \
+                               test_score * 100.))
 
                     else:
                         print('Fuck, now loss>best loss, best loss is %f %%, ' % \
@@ -166,11 +166,11 @@ class TrainEarlyStopping(TrainPolicy):
                             # save best params
                             print 'Yay! Saving best model ...'
                             self.logger.save_params('best')
-                            if ( ( (iter+1) % self.test_freq ==0) or (iter ==5)) and (self.test_model is not None):
-                                test_score = self.do_test()
-                                print('After epoch %i, minibatch %i/%i, with the best model, test error %f %%' % \
-                                      (epoch, minibatch_index + 1, self.n_batches[0], \
-                                       test_score * 100.))
+                    if ( ( (iter+1) % self.test_freq ==0) or (iter ==5)) and (self.test_model is not None):
+                        test_score = self.do_test()
+                        print('After epoch %i, minibatch %i/%i, with the best model, test error %f %%' % \
+                              (epoch, minibatch_index + 1, self.n_batches[0], \
+                               test_score * 100.))
 
                     else:
                         print('Fuck, now loss>best loss, best loss is %f %%, patience now is %i' %\
