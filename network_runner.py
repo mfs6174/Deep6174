@@ -13,6 +13,7 @@ import operator
 import itertools
 from itertools import count, izip
 import time
+import dataio
 
 from network_trainer import NNTrainer
 from lib.imageutil import tile_raster_images, get_image_matrix
@@ -21,13 +22,14 @@ from layers.layers import *
 N_OUT = 10
 
 class NetworkRunner(object):
-    def __init__(self, input_shape, multi_output, patch_output, stride):
+    def __init__(self, input_shape, multi_output, patch_output, stride, n_out=1):
         """ input size in (height, width)"""
         # nn is the underlying neural network object to run with
         self.nn = NNTrainer(input_shape, multi_output,patch_output,stride)
         self.multi_output = multi_output
         self.patch_output = patch_output
         self.stride = stride
+        self.n_out = n_out
         
     def get_layer_by_index(self, idx):
         """ return the instance of certain layer.
@@ -99,6 +101,48 @@ class NetworkRunner(object):
                                                     self.var_len_output)
         return label
 
+    def patch_raw_predict(self,inputData):
+        ''' inputData should be (b,c*x*y) return data is (b*s_out*s_out,n_out)'''
+        inputData = inputData.reshape(inputData.shape[0], -1)       # flatten each image
+        return self.run_only_last(inputData)
+
+    def predict_whole_img(self,img_name):
+        img = dataio.read_raw_image_only(img_name)
+        image_size= img.shape
+        if type(self.stride)==int:
+            tstride = (self.stride,self.stride)
+        else:
+            tstride = stride
+        patch_size = self.nn.input_shape[1:]
+        patch_num_2d = tuple( ( (image_size[1+i]-patch_size[1+i])/tstride[i]+1 for i in range(2) ) )
+        patch_num = np.prod(patch_num_2d)
+        print 'patch per image'
+        print patch_num
+        if patch_num % self.nn.batch_size != 0:
+            patch_num = patch_num/self.nn.batch_size*self.nn.batch_size
+            print 'drop some data to fit batch_size'
+            print patch_num
+        assert patch_num%self.nn.batch_size == 0
+        batch_per_image = patch_num / self.nn.batch_size
+        data_x=np.ndarray((self.nn.batch_size,patch_size[0],patch_size[1],patch_size[2]),dtype=theano.config.floatX)
+        retImage = np.ndarray((image_size[1],image_size[2],self.n_out),dtype=theano.config.floatX)
+        for index in range(batch_per_image):
+            insideIdx = index
+            for i in range(self.nn.batch_size):
+                j=i+insideIdx
+                data_x[i,:,:,:] = img[:,j/patch_num_2d[1]*tstride[0]:j/patch_num_2d[1]*tstride[0]+patch_size[1],
+                                                j%patch_num_2d[1]*tstride[1]:j%patch_num_2d[1]*tstride[1]+tpatch_size[2]]
+            result = self.patch_raw_predict(data_x)
+            result = result.reshape((self.nn.batch_size,tstride[0],tstride[1],self.n_out))
+            offset = ((patch_size[1]-tstride[0])/2,(patch_size[2]-tstride[1])/2)
+            for i in range(self.nn.batch_size):
+                j=i+insideIdx
+                retImage[j/patch_num_2d[1]*tstride[0]+offset[0]:j/patch_num_2d[1]*tstride[0]+patch_size[1]-offset[0],
+                         j%patch_num_2d[1]*tstride[1]+offset[1]:j%patch_num_2d[1]*tstride[1]+patch_size[2]-offset[1],:]
+                = data_y[i,:,:,:]
+        return retImage
+
+
     @staticmethod
     def get_label_from_result(img, results, multi_output, var_len_output=True):
         """ parse the results and get label
@@ -146,7 +190,8 @@ def build_nn_with_params(params, batch_size):
     else:
         assert False
     stride = last_layer.get('s_out',0)
-    runner = NetworkRunner(input_size, multi_output,patch_output,stride)
+    n_our = last_layer.get('n_out',1)
+    runner = NetworkRunner(input_size, multi_output,patch_output,stride,n_out)
 
     if 'last_updates' in params:
         runner.set_last_updates(params['last_updates'])

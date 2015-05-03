@@ -145,7 +145,20 @@ def read_raw_image_label(ipath,image,label = None,multi = 0):
         return (newim,newlb)
     assert False, "Invalid Dataset Filename"
 
-
+@memorized
+def read_raw_image_only(image):
+    if os.path.isfile(image):
+        im = cv2.imread(image).astype(tn.config.floatX)/255.0
+        assert im is not None, "invalid image"
+        if (len(im.shape)==2):
+            newim = im.reshape((1,im.shape[0],im.shape[1]))
+        elif len(im.shape)==3:
+            newim = np.ndarray((im.shape[2],im.shape[0],im.shape[1]))
+            for i in range(0,im.shape[2]):newim[i,:,:]=im[:,:,i]
+        else:
+            assert False, "invalid image shape"
+        return newim
+    assert False, "Invalid image Filename"
 
 image_type = [".tif",".jpg",".png",".bmp",".pgm"]
 
