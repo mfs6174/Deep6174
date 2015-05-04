@@ -213,7 +213,7 @@ class SharedImagesIO(SharedDataIO):
         if self.need_proc:
             raise NotImplementedError()
 
-        insideIdx = index-imgidx*self.batch_per_image
+        insideIdx = (index-imgidx*self.batch_per_image)*self.batch_size
         if (not self.need_proc) or (dataset != 0):
             for i in range(self.batch_size):
                 j=i+insideIdx

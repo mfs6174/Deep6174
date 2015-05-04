@@ -104,7 +104,7 @@ class NetworkRunner(object):
     def patch_raw_predict(self,inputData):
         ''' inputData should be (b,c*x*y) return data is (b*s_out*s_out,n_out)'''
         inputData = inputData.reshape(inputData.shape[0], -1)       # flatten each image
-        return self.run_only_last(inputData)
+        return self.funcs[-1](inputData)
 
     def predict_whole_img(self,img_name):
         img = dataio.read_raw_image_only(img_name)
@@ -127,19 +127,18 @@ class NetworkRunner(object):
         data_x=np.ndarray((self.nn.batch_size,patch_size[0],patch_size[1],patch_size[2]),dtype=theano.config.floatX)
         retImage = np.ndarray((image_size[1],image_size[2],self.n_out),dtype=theano.config.floatX)
         for index in range(batch_per_image):
-            insideIdx = index
+            insideIdx = index*self.nn.batch_size
             for i in range(self.nn.batch_size):
                 j=i+insideIdx
                 data_x[i,:,:,:] = img[:,j/patch_num_2d[1]*tstride[0]:j/patch_num_2d[1]*tstride[0]+patch_size[1],
-                                                j%patch_num_2d[1]*tstride[1]:j%patch_num_2d[1]*tstride[1]+tpatch_size[2]]
+                                                j%patch_num_2d[1]*tstride[1]:j%patch_num_2d[1]*tstride[1]+patch_size[2]]
             result = self.patch_raw_predict(data_x)
             result = result.reshape((self.nn.batch_size,tstride[0],tstride[1],self.n_out))
             offset = ((patch_size[1]-tstride[0])/2,(patch_size[2]-tstride[1])/2)
             for i in range(self.nn.batch_size):
                 j=i+insideIdx
                 retImage[j/patch_num_2d[1]*tstride[0]+offset[0]:j/patch_num_2d[1]*tstride[0]+patch_size[1]-offset[0],
-                         j%patch_num_2d[1]*tstride[1]+offset[1]:j%patch_num_2d[1]*tstride[1]+patch_size[2]-offset[1],:]
-                = data_y[i,:,:,:]
+                         j%patch_num_2d[1]*tstride[1]+offset[1]:j%patch_num_2d[1]*tstride[1]+patch_size[2]-offset[1],:] = result[i,:,:,:]
         return retImage
 
 
@@ -190,7 +189,7 @@ def build_nn_with_params(params, batch_size):
     else:
         assert False
     stride = last_layer.get('s_out',0)
-    n_our = last_layer.get('n_out',1)
+    n_out = last_layer.get('n_out',1)
     runner = NetworkRunner(input_size, multi_output,patch_output,stride,n_out)
 
     if 'last_updates' in params:
