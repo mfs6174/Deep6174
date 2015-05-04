@@ -15,10 +15,10 @@ if len(sys.argv) != 3:
 from network_runner import get_nn
 
 params_file = sys.argv[1]
-img_file = sys.argv[2]
-nn = get_nn(params_file, 1)
+img_name = sys.argv[2]
+nn = get_nn(params_file, 101)
 
-pred = nn.predict_whole_img(img_file,101)
+pred = nn.predict_whole_img(img_name)
 to_show = (pred*255.0).astype('uint8')
 label = np.zeros_like(to_show)
 indic = pred.argmax(-1)
