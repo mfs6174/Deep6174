@@ -107,6 +107,7 @@ class NetworkRunner(object):
         return self.funcs[-1](inputData)
 
     def predict_whole_img(self,img_name):
+        print "reading image: "+img_name
         img = dataio.read_raw_image_only(img_name)
         image_size= img.shape
         if type(self.stride)==int:
@@ -126,7 +127,9 @@ class NetworkRunner(object):
         batch_per_image = patch_num / self.nn.batch_size
         data_x=np.ndarray((self.nn.batch_size,patch_size[0],patch_size[1],patch_size[2]),dtype=theano.config.floatX)
         retImage = np.ndarray((image_size[1],image_size[2],self.n_out),dtype=theano.config.floatX)
+        print "predicting image: "+img_name
         for index in range(batch_per_image):
+            print float(index)/batch_per_image,"%"
             insideIdx = index*self.nn.batch_size
             for i in range(self.nn.batch_size):
                 j=i+insideIdx
