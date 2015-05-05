@@ -5,7 +5,7 @@
 # Author: Xi-Jin Zhang <zhangxijin91@gmail.com>
 
 import numpy as np
-import sys
+import sys,os
 import cv2
 import gzip
 import cPickle as pickle
