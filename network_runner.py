@@ -14,6 +14,7 @@ import itertools
 from itertools import count, izip
 import time
 import dataio
+import sys
 
 from network_trainer import NNTrainer
 from lib.imageutil import tile_raster_images, get_image_matrix
@@ -129,7 +130,6 @@ class NetworkRunner(object):
         retImage = np.ndarray((image_size[1],image_size[2],self.n_out),dtype=theano.config.floatX)
         print "predicting image: "+img_name
         for index in range(batch_per_image):
-            print float(index)/batch_per_image,"%"
             insideIdx = index*self.nn.batch_size
             for i in range(self.nn.batch_size):
                 j=i+insideIdx
@@ -142,6 +142,10 @@ class NetworkRunner(object):
                 j=i+insideIdx
                 retImage[j/patch_num_2d[1]*tstride[0]+offset[0]:j/patch_num_2d[1]*tstride[0]+patch_size[1]-offset[0],
                          j%patch_num_2d[1]*tstride[1]+offset[1]:j%patch_num_2d[1]*tstride[1]+patch_size[2]-offset[1],:] = result[i,:,:,:]
+            print "%.1f%%..." % (float(index+1)/batch_per_image*100.0),
+            sys.stdout.flush()
+
+        print
         return retImage
 
 
