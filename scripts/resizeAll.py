@@ -30,7 +30,7 @@ def resize_all(dir,fx=0.25,fy=0.25,dst=None,nearest=False):
         im = cv2.imread(f)
         name,ext=os.path.splitext(f)
         if not nearest:
-            if fx>1 or fy>1:
+            if fx>1 or fy>1 or dst[0]>im.shape[0] or dst[1]>im.shape[1]:
                 imr = cv2.resize(im,dsize=dst,fx=fx,fy=fy, interpolation=cv2.INTER_CUBIC)
             else:
                 imr = cv2.resize(im,dsize=dst,fx=fx,fy=fy, interpolation=cv2.INTER_AREA)
