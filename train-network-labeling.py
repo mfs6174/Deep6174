@@ -44,35 +44,8 @@ if __name__ == '__main__':
     nn = NNTrainer(shape, multi_output=multi_output,patch_output=True,stride=20)
 
     nn.add_layer(ConvLayer, {'filter_shape': (64, 9, 9)})
-    nn.add_layer(MaxoutLayer, {'maxout_unit': 4})
-    nn.add_layer(PoolLayer, {'pool_size': 2,'stride': 1})
-    #nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    #nn.add_layer(DropoutLayer, {})
-
-    nn.add_layer(ConvLayer, {'filter_shape': (128, 7, 7)})
-    nn.add_layer(MaxoutLayer, {'maxout_unit': 4})
-    nn.add_layer(PoolLayer, {'pool_size': 2})
-    #nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    #nn.add_layer(DropoutLayer, {})
-
-    nn.add_layer(ConvLayer, {'filter_shape': (128, 5, 5)})
-    nn.add_layer(MaxoutLayer, {'maxout_unit': 4})
-    #nn.add_layer(PoolLayer, {'pool_size': 2})
-    #nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    nn.add_layer(DropoutLayer, {})
-
-    #nn.add_layer(ConvLayer, {'filter_shape': (160, 5, 5)})
-    #nn.add_layer(PoolLayer, {'pool_size': 2, 'stride': 1})
-    #nn.add_layer(MeanSubtractLayer, {'filter_size': 3})
-    #nn.add_layer(DropoutLayer, {})
-
-    nn.add_layer(FullyConnectedLayer, {'n_out': 1600})
-    nn.add_layer(DropoutLayer, {})
-    nn.add_layer(FullyConnectedLayer, {'n_out': 1200})
-    
-    #nn.add_layer(SequenceSoftmax, {'seq_max_len': 5, 'n_out': 10})
-    #nn.add_layer(LogisticRegression, {'n_out': 10})
+    '''
+    add your network structure here
+    '''
     nn.add_layer(SoftmaxLoss, {'s_out': 20, 'n_out': 3})
     nn.work(0.05, dataset, load_all, output_directory)
-
-# Usage: ./train-network.py dataset.pkl.gz
