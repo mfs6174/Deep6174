@@ -1,6 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: network_trainer.py
+# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Xi-Jin Zhang <zhangxijin91@gmail.com>
+
 from itertools import chain, izip
 import operator
 import pprint

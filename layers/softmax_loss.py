@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 # File: LR.py
 # Date: Sun Nov 30 22:43:30 2014 +0800
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Xi-Jin Zhang <zhangxijin91@gmail.com>
 import numpy
 import theano
 import theano.tensor as T

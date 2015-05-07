@@ -3,6 +3,7 @@
 # File: continue-train.py
 # Date: Sun Sep 21 17:46:11 2014 -0700
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Xi-Jin Zhang <zhangxijin91@gmail.com>
 
 from network_runner import build_nn_with_params
 
